@@ -1,4 +1,4 @@
-# 🏢 Co-Living Smart System (2050)
+# 🏢 HomeLive (2050)
 > **Sistema Inteligente de Gestão de Convivência, Custos Compartilhados e Escalas**  
 > *Projeto Semestral de Programação Orientada a Objetos (POO) em Java com Spring Boot.*
 
@@ -60,7 +60,7 @@ No terminal, dentro do diretório do projeto:
 
 * **API Base URL:** `http://localhost:8080/api`
 * **H2 Console:** `http://localhost:8080/h2-console`
-  * **JDBC URL:** `jdbc:h2:mem:colivingdb`
+  * **JDBC URL:** `jdbc:h2:mem:homelivedb`
   * **Usuário:** `sa`
   * **Senha:** *(deixar em branco)*
 
@@ -96,7 +96,7 @@ No terminal, dentro do diretório do projeto:
 
 ## 👥 6. Dados Pré-Carregados (`DataInitializer`)
 Ao iniciar, o sistema carrega automaticamente:
-* **Síndico:** Dra. Helena Vance (`helena.vance@coliving2050.io`)
+* **Síndico:** Dra. Helena Vance (`helena.vance@homelive2050.io`)
 * **Moradores:** Lucas Silva, Sofia Chen, Mateus Oliveira e Beatriz Santos.
 * **Espaços:** *Escritório Acústico VR*, *Lavanderia Inteligente IoT* e *Espaço Gourmet e Rooftop Hidropônico*.
 * **Despesas & Rateios:** Demonstração prática do rateio por consumo, igualitário e por estadia já calculados!

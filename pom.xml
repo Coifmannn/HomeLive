@@ -8,10 +8,10 @@
 		<version>4.1.1</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>br.com.coliving</groupId>
-	<artifactId>coliving-smart-system</artifactId>
+	<groupId>br.com.homelive</groupId>
+	<artifactId>homelive</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>coliving-smart-system</name>
+	<name>homelive</name>
 	<description/>
 	<url/>
 	<licenses>
