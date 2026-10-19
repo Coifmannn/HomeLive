@@ -3,6 +3,8 @@ package br.com.homelive.controller;
 import br.com.homelive.dto.TarefaDTO;
 import br.com.homelive.model.enums.StatusTarefa;
 import br.com.homelive.service.TarefaService;
+import br.com.homelive.security.UsuarioAutenticado;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,14 +22,15 @@ public class TarefaController {
     private final TarefaService tarefaService;
 
     @PostMapping
-    public ResponseEntity<TarefaDTO.Response> criar(@RequestBody @Valid TarefaDTO.Request request) {
-        TarefaDTO.Response response = tarefaService.criarTarefa(request);
+    public ResponseEntity<TarefaDTO.Response> criar(@RequestBody @Valid TarefaDTO.Request request,
+                                                @AuthenticationPrincipal UsuarioAutenticado sindico) {
+        TarefaDTO.Response response = tarefaService.criarTarefa(request, sindico.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PatchMapping("/{id}/concluir")
-    public ResponseEntity<TarefaDTO.Response> concluir(@PathVariable Long id) {
-        return ResponseEntity.ok(tarefaService.concluirTarefa(id));
+    public ResponseEntity<TarefaDTO.Response> concluir(@PathVariable Long id, @AuthenticationPrincipal UsuarioAutenticado ator) {
+        return ResponseEntity.ok(tarefaService.concluirTarefa(id, ator));
     }
 
     @PostMapping("/processar-atrasos")

@@ -20,7 +20,7 @@ public class AgendamentoDTO {
         @NotNull(message = "O ID do espaço comum é obrigatório")
         private Long espacoId;
 
-        @NotNull(message = "O ID do morador é obrigatório")
+        /** Só o síndico informa (reserva em nome de um morador). Para morador, vale sempre o usuário logado. */
         private Long moradorId;
 
         @NotNull(message = "A data e hora de início são obrigatórias")

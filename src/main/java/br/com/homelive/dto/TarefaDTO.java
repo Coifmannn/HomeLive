@@ -31,8 +31,6 @@ public class TarefaDTO {
         private Integer pontosPenalidade;
 
         private Long responsavelId;
-
-        private Long atribuidaPorId;
     }
 
     @Getter

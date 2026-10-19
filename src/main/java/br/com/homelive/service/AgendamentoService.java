@@ -6,7 +6,9 @@ import br.com.homelive.exception.RecursoNaoEncontradoException;
 import br.com.homelive.model.AgendamentoEspaco;
 import br.com.homelive.model.EspacoComum;
 import br.com.homelive.model.Morador;
+import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.repository.AgendamentoEspacoRepository;
+import br.com.homelive.security.UsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,9 +27,10 @@ public class AgendamentoService {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     @Transactional
-    public AgendamentoDTO.Response criarAgendamento(AgendamentoDTO.Request request) {
+    public AgendamentoDTO.Response criarAgendamento(AgendamentoDTO.Request request, UsuarioAutenticado ator) {
+        Long moradorId = resolverMorador(request, ator);
         EspacoComum espaco = espacoComumService.buscarEntidade(request.getEspacoId());
-        Morador morador = moradorService.buscarEntidade(request.getMoradorId());
+        Morador morador = moradorService.buscarEntidade(moradorId);
 
         // As invariantes da reserva (datas, passado, espaço/morador ativos) são validadas pelo próprio construtor.
         AgendamentoEspaco agendamento = new AgendamentoEspaco(
@@ -56,6 +59,18 @@ public class AgendamentoService {
         return toResponse(salvo);
     }
 
+    /** Morador reserva sempre em nome próprio; o síndico reserva em nome de um morador que informar. */
+    private Long resolverMorador(AgendamentoDTO.Request request, UsuarioAutenticado ator) {
+        if (!ator.isSindico()) {
+            ator.exigirSindicoOuDono(request.getMoradorId() != null ? request.getMoradorId() : ator.getId());
+            return ator.getId();
+        }
+        if (request.getMoradorId() == null) {
+            throw new RegraNegocioException("O síndico deve informar o morador da reserva (moradorId).");
+        }
+        return request.getMoradorId();
+    }
+
     public List<AgendamentoDTO.Response> listarTodos() {
         return agendamentoRepository.findAll().stream().map(this::toResponse).toList();
     }
@@ -69,9 +84,11 @@ public class AgendamentoService {
     }
 
     @Transactional
-    public void cancelarAgendamento(Long agendamentoId) {
+    public void cancelarAgendamento(Long agendamentoId, UsuarioAutenticado ator) {
         AgendamentoEspaco agendamento = agendamentoRepository.findById(agendamentoId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Agendamento não encontrado com o ID: " + agendamentoId));
+
+        ator.exigirSindicoOuDono(agendamento.getMorador().getId());
 
         agendamento.cancelar();
         agendamentoRepository.save(agendamento);

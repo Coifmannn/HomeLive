@@ -2,6 +2,8 @@ package br.com.homelive.controller;
 
 import br.com.homelive.dto.AgendamentoDTO;
 import br.com.homelive.service.AgendamentoService;
+import br.com.homelive.security.UsuarioAutenticado;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,8 +20,9 @@ public class AgendamentoController {
     private final AgendamentoService agendamentoService;
 
     @PostMapping
-    public ResponseEntity<AgendamentoDTO.Response> criar(@RequestBody @Valid AgendamentoDTO.Request request) {
-        AgendamentoDTO.Response response = agendamentoService.criarAgendamento(request);
+    public ResponseEntity<AgendamentoDTO.Response> criar(@RequestBody @Valid AgendamentoDTO.Request request,
+                                                        @AuthenticationPrincipal UsuarioAutenticado ator) {
+        AgendamentoDTO.Response response = agendamentoService.criarAgendamento(request, ator);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -39,8 +42,8 @@ public class AgendamentoController {
     }
 
     @PatchMapping("/{id}/cancelar")
-    public ResponseEntity<Void> cancelar(@PathVariable Long id) {
-        agendamentoService.cancelarAgendamento(id);
+    public ResponseEntity<Void> cancelar(@PathVariable Long id, @AuthenticationPrincipal UsuarioAutenticado ator) {
+        agendamentoService.cancelarAgendamento(id, ator);
         return ResponseEntity.noContent().build();
     }
 }

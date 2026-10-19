@@ -6,6 +6,7 @@ import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.model.Morador;
 import br.com.homelive.repository.MoradorRepository;
 import br.com.homelive.repository.UsuarioRepository;
+import br.com.homelive.security.UsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -60,7 +61,8 @@ public class MoradorService {
     }
 
     @Transactional
-    public MoradorDTO.Response atualizarConsumo(Long id, Double consumoKwh) {
+    public MoradorDTO.Response atualizarConsumo(Long id, Double consumoKwh, UsuarioAutenticado ator) {
+        ator.exigirSindicoOuDono(id);
         Morador morador = buscarEntidade(id);
         morador.atualizarConsumo(consumoKwh);
         return toResponse(moradorRepository.save(morador));

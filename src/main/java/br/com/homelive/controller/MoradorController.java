@@ -2,6 +2,8 @@ package br.com.homelive.controller;
 
 import br.com.homelive.dto.MoradorDTO;
 import br.com.homelive.service.MoradorService;
+import br.com.homelive.security.UsuarioAutenticado;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -42,8 +44,9 @@ public class MoradorController {
     }
 
     @PatchMapping("/{id}/consumo")
-    public ResponseEntity<MoradorDTO.Response> atualizarConsumo(@PathVariable Long id, @RequestParam Double consumoKwh) {
-        return ResponseEntity.ok(moradorService.atualizarConsumo(id, consumoKwh));
+    public ResponseEntity<MoradorDTO.Response> atualizarConsumo(@PathVariable Long id, @RequestParam Double consumoKwh,
+                                                                @AuthenticationPrincipal UsuarioAutenticado ator) {
+        return ResponseEntity.ok(moradorService.atualizarConsumo(id, consumoKwh, ator));
     }
 
     @PatchMapping("/{id}/estadia")

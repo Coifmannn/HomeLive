@@ -8,6 +8,7 @@ import br.com.homelive.model.TarefaDomestica;
 import br.com.homelive.model.enums.StatusTarefa;
 import br.com.homelive.repository.MoradorRepository;
 import br.com.homelive.repository.TarefaDomesticaRepository;
+import br.com.homelive.security.UsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,16 +26,13 @@ public class TarefaService {
     private final MoradorRepository moradorRepository;
 
     @Transactional
-    public TarefaDTO.Response criarTarefa(TarefaDTO.Request request) {
+    public TarefaDTO.Response criarTarefa(TarefaDTO.Request request, Long sindicoId) {
         Morador responsavel = null;
         if (request.getResponsavelId() != null) {
             responsavel = moradorService.buscarEntidade(request.getResponsavelId());
         }
 
-        Sindico atribuidaPor = null;
-        if (request.getAtribuidaPorId() != null) {
-            atribuidaPor = sindicoService.buscarEntidade(request.getAtribuidaPorId());
-        }
+        Sindico atribuidaPor = sindicoService.buscarEntidade(sindicoId);
 
         TarefaDomestica tarefa = new TarefaDomestica(
                 request.getTitulo(),
@@ -51,8 +49,11 @@ public class TarefaService {
     }
 
     @Transactional
-    public TarefaDTO.Response concluirTarefa(Long tarefaId) {
+    public TarefaDTO.Response concluirTarefa(Long tarefaId, UsuarioAutenticado ator) {
         TarefaDomestica tarefa = buscarEntidade(tarefaId);
+
+        // Tarefa sem responsável não tem dono: só o síndico conclui.
+        ator.exigirSindicoOuDono(tarefa.getResponsavel() != null ? tarefa.getResponsavel().getId() : null);
 
         tarefa.concluir();
         if (tarefa.getResponsavel() != null) {

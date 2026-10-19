@@ -2,12 +2,14 @@ package br.com.homelive.security;
 
 import br.com.homelive.model.Usuario;
 import br.com.homelive.model.enums.TipoUsuario;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Adaptador entre o domínio e o Spring Security: guarda só um retrato imutável do usuário
@@ -40,6 +42,16 @@ public class UsuarioAutenticado implements UserDetails {
 
     public boolean isSindico() {
         return tipo == TipoUsuario.SINDICO;
+    }
+
+    /**
+     * Regra de "dono": o síndico pode agir sobre qualquer recurso; o morador só sobre os próprios.
+     * Passe {@code null} quando o recurso não tem dono (ex.: tarefa sem responsável): só o síndico passa.
+     */
+    public void exigirSindicoOuDono(Long donoId) {
+        if (!isSindico() && !Objects.equals(id, donoId)) {
+            throw new AccessDeniedException("Você só pode realizar esta ação sobre os seus próprios dados.");
+        }
     }
 
     @Override

@@ -11,6 +11,7 @@ import br.com.homelive.model.enums.StatusDespesa;
 import br.com.homelive.repository.DespesaRepository;
 import br.com.homelive.repository.MoradorRepository;
 import br.com.homelive.repository.RateioItemRepository;
+import br.com.homelive.security.UsuarioAutenticado;
 import br.com.homelive.strategy.CalculoRateioStrategy;
 import br.com.homelive.strategy.RateioStrategyFactory;
 import lombok.RequiredArgsConstructor;
@@ -31,11 +32,9 @@ public class DespesaService {
     private final RateioStrategyFactory rateioStrategyFactory;
 
     @Transactional
-    public DespesaDTO.Response lancarDespesa(DespesaDTO.Request request) {
-        Morador solicitante = null;
-        if (request.getSolicitanteId() != null) {
-            solicitante = moradorService.buscarEntidade(request.getSolicitanteId());
-        }
+    public DespesaDTO.Response lancarDespesa(DespesaDTO.Request request, UsuarioAutenticado ator) {
+        // Morador lança em nome próprio; lançamento do síndico é administrativo (sem solicitante).
+        Morador solicitante = ator.isSindico() ? null : moradorService.buscarEntidade(ator.getId());
 
         Despesa despesa = new Despesa(
                 request.getTitulo(),
@@ -53,9 +52,9 @@ public class DespesaService {
     }
 
     @Transactional
-    public DespesaDTO.Response avaliarDespesa(Long despesaId, DespesaDTO.AprovacaoRequest request) {
+    public DespesaDTO.Response avaliarDespesa(Long despesaId, DespesaDTO.AprovacaoRequest request, Long sindicoId) {
         Despesa despesa = buscarEntidade(despesaId);
-        Sindico sindico = sindicoService.buscarEntidade(request.getSindicoId());
+        Sindico sindico = sindicoService.buscarEntidade(sindicoId);
 
         if (Boolean.TRUE.equals(request.getAprovado())) {
             despesa.aprovar(sindico);
@@ -79,9 +78,11 @@ public class DespesaService {
     }
 
     @Transactional
-    public DespesaDTO.RateioItemResponse quitarItemRateio(Long itemId) {
+    public DespesaDTO.RateioItemResponse quitarItemRateio(Long itemId, UsuarioAutenticado ator) {
         RateioItem item = rateioItemRepository.findById(itemId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Item de rateio não encontrado com ID: " + itemId));
+
+        ator.exigirSindicoOuDono(item.getMorador().getId());
 
         item.quitar();
         RateioItem salvo = rateioItemRepository.save(item);

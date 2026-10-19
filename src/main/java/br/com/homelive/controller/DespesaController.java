@@ -3,6 +3,8 @@ package br.com.homelive.controller;
 import br.com.homelive.dto.DespesaDTO;
 import br.com.homelive.model.enums.StatusDespesa;
 import br.com.homelive.service.DespesaService;
+import br.com.homelive.security.UsuarioAutenticado;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,22 +21,25 @@ public class DespesaController {
     private final DespesaService despesaService;
 
     @PostMapping
-    public ResponseEntity<DespesaDTO.Response> lancar(@RequestBody @Valid DespesaDTO.Request request) {
-        DespesaDTO.Response response = despesaService.lancarDespesa(request);
+    public ResponseEntity<DespesaDTO.Response> lancar(@RequestBody @Valid DespesaDTO.Request request,
+                                                    @AuthenticationPrincipal UsuarioAutenticado ator) {
+        DespesaDTO.Response response = despesaService.lancarDespesa(request, ator);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/{id}/avaliar")
     public ResponseEntity<DespesaDTO.Response> avaliar(
             @PathVariable Long id,
-            @RequestBody @Valid DespesaDTO.AprovacaoRequest request) {
-        DespesaDTO.Response response = despesaService.avaliarDespesa(id, request);
+            @RequestBody @Valid DespesaDTO.AprovacaoRequest request,
+            @AuthenticationPrincipal UsuarioAutenticado sindico) {
+        DespesaDTO.Response response = despesaService.avaliarDespesa(id, request, sindico.getId());
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/rateio/{itemId}/quitar")
-    public ResponseEntity<DespesaDTO.RateioItemResponse> quitarItemRateio(@PathVariable Long itemId) {
-        return ResponseEntity.ok(despesaService.quitarItemRateio(itemId));
+    public ResponseEntity<DespesaDTO.RateioItemResponse> quitarItemRateio(@PathVariable Long itemId,
+                                                                           @AuthenticationPrincipal UsuarioAutenticado ator) {
+        return ResponseEntity.ok(despesaService.quitarItemRateio(itemId, ator));
     }
 
     @GetMapping

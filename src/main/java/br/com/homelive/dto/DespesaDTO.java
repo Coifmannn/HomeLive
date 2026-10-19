@@ -39,8 +39,6 @@ public class DespesaDTO {
         private TipoDespesa tipoDespesa;
 
         private TipoRateio tipoRateio = TipoRateio.IGUALITARIO;
-
-        private Long solicitanteId;
     }
 
     @Getter
@@ -48,9 +46,6 @@ public class DespesaDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class AprovacaoRequest {
-        @NotNull(message = "O ID do síndico é obrigatório")
-        private Long sindicoId;
-
         @NotNull(message = "A decisão de aprovação é obrigatória")
         private Boolean aprovado;
 

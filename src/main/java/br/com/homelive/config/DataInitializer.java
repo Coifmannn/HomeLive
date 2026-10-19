@@ -14,6 +14,7 @@ import br.com.homelive.repository.MoradorRepository;
 import br.com.homelive.repository.SindicoRepository;
 import br.com.homelive.repository.TarefaDomesticaRepository;
 import br.com.homelive.service.AgendamentoService;
+import br.com.homelive.security.UsuarioAutenticado;
 import br.com.homelive.service.DespesaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
@@ -96,11 +97,10 @@ public class DataInitializer implements CommandLineRunner {
                 LocalDate.now().plusDays(10),
                 CategoriaDespesa.INTERNET_QUANTICA,
                 TipoDespesa.FIXA,
-                TipoRateio.IGUALITARIO,
-                m1.getId()
+                TipoRateio.IGUALITARIO
         );
-        DespesaDTO.Response r1 = despesaService.lancarDespesa(desp1);
-        despesaService.avaliarDespesa(r1.getId(), new DespesaDTO.AprovacaoRequest(sindicoSalvo.getId(), true, null));
+        DespesaDTO.Response r1 = despesaService.lancarDespesa(desp1, new UsuarioAutenticado(m1));
+        despesaService.avaliarDespesa(r1.getId(), new DespesaDTO.AprovacaoRequest(true, null), sindicoSalvo.getId());
 
         // Despesa B: Matriz Solar e Células de Hidrogênio (Rateio por Consumo)
         DespesaDTO.Request desp2 = new DespesaDTO.Request(
@@ -110,11 +110,10 @@ public class DataInitializer implements CommandLineRunner {
                 LocalDate.now().plusDays(15),
                 CategoriaDespesa.ENERGIA_SOLAR,
                 TipoDespesa.VARIAVEL,
-                TipoRateio.POR_CONSUMO,
-                m2.getId()
+                TipoRateio.POR_CONSUMO
         );
-        DespesaDTO.Response r2 = despesaService.lancarDespesa(desp2);
-        despesaService.avaliarDespesa(r2.getId(), new DespesaDTO.AprovacaoRequest(sindicoSalvo.getId(), true, null));
+        DespesaDTO.Response r2 = despesaService.lancarDespesa(desp2, new UsuarioAutenticado(m2));
+        despesaService.avaliarDespesa(r2.getId(), new DespesaDTO.AprovacaoRequest(true, null), sindicoSalvo.getId());
 
         // Despesa C: Manutenção Preventiva dos Drones de Limpeza (Pendente para o Síndico aprovar)
         DespesaDTO.Request desp3 = new DespesaDTO.Request(
@@ -124,10 +123,9 @@ public class DataInitializer implements CommandLineRunner {
                 LocalDate.now().plusDays(20),
                 CategoriaDespesa.MANUTENCAO_ROBOS,
                 TipoDespesa.VARIAVEL,
-                TipoRateio.POR_ESTADIA,
-                m3.getId()
+                TipoRateio.POR_ESTADIA
         );
-        despesaService.lancarDespesa(desp3);
+        despesaService.lancarDespesa(desp3, new UsuarioAutenticado(m3));
 
         // 5. Cadastrar Agendamentos de Espaços
         LocalDateTime hojeTardeInicio = LocalDateTime.now().plusHours(2).withMinute(0).withSecond(0);
@@ -138,7 +136,7 @@ public class DataInitializer implements CommandLineRunner {
                 hojeTardeInicio,
                 hojeTardeFim,
                 "Apresentação de projeto no metaverso corporativo"
-        ));
+        ), new UsuarioAutenticado(m1));
 
         LocalDateTime amanhaInicio = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0);
         LocalDateTime amanhaFim = amanhaInicio.plusHours(1).plusMinutes(30);
@@ -148,7 +146,7 @@ public class DataInitializer implements CommandLineRunner {
                 amanhaInicio,
                 amanhaFim,
                 "Higienização de roupas de algodão bio-sintético"
-        ));
+        ), new UsuarioAutenticado(m2));
 
         // 6. Cadastrar Tarefas Domésticas com Gamificação
         TarefaDomestica t1 = new TarefaDomestica(
