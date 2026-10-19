@@ -12,5 +12,7 @@ import java.util.List;
 public interface TarefaDomesticaRepository extends JpaRepository<TarefaDomestica, Long> {
     List<TarefaDomestica> findByResponsavelId(Long moradorId);
     List<TarefaDomestica> findByStatus(StatusTarefa status);
+
+    long countByStatus(StatusTarefa status);
     List<TarefaDomestica> findByStatusAndDataPrazoBefore(StatusTarefa status, LocalDate data);
 }

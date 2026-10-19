@@ -1,6 +1,7 @@
 package br.com.homelive.repository;
 
 import br.com.homelive.model.AgendamentoEspaco;
+import br.com.homelive.model.enums.StatusAgendamento;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,6 +16,13 @@ public interface AgendamentoEspacoRepository extends JpaRepository<AgendamentoEs
     List<AgendamentoEspaco> findByEspacoComumId(Long espacoId);
 
     List<AgendamentoEspaco> findByMoradorId(Long moradorId);
+
+    /** Conta reservas com o status dado que começam em [inicio, fim). */
+    long countByStatusAndDataHoraInicioGreaterThanEqualAndDataHoraInicioLessThan(
+            StatusAgendamento status, LocalDateTime inicio, LocalDateTime fim);
+
+    List<AgendamentoEspaco> findTop5ByStatusAndDataHoraInicioAfterOrderByDataHoraInicioAsc(
+            StatusAgendamento status, LocalDateTime depoisDe);
 
     /**
      * Busca agendamentos confirmados que colidam temporalmente com o intervalo informado:

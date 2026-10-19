@@ -3,7 +3,6 @@ package br.com.homelive.service;
 import br.com.homelive.dto.AgendamentoDTO;
 import br.com.homelive.dto.DashboardDTO;
 import br.com.homelive.dto.MoradorDTO;
-import br.com.homelive.model.Despesa;
 import br.com.homelive.model.enums.StatusAgendamento;
 import br.com.homelive.model.enums.StatusTarefa;
 import br.com.homelive.repository.AgendamentoEspacoRepository;
@@ -30,30 +29,26 @@ public class DashboardService {
     private final AgendamentoService agendamentoService;
 
     public DashboardDTO.Response obterResumoGeral() {
+        LocalDate hoje = LocalDate.now();
+        LocalDateTime agora = LocalDateTime.now();
+
         long totalMoradores = moradorRepository.count();
 
-        BigDecimal totalDespesasMes = despesaRepository.findAll().stream()
-                .filter(d -> d.getDataLancamento().getMonth() == LocalDate.now().getMonth())
-                .map(Despesa::getValorTotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // Intervalos semiabertos [inicio, fim): não perdem a última fração do dia e distinguem o ano.
+        LocalDate inicioMes = hoje.withDayOfMonth(1);
+        BigDecimal totalDespesasMes = despesaRepository.somarValorLancadoEntre(inicioMes, inicioMes.plusMonths(1));
 
-        long totalTarefasPendentes = tarefaRepository.findByStatus(StatusTarefa.PENDENTE).size();
+        long totalTarefasPendentes = tarefaRepository.countByStatus(StatusTarefa.PENDENTE);
 
-        LocalDateTime inicioDia = LocalDate.now().atStartOfDay();
-        LocalDateTime fimDia = LocalDate.now().atTime(23, 59, 59);
-
-        long totalAgendamentosHoje = agendamentoRepository.findAll().stream()
-                .filter(a -> a.getStatus() == StatusAgendamento.CONFIRMADO &&
-                             !a.getDataHoraInicio().isBefore(inicioDia) &&
-                             !a.getDataHoraInicio().isAfter(fimDia))
-                .count();
+        long totalAgendamentosHoje = agendamentoRepository
+                .countByStatusAndDataHoraInicioGreaterThanEqualAndDataHoraInicioLessThan(
+                        StatusAgendamento.CONFIRMADO, hoje.atStartOfDay(), hoje.plusDays(1).atStartOfDay());
 
         List<MoradorDTO.Response> ranking = moradorService.obterRankingGamificacao();
 
-        List<AgendamentoDTO.Response> proximos = agendamentoRepository.findAll().stream()
-                .filter(a -> a.getStatus() == StatusAgendamento.CONFIRMADO && a.getDataHoraInicio().isAfter(LocalDateTime.now()))
-                .sorted((a1, a2) -> a1.getDataHoraInicio().compareTo(a2.getDataHoraInicio()))
-                .limit(5)
+        List<AgendamentoDTO.Response> proximos = agendamentoRepository
+                .findTop5ByStatusAndDataHoraInicioAfterOrderByDataHoraInicioAsc(StatusAgendamento.CONFIRMADO, agora)
+                .stream()
                 .map(agendamentoService::toResponse)
                 .toList();
 
