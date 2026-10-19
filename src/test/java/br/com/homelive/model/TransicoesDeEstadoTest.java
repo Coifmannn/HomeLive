@@ -114,6 +114,30 @@ class TransicoesDeEstadoTest {
     }
 
     @Test
+    @DisplayName("Concluir tarefa já marcada como atrasada rende só 50% da recompensa")
+    void tarefaAtrasadaRendeMetade() {
+        TarefaDomestica t = new TarefaDomestica("Lixo", "x", LocalDate.now().minusDays(1), 25, 15, morador, sindico);
+        t.penalizarAtraso();              // 100 - 15 = 85
+        assertEquals(StatusTarefa.ATRASADA, t.getStatus());
+
+        t.concluir();                     // + 25/2 = 12
+
+        assertEquals(StatusTarefa.CONCLUIDA, t.getStatus());
+        assertEquals(97, morador.getPontosConvivencia());
+    }
+
+    @Test
+    @DisplayName("Concluir depois do prazo rende 50% mesmo se o atraso ainda não foi processado")
+    void tarefaForaDoPrazoNaoProcessadaRendeMetade() {
+        TarefaDomestica t = new TarefaDomestica("Lixo", "x", LocalDate.now().minusDays(1), 25, 15, morador, sindico);
+        assertEquals(StatusTarefa.PENDENTE, t.getStatus());
+
+        t.concluir();
+
+        assertEquals(112, morador.getPontosConvivencia());
+    }
+
+    @Test
     @DisplayName("Tarefa atrasada penaliza o responsável uma única vez")
     void tarefaAtrasadaPenalizaUmaVez() {
         TarefaDomestica t = new TarefaDomestica("Lixo", "x", LocalDate.now().minusDays(1), 25, 15, morador, sindico);

@@ -69,11 +69,18 @@ public class TarefaDomestica {
         if (this.status == StatusTarefa.CANCELADA) {
             throw new RegraNegocioException("Uma tarefa cancelada não pode ser concluída.");
         }
+        // Concluir fora do prazo vale só metade da recompensa (inclusive se o atraso ainda não foi processado).
+        int pontos = estaAtrasada() ? this.pontosRecompensa / 2 : this.pontosRecompensa;
         this.status = StatusTarefa.CONCLUIDA;
         this.dataConclusao = LocalDateTime.now();
         if (this.responsavel != null) {
-            this.responsavel.adicionarPontos(this.pontosRecompensa);
+            this.responsavel.adicionarPontos(pontos);
         }
+    }
+
+    public boolean estaAtrasada() {
+        return this.status == StatusTarefa.ATRASADA
+                || (this.status == StatusTarefa.PENDENTE && LocalDate.now().isAfter(this.dataPrazo));
     }
 
     public void penalizarAtraso() {
