@@ -8,7 +8,6 @@ import br.com.homelive.model.Morador;
 import br.com.homelive.model.RateioItem;
 import br.com.homelive.model.Sindico;
 import br.com.homelive.model.enums.StatusDespesa;
-import br.com.homelive.model.enums.StatusPagamento;
 import br.com.homelive.repository.DespesaRepository;
 import br.com.homelive.repository.MoradorRepository;
 import br.com.homelive.repository.RateioItemRepository;
@@ -58,10 +57,6 @@ public class DespesaService {
         Despesa despesa = buscarEntidade(despesaId);
         Sindico sindico = sindicoService.buscarEntidade(request.getSindicoId());
 
-        if (despesa.getStatus() != StatusDespesa.PENDENTE_APROVACAO) {
-            throw new RegraNegocioException("Esta despesa já foi avaliada anteriormente (Status atual: " + despesa.getStatus() + ").");
-        }
-
         if (Boolean.TRUE.equals(request.getAprovado())) {
             despesa.aprovar(sindico);
 
@@ -87,10 +82,6 @@ public class DespesaService {
     public DespesaDTO.RateioItemResponse quitarItemRateio(Long itemId) {
         RateioItem item = rateioItemRepository.findById(itemId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Item de rateio não encontrado com ID: " + itemId));
-
-        if (item.getStatusPagamento() == StatusPagamento.PAGO) {
-            throw new RegraNegocioException("Este item de rateio já foi quitado em " + item.getDataPagamento());
-        }
 
         item.quitar();
         RateioItem salvo = rateioItemRepository.save(item);

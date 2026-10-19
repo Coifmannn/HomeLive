@@ -59,14 +59,14 @@ public class MoradorService {
     @Transactional
     public MoradorDTO.Response atualizarConsumo(Long id, Double consumoKwh) {
         Morador morador = buscarEntidade(id);
-        morador.setConsumoDeclaradoKwh(consumoKwh);
+        morador.atualizarConsumo(consumoKwh);
         return toResponse(moradorRepository.save(morador));
     }
 
     @Transactional
     public MoradorDTO.Response atualizarEstadia(Long id, Integer dias) {
         Morador morador = buscarEntidade(id);
-        morador.setDiasEstadia(dias);
+        morador.atualizarEstadia(dias);
         return toResponse(moradorRepository.save(morador));
     }
 

@@ -1,5 +1,6 @@
 package br.com.homelive.model;
 
+import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.model.enums.CategoriaDespesa;
 import br.com.homelive.model.enums.StatusDespesa;
 import br.com.homelive.model.enums.TipoDespesa;
@@ -8,22 +9,24 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+/**
+ * Ciclo de vida: PENDENTE_APROVACAO -> APROVADA -> RATEADA, ou PENDENTE_APROVACAO -> REJEITADA.
+ * Toda transição passa por um método desta classe, que recusa as inválidas.
+ */
 @Entity
 @Table(name = "despesas")
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Despesa {
 
     @Id
@@ -90,23 +93,43 @@ public class Despesa {
         this.dataLancamento = LocalDate.now();
     }
 
+    /** Visão somente leitura: quem quiser alterar o rateio precisa passar por {@link #marcarComoRateada}. */
+    public List<RateioItem> getItensRateio() {
+        return Collections.unmodifiableList(itensRateio);
+    }
+
     public void aprovar(Sindico sindico) {
+        exigirAvaliacaoPendente(sindico);
         this.status = StatusDespesa.APROVADA;
         this.aprovador = sindico;
         this.motivoRejeicao = null;
     }
 
     public void rejeitar(Sindico sindico, String motivo) {
+        exigirAvaliacaoPendente(sindico);
         this.status = StatusDespesa.REJEITADA;
         this.aprovador = sindico;
         this.motivoRejeicao = motivo;
     }
 
     public void marcarComoRateada(List<RateioItem> itens) {
-        this.itensRateio.clear();
-        if (itens != null) {
-            this.itensRateio.addAll(itens);
+        if (this.status != StatusDespesa.APROVADA) {
+            throw new RegraNegocioException("Só é possível ratear uma despesa aprovada (Status atual: " + this.status + ").");
         }
+        if (itens == null || itens.isEmpty()) {
+            throw new RegraNegocioException("O rateio deve conter ao menos um item.");
+        }
+        this.itensRateio.clear();
+        this.itensRateio.addAll(itens);
         this.status = StatusDespesa.RATEADA;
+    }
+
+    private void exigirAvaliacaoPendente(Sindico sindico) {
+        if (sindico == null) {
+            throw new RegraNegocioException("Apenas um síndico pode avaliar uma despesa.");
+        }
+        if (this.status != StatusDespesa.PENDENTE_APROVACAO) {
+            throw new RegraNegocioException("Esta despesa já foi avaliada anteriormente (Status atual: " + this.status + ").");
+        }
     }
 }

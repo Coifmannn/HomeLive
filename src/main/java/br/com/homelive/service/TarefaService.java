@@ -2,7 +2,6 @@ package br.com.homelive.service;
 
 import br.com.homelive.dto.TarefaDTO;
 import br.com.homelive.exception.RecursoNaoEncontradoException;
-import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.model.Morador;
 import br.com.homelive.model.Sindico;
 import br.com.homelive.model.TarefaDomestica;
@@ -54,10 +53,6 @@ public class TarefaService {
     @Transactional
     public TarefaDTO.Response concluirTarefa(Long tarefaId) {
         TarefaDomestica tarefa = buscarEntidade(tarefaId);
-
-        if (tarefa.getStatus() == StatusTarefa.CONCLUIDA) {
-            throw new RegraNegocioException("Esta tarefa já foi concluída anteriormente.");
-        }
 
         tarefa.concluir();
         if (tarefa.getResponsavel() != null) {

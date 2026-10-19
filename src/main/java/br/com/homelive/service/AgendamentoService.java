@@ -3,17 +3,14 @@ package br.com.homelive.service;
 import br.com.homelive.dto.AgendamentoDTO;
 import br.com.homelive.exception.ConflitoHorarioException;
 import br.com.homelive.exception.RecursoNaoEncontradoException;
-import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.model.AgendamentoEspaco;
 import br.com.homelive.model.EspacoComum;
 import br.com.homelive.model.Morador;
-import br.com.homelive.model.enums.StatusAgendamento;
 import br.com.homelive.repository.AgendamentoEspacoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -29,35 +26,21 @@ public class AgendamentoService {
 
     @Transactional
     public AgendamentoDTO.Response criarAgendamento(AgendamentoDTO.Request request) {
-        LocalDateTime inicio = request.getDataHoraInicio();
-        LocalDateTime fim = request.getDataHoraFim();
-
-        // 1. Validações temporais básicas
-        if (inicio == null || fim == null) {
-            throw new RegraNegocioException("As datas e horários de início e término são obrigatórios.");
-        }
-
-        if (!fim.isAfter(inicio)) {
-            throw new RegraNegocioException("O horário de término deve ser posterior ao horário de início.");
-        }
-
-        if (inicio.isBefore(LocalDateTime.now())) {
-            throw new RegraNegocioException("Não é permitido agendar reservas em horários passados.");
-        }
-
-        // 2. Buscar entidades relacionadas e verificar status ativo
         EspacoComum espaco = espacoComumService.buscarEntidade(request.getEspacoId());
-        if (!espaco.isAtivo()) {
-            throw new RegraNegocioException("O espaço '" + espaco.getNome() + "' está temporariamente inativo para reservas.");
-        }
-
         Morador morador = moradorService.buscarEntidade(request.getMoradorId());
-        if (!morador.isAtivo()) {
-            throw new RegraNegocioException("O morador " + morador.getNome() + " está inativo no sistema.");
-        }
 
-        // 3. Validação rigorosa de conflito de horários (POO e Integridade)
-        List<AgendamentoEspaco> conflitos = agendamentoRepository.findConflitos(espaco.getId(), inicio, fim);
+        // As invariantes da reserva (datas, passado, espaço/morador ativos) são validadas pelo próprio construtor.
+        AgendamentoEspaco agendamento = new AgendamentoEspaco(
+                espaco,
+                morador,
+                request.getDataHoraInicio(),
+                request.getDataHoraFim(),
+                request.getMotivoReserva()
+        );
+
+        // Conflito depende de outras reservas, então só o service (com acesso ao repositório) consegue checar.
+        List<AgendamentoEspaco> conflitos = agendamentoRepository.findConflitos(
+                espaco.getId(), agendamento.getDataHoraInicio(), agendamento.getDataHoraFim());
         if (!conflitos.isEmpty()) {
             AgendamentoEspaco c = conflitos.get(0);
             throw new ConflitoHorarioException(String.format(
@@ -68,15 +51,6 @@ public class AgendamentoService {
                     c.getDataHoraFim().format(FORMATTER)
             ));
         }
-
-        // 4. Salvar agendamento
-        AgendamentoEspaco agendamento = new AgendamentoEspaco(
-                espaco,
-                morador,
-                inicio,
-                fim,
-                request.getMotivoReserva()
-        );
 
         AgendamentoEspaco salvo = agendamentoRepository.save(agendamento);
         return toResponse(salvo);
@@ -98,10 +72,6 @@ public class AgendamentoService {
     public void cancelarAgendamento(Long agendamentoId) {
         AgendamentoEspaco agendamento = agendamentoRepository.findById(agendamentoId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Agendamento não encontrado com o ID: " + agendamentoId));
-
-        if (agendamento.getStatus() == StatusAgendamento.CANCELADO) {
-            throw new RegraNegocioException("Este agendamento já se encontra cancelado.");
-        }
 
         agendamento.cancelar();
         agendamentoRepository.save(agendamento);

@@ -1,13 +1,13 @@
 package br.com.homelive.model;
 
+import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.model.enums.StatusTarefa;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -15,9 +15,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "tarefas_domesticas")
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TarefaDomestica {
 
     @Id
@@ -65,6 +63,12 @@ public class TarefaDomestica {
     }
 
     public void concluir() {
+        if (this.status == StatusTarefa.CONCLUIDA) {
+            throw new RegraNegocioException("Esta tarefa já foi concluída anteriormente.");
+        }
+        if (this.status == StatusTarefa.CANCELADA) {
+            throw new RegraNegocioException("Uma tarefa cancelada não pode ser concluída.");
+        }
         this.status = StatusTarefa.CONCLUIDA;
         this.dataConclusao = LocalDateTime.now();
         if (this.responsavel != null) {

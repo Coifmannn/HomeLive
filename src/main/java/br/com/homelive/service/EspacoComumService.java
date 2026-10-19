@@ -42,7 +42,7 @@ public class EspacoComumService {
     @Transactional
     public void alternarStatus(Long id) {
         EspacoComum espaco = buscarEntidade(id);
-        espaco.setAtivo(!espaco.isAtivo());
+        espaco.alternarStatus();
         espacoComumRepository.save(espaco);
     }
 

@@ -1,14 +1,14 @@
 package br.com.homelive.model;
 
+import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.model.enums.StatusPagamento;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -16,9 +16,7 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "rateio_itens")
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RateioItem {
 
     @Id
@@ -54,6 +52,9 @@ public class RateioItem {
     }
 
     public void quitar() {
+        if (this.statusPagamento == StatusPagamento.PAGO) {
+            throw new RegraNegocioException("Este item de rateio já foi quitado em " + this.dataPagamento);
+        }
         this.statusPagamento = StatusPagamento.PAGO;
         this.dataPagamento = LocalDate.now();
     }

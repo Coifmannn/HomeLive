@@ -27,13 +27,10 @@ class CalculoRateioStrategyTest {
     @BeforeEach
     void setUp() {
         m1 = new Morador("Lucas", "lucas@test.com", "11999990001", "101", 30, 100.0);
-        m1.setId(1L);
 
         m2 = new Morador("Sofia", "sofia@test.com", "11999990002", "102", 30, 200.0);
-        m2.setId(2L);
 
         m3 = new Morador("Mateus", "mateus@test.com", "11999990003", "103", 20, 100.0);
-        m3.setId(3L);
 
         moradores = List.of(m1, m2, m3);
     }
@@ -159,9 +156,9 @@ class CalculoRateioStrategyTest {
     @Test
     @DisplayName("Rateio por consumo com consumo total zero deve ser rejeitado")
     void testRateioPorConsumoZerado() {
-        m1.setConsumoDeclaradoKwh(0.0);
-        m2.setConsumoDeclaradoKwh(0.0);
-        m3.setConsumoDeclaradoKwh(0.0);
+        m1.atualizarConsumo(0.0);
+        m2.atualizarConsumo(0.0);
+        m3.atualizarConsumo(0.0);
         Despesa despesa = new Despesa("Conta", "x", new BigDecimal("10.00"), LocalDate.now().plusDays(1),
                 CategoriaDespesa.ENERGIA_SOLAR, TipoDespesa.VARIAVEL, TipoRateio.POR_CONSUMO, null);
 

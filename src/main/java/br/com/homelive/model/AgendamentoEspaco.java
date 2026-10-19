@@ -1,22 +1,19 @@
 package br.com.homelive.model;
 
+import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.model.enums.StatusAgendamento;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "agendamentos_espacos")
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AgendamentoEspaco {
 
     @Id
@@ -34,7 +31,6 @@ public class AgendamentoEspaco {
     private Morador morador;
 
     @NotNull(message = "A data e hora de início são obrigatórias")
-    @FutureOrPresent(message = "O agendamento não pode ser realizado no passado")
     @Column(nullable = false)
     private LocalDateTime dataHoraInicio;
 
@@ -50,7 +46,37 @@ public class AgendamentoEspaco {
 
     private LocalDateTime dataCriacao = LocalDateTime.now();
 
-    public AgendamentoEspaco(EspacoComum espacoComum, Morador morador, LocalDateTime dataHoraInicio, LocalDateTime dataHoraFim, String motivoReserva) {
+    /**
+     * Cria uma reserva válida ou falha. As invariantes da reserva vivem aqui, e não no service:
+     * não existe {@code AgendamentoEspaco} em estado inválido.
+     * <p>
+     * A regra "não pode ser no passado" é checada só na criação (e não como anotação do campo),
+     * senão cancelar uma reserva que já começou falharia na validação do Hibernate.
+     */
+    public AgendamentoEspaco(EspacoComum espacoComum, Morador morador, LocalDateTime dataHoraInicio,
+                             LocalDateTime dataHoraFim, String motivoReserva) {
+        if (espacoComum == null) {
+            throw new RegraNegocioException("O espaço comum é obrigatório.");
+        }
+        if (morador == null) {
+            throw new RegraNegocioException("O morador solicitante é obrigatório.");
+        }
+        if (dataHoraInicio == null || dataHoraFim == null) {
+            throw new RegraNegocioException("As datas e horários de início e término são obrigatórios.");
+        }
+        if (!dataHoraFim.isAfter(dataHoraInicio)) {
+            throw new RegraNegocioException("O horário de término deve ser posterior ao horário de início.");
+        }
+        if (dataHoraInicio.isBefore(LocalDateTime.now())) {
+            throw new RegraNegocioException("Não é permitido agendar reservas em horários passados.");
+        }
+        if (!espacoComum.isAtivo()) {
+            throw new RegraNegocioException("O espaço '" + espacoComum.getNome() + "' está temporariamente inativo para reservas.");
+        }
+        if (!morador.isAtivo()) {
+            throw new RegraNegocioException("O morador " + morador.getNome() + " está inativo no sistema.");
+        }
+
         this.espacoComum = espacoComum;
         this.morador = morador;
         this.dataHoraInicio = dataHoraInicio;
@@ -61,6 +87,9 @@ public class AgendamentoEspaco {
     }
 
     public void cancelar() {
+        if (this.status == StatusAgendamento.CANCELADO) {
+            throw new RegraNegocioException("Este agendamento já se encontra cancelado.");
+        }
         this.status = StatusAgendamento.CANCELADO;
     }
 

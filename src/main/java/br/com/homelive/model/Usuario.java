@@ -4,7 +4,9 @@ import br.com.homelive.model.enums.TipoUsuario;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -12,9 +14,7 @@ import java.time.LocalDateTime;
 @Table(name = "usuarios")
 @Inheritance(strategy = InheritanceType.JOINED)
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public abstract class Usuario {
 
     @Id
@@ -39,6 +39,13 @@ public abstract class Usuario {
     private boolean ativo = true;
 
     private LocalDateTime dataCriacao = LocalDateTime.now();
+
+    protected Usuario(String nome, String email, String telefone, TipoUsuario tipoUsuario) {
+        this.nome = nome;
+        this.email = email;
+        this.telefone = telefone;
+        this.tipoUsuario = tipoUsuario;
+    }
 
     public void ativar() {
         this.ativo = true;
