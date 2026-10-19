@@ -49,6 +49,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/despesas/*/avaliar").hasRole("SINDICO")
                         .requestMatchers(HttpMethod.PATCH, "/api/espacos/*/status", "/api/moradores/*/estadia").hasRole("SINDICO")
                         .requestMatchers(HttpMethod.DELETE, "/api/moradores/*").hasRole("SINDICO")
+                        .requestMatchers(HttpMethod.POST, "/api/tarefas-recorrentes", "/api/tarefas-recorrentes/gerar").hasRole("SINDICO")
+                        .requestMatchers(HttpMethod.PATCH, "/api/tarefas-recorrentes/*/ativar", "/api/tarefas-recorrentes/*/desativar").hasRole("SINDICO")
 
                         // Todo o resto exige apenas estar logado (consultas e ações do dia a dia do morador).
                         .anyRequest().authenticated())

@@ -6,6 +6,9 @@ import br.com.homelive.model.EspacoComum;
 import br.com.homelive.model.Morador;
 import br.com.homelive.model.Sindico;
 import br.com.homelive.model.TarefaDomestica;
+import br.com.homelive.model.TarefaRecorrente;
+import br.com.homelive.model.enums.Periodicidade;
+import br.com.homelive.model.enums.TipoRodizio;
 import br.com.homelive.model.enums.CategoriaDespesa;
 import br.com.homelive.model.enums.TipoDespesa;
 import br.com.homelive.model.enums.TipoRateio;
@@ -13,6 +16,7 @@ import br.com.homelive.repository.EspacoComumRepository;
 import br.com.homelive.repository.MoradorRepository;
 import br.com.homelive.repository.SindicoRepository;
 import br.com.homelive.repository.TarefaDomesticaRepository;
+import br.com.homelive.repository.TarefaRecorrenteRepository;
 import br.com.homelive.service.AgendamentoService;
 import br.com.homelive.security.UsuarioAutenticado;
 import br.com.homelive.service.DespesaService;
@@ -35,6 +39,7 @@ public class DataInitializer implements CommandLineRunner {
     private final DespesaService despesaService;
     private final AgendamentoService agendamentoService;
     private final TarefaDomesticaRepository tarefaRepository;
+    private final TarefaRecorrenteRepository tarefaRecorrenteRepository;
     private final PasswordEncoder passwordEncoder;
 
     /** Senha única das contas de demonstração. Só para desenvolvimento. */
@@ -182,6 +187,16 @@ public class DataInitializer implements CommandLineRunner {
                 sindicoSalvo
         );
         tarefaRepository.save(t3);
+
+        // 7. Tarefas recorrentes (escalas com rodízio). Devidas hoje: POST /api/tarefas-recorrentes/gerar as distribui.
+        tarefaRecorrenteRepository.saveAll(java.util.List.of(
+                new TarefaRecorrente("Retirada do lixo orgânico", "Levar ao biodigestor do térreo",
+                        Periodicidade.SEMANAL, 2, 20, 10, TipoRodizio.SEQUENCIAL, LocalDate.now()),
+                new TarefaRecorrente("Limpeza do Espaço Gourmet", "Higienizar bancadas e a cozinha automatizada",
+                        Periodicidade.SEMANAL, 3, 30, 15, TipoRodizio.MENOR_CARGA, LocalDate.now()),
+                new TarefaRecorrente("Troca dos filtros de água reciclada", "Substituir os cartuchos do sistema central",
+                        Periodicidade.MENSAL, 5, 40, 20, TipoRodizio.MENOR_PONTUACAO, LocalDate.now().plusDays(7))
+        ));
 
         System.out.println(">>> [HomeLive 2050] Dados de teste carregados com sucesso!");
     }

@@ -40,6 +40,20 @@ Desacopla os algoritmos de rateio da entidade `Despesa`.
   * Conclusão **fora do prazo** rende só **50%** da recompensa.
   * Processamento de tarefas atrasadas aplica dedução de pontos (`pontosPenalidade`).
 
+### D. Escala Automática de Tarefas com Rodízio
+A `TarefaRecorrente` é o *modelo* de uma tarefa que se repete ("tirar o lixo, toda semana"). Quando fica devida, gera uma `TarefaDomestica` concreta e avança a própria data, e a escolha de **quem** pega a tarefa é uma **Strategy** plugável (`RodizioStrategy`, com *Template Method* e `RodizioStrategyFactory`, como no rateio):
+
+| `tipoRodizio` | Quem recebe a tarefa |
+| :--- | :--- |
+| `SEQUENCIAL` | Os moradores em ordem circular. Na primeira vez parte de quem tem menos tarefas em aberto, para que escalas criadas juntas não girem em sincronia |
+| `MENOR_PONTUACAO` | Quem tem menos pontos de convivência (ajuda a equilibrar o ranking) |
+| `MENOR_CARGA` | Quem tem menos tarefas em aberto (pendentes ou atrasadas) |
+
+* **Automático:** uma rotina diária (06:00, horário de Brasília) penaliza os atrasos e gera as tarefas devidas. Nenhuma chamada à API é necessária.
+* **Idempotente:** gerar duas vezes no mesmo dia não duplica tarefas. Se o sistema ficou parado, gera uma só e salta para a próxima data futura.
+* Só participam moradores **ativos**. Tarefas geradas aparecem como atribuídas pelo "Sistema Automático".
+* `Periodicidade` (`DIARIA`, `SEMANAL`, `QUINZENAL`, `MENSAL`) é um enum que sabe calcular a própria data seguinte.
+
 ---
 
 ## 🛠️ 3. Tecnologias Utilizadas
@@ -90,6 +104,7 @@ fetch('http://localhost:8080/api/dashboard', { headers: { Authorization: auth } 
 | Cadastrar moradores e síndicos | ✅ | ❌ |
 | Cadastrar espaço / ativar-desativar | ✅ | ❌ |
 | Criar tarefa / processar atrasos | ✅ | ❌ |
+| Criar, ativar/desativar escalas recorrentes e gerar tarefas | ✅ | ❌ |
 | Desativar morador / atualizar estadia | ✅ | ❌ |
 | Lançar despesa | ✅ (administrativa) | ✅ (em nome próprio) |
 | Reservar espaço | ✅ (informa `moradorId`) | ✅ (em nome próprio) |
@@ -129,6 +144,10 @@ fetch('http://localhost:8080/api/dashboard', { headers: { Authorization: auth } 
 | **Tarefas** | `POST` | `/api/tarefas` | síndico | Cria tarefa (atribuída pelo síndico logado) |
 | | `PATCH` | `/api/tarefas/{id}/concluir` | responsável ou síndico | Conclui a tarefa (+pontos; 50% se atrasada) |
 | | `POST` | `/api/tarefas/processar-atrasos` | síndico | Processa penalidades das tarefas vencidas |
+| **Tarefas recorrentes** | `GET` | `/api/tarefas-recorrentes` | logado | Lista as escalas com a próxima data e o último responsável |
+| | `POST` | `/api/tarefas-recorrentes` | síndico | Cria escala: `titulo`, `periodicidade`, `prazoEmDias`, `tipoRodizio` (opcionais: `descricao`, `pontosRecompensa`, `pontosPenalidade`, `primeiraGeracao`) |
+| | `PATCH` | `/api/tarefas-recorrentes/{id}/ativar` e `/desativar` | síndico | Liga ou pausa a escala |
+| | `POST` | `/api/tarefas-recorrentes/gerar` | síndico | Gera agora as tarefas devidas (a rotina diária já faz isso sozinha) |
 
 ---
 
@@ -144,4 +163,5 @@ Ao iniciar, o sistema carrega automaticamente as contas abaixo. **A senha de tod
 | Morador | Beatriz Santos | `beatriz.santos@homelive2050.io` |
 
 * **Espaços:** *Escritório Acústico VR*, *Lavanderia Inteligente IoT* e *Espaço Gourmet e Rooftop Hidropônico*.
+* **Escalas recorrentes:** *Retirada do lixo orgânico* (semanal, `SEQUENCIAL`), *Limpeza do Espaço Gourmet* (semanal, `MENOR_CARGA`) e *Troca dos filtros de água* (mensal, `MENOR_PONTUACAO`). As duas primeiras ficam devidas hoje: faça `POST /api/tarefas-recorrentes/gerar` como síndico para ver o rodízio distribuí-las.
 * **Despesas & Rateios:** demonstração prática do rateio por consumo e igualitário já calculados, e uma despesa pendente de aprovação.
