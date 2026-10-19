@@ -21,8 +21,8 @@ class TransicoesDeEstadoTest {
 
     @BeforeEach
     void setUp() {
-        morador = new Morador("Lucas", "lucas@test.com", "11999990001", "101", 30, 100.0);
-        sindico = new Sindico("Helena", "helena@test.com", "11999990000", "Governança");
+        morador = new Morador("Lucas", "lucas@test.com", "hash", "11999990001", "101", 30, 100.0);
+        sindico = new Sindico("Helena", "helena@test.com", "hash", "11999990000", "Governança");
     }
 
     private Despesa novaDespesa() {

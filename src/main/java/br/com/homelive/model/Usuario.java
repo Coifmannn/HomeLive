@@ -32,20 +32,24 @@ public abstract class Usuario {
 
     private String telefone;
 
-    @Enumerated(EnumType.STRING)
+    /** Hash BCrypt. A senha em texto puro nunca chega à entidade. */
+    @NotBlank(message = "A senha é obrigatória")
     @Column(nullable = false)
-    private TipoUsuario tipoUsuario;
+    private String senhaHash;
 
     private boolean ativo = true;
 
     private LocalDateTime dataCriacao = LocalDateTime.now();
 
-    protected Usuario(String nome, String email, String telefone, TipoUsuario tipoUsuario) {
+    protected Usuario(String nome, String email, String senhaHash, String telefone) {
         this.nome = nome;
         this.email = email;
+        this.senhaHash = senhaHash;
         this.telefone = telefone;
-        this.tipoUsuario = tipoUsuario;
     }
+
+    /** Cada perfil declara o próprio papel (polimorfismo); a segurança deriva as permissões daqui. */
+    public abstract TipoUsuario getTipoUsuario();
 
     public void ativar() {
         this.ativo = true;

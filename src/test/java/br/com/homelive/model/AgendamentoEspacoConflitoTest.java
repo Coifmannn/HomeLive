@@ -18,7 +18,7 @@ class AgendamentoEspacoConflitoTest {
     @BeforeEach
     void setUp() {
         espaco = new EspacoComum("Escritório Acústico", "Sala silenciosa", 4, "Silêncio");
-        morador = new Morador("Lucas", "lucas@test.com", "11999990001", "101", 30, 100.0);
+        morador = new Morador("Lucas", "lucas@test.com", "hash", "11999990001", "101", 30, 100.0);
     }
 
     private AgendamentoEspaco reserva(LocalDateTime inicio, LocalDateTime fim) {

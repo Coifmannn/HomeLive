@@ -19,10 +19,15 @@ public class Sindico extends Usuario {
     private LocalDate inicioMandato = LocalDate.now();
     private LocalDate fimMandato = LocalDate.now().plusYears(1);
 
-    public Sindico(String nome, String email, String telefone, String departamento) {
-        super(nome, email, telefone, TipoUsuario.SINDICO);
+    public Sindico(String nome, String email, String senhaHash, String telefone, String departamento) {
+        super(nome, email, senhaHash, telefone);
         this.departamento = departamento != null ? departamento : "Administração HomeLive 2050";
         this.inicioMandato = LocalDate.now();
         this.fimMandato = LocalDate.now().plusYears(1);
+    }
+
+    @Override
+    public TipoUsuario getTipoUsuario() {
+        return TipoUsuario.SINDICO;
     }
 }

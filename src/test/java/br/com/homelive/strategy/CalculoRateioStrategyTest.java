@@ -26,11 +26,11 @@ class CalculoRateioStrategyTest {
 
     @BeforeEach
     void setUp() {
-        m1 = new Morador("Lucas", "lucas@test.com", "11999990001", "101", 30, 100.0);
+        m1 = new Morador("Lucas", "lucas@test.com", "hash", "11999990001", "101", 30, 100.0);
 
-        m2 = new Morador("Sofia", "sofia@test.com", "11999990002", "102", 30, 200.0);
+        m2 = new Morador("Sofia", "sofia@test.com", "hash", "11999990002", "102", 30, 200.0);
 
-        m3 = new Morador("Mateus", "mateus@test.com", "11999990003", "103", 20, 100.0);
+        m3 = new Morador("Mateus", "mateus@test.com", "hash", "11999990003", "103", 20, 100.0);
 
         moradores = List.of(m1, m2, m3);
     }

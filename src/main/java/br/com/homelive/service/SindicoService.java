@@ -7,6 +7,7 @@ import br.com.homelive.model.Sindico;
 import br.com.homelive.repository.SindicoRepository;
 import br.com.homelive.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ public class SindicoService {
 
     private final SindicoRepository sindicoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public SindicoDTO.Response cadastrar(SindicoDTO.Request request) {
@@ -28,6 +30,7 @@ public class SindicoService {
         Sindico sindico = new Sindico(
                 request.getNome(),
                 request.getEmail(),
+                passwordEncoder.encode(request.getSenha()),
                 request.getTelefone(),
                 request.getDepartamento()
         );

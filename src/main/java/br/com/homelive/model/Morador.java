@@ -28,13 +28,18 @@ public class Morador extends Usuario {
 
     private LocalDate dataEntrada = LocalDate.now();
 
-    public Morador(String nome, String email, String telefone, String numeroQuarto, Integer diasEstadia, Double consumoDeclaradoKwh) {
-        super(nome, email, telefone, TipoUsuario.MORADOR);
+    public Morador(String nome, String email, String senhaHash, String telefone, String numeroQuarto, Integer diasEstadia, Double consumoDeclaradoKwh) {
+        super(nome, email, senhaHash, telefone);
         this.numeroQuarto = numeroQuarto;
         this.diasEstadia = diasEstadia != null ? diasEstadia : 30;
         this.consumoDeclaradoKwh = consumoDeclaradoKwh != null ? consumoDeclaradoKwh : 100.0;
         this.pontosConvivencia = 100;
         this.dataEntrada = LocalDate.now();
+    }
+
+    @Override
+    public TipoUsuario getTipoUsuario() {
+        return TipoUsuario.MORADOR;
     }
 
     public void adicionarPontos(int pontos) {

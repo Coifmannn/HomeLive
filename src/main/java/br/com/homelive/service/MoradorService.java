@@ -7,6 +7,7 @@ import br.com.homelive.model.Morador;
 import br.com.homelive.repository.MoradorRepository;
 import br.com.homelive.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ public class MoradorService {
 
     private final MoradorRepository moradorRepository;
     private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public MoradorDTO.Response cadastrar(MoradorDTO.Request request) {
@@ -28,6 +30,7 @@ public class MoradorService {
         Morador morador = new Morador(
                 request.getNome(),
                 request.getEmail(),
+                passwordEncoder.encode(request.getSenha()),
                 request.getTelefone(),
                 request.getNumeroQuarto(),
                 request.getDiasEstadia(),
