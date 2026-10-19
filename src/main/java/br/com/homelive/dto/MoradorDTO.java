@@ -36,9 +36,6 @@ public class MoradorDTO {
 
         @PositiveOrZero(message = "Dias de estadia deve ser zero ou positivo")
         private Integer diasEstadia;
-
-        @PositiveOrZero(message = "Consumo declarado em kWh deve ser positivo")
-        private Double consumoDeclaradoKwh;
     }
 
     @Getter
@@ -52,7 +49,6 @@ public class MoradorDTO {
         private String telefone;
         private String numeroQuarto;
         private Integer diasEstadia;
-        private Double consumoDeclaradoKwh;
         private Integer pontosConvivencia;
         private LocalDate dataEntrada;
         private boolean ativo;

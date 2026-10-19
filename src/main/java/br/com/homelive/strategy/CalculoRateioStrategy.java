@@ -14,5 +14,5 @@ public interface CalculoRateioStrategy {
 
     TipoRateio getTipoRateio();
 
-    List<RateioItem> calcular(Despesa despesa, List<Morador> moradores);
+    List<RateioItem> calcular(Despesa despesa, List<Morador> moradores, ContextoRateio contexto);
 }

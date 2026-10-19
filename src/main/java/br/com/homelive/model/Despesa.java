@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -50,6 +51,10 @@ public class Despesa {
 
     private LocalDate dataLancamento = LocalDate.now();
 
+    /** Mês a que a conta se refere (sempre o dia 1). Define quais leituras de consumo valem no rateio. */
+    @Column(nullable = false)
+    private LocalDate competencia = YearMonth.now().atDay(1);
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CategoriaDespesa categoria;
@@ -81,6 +86,18 @@ public class Despesa {
 
     public Despesa(String titulo, String descricao, BigDecimal valorTotal, LocalDate dataVencimento,
                    CategoriaDespesa categoria, TipoDespesa tipoDespesa, TipoRateio tipoRateio, Morador solicitante) {
+        this(titulo, descricao, valorTotal, dataVencimento, categoria, tipoDespesa, tipoRateio, solicitante, null);
+    }
+
+    /** @param competencia mês de referência da conta; se nulo, o mês corrente. Não pode ser futuro. */
+    public Despesa(String titulo, String descricao, BigDecimal valorTotal, LocalDate dataVencimento,
+                   CategoriaDespesa categoria, TipoDespesa tipoDespesa, TipoRateio tipoRateio, Morador solicitante,
+                   YearMonth competencia) {
+        YearMonth mes = competencia != null ? competencia : YearMonth.now();
+        if (mes.isAfter(YearMonth.now())) {
+            throw new RegraNegocioException("A competência da despesa não pode ser de um mês futuro.");
+        }
+        this.competencia = mes.atDay(1);
         this.titulo = titulo;
         this.descricao = descricao;
         this.valorTotal = valorTotal;
@@ -91,6 +108,10 @@ public class Despesa {
         this.solicitante = solicitante;
         this.status = StatusDespesa.PENDENTE_APROVACAO;
         this.dataLancamento = LocalDate.now();
+    }
+
+    public YearMonth getMesCompetencia() {
+        return YearMonth.from(competencia);
     }
 
     /** Visão somente leitura: quem quiser alterar o rateio precisa passar por {@link #marcarComoRateada}. */

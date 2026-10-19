@@ -15,7 +15,7 @@ public class RateioPorEstadiaStrategy extends RateioProporcionalStrategy {
     }
 
     @Override
-    protected BigDecimal peso(Morador morador) {
+    protected BigDecimal peso(Morador morador, ContextoRateio contexto) {
         Integer dias = morador.getDiasEstadia();
         return BigDecimal.valueOf(dias != null ? dias : 0);
     }

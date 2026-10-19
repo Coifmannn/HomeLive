@@ -15,7 +15,7 @@ public class RateioIgualitarioStrategy extends RateioProporcionalStrategy {
     }
 
     @Override
-    protected BigDecimal peso(Morador morador) {
+    protected BigDecimal peso(Morador morador, ContextoRateio contexto) {
         return BigDecimal.ONE;
     }
 

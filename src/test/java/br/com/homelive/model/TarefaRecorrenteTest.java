@@ -21,7 +21,7 @@ class TarefaRecorrenteTest {
 
     @BeforeEach
     void setUp() {
-        lucas = new Morador("Lucas", "lucas@test.com", "hash", "11999990001", "101", 30, 100.0);
+        lucas = new Morador("Lucas", "lucas@test.com", "hash", "11999990001", "101", 30);
     }
 
     private TarefaRecorrente semanal() {

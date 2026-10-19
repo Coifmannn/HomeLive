@@ -4,21 +4,28 @@ import br.com.homelive.dto.DespesaDTO;
 import br.com.homelive.exception.RecursoNaoEncontradoException;
 import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.model.Despesa;
+import br.com.homelive.model.LeituraConsumo;
 import br.com.homelive.model.Morador;
 import br.com.homelive.model.RateioItem;
 import br.com.homelive.model.Sindico;
 import br.com.homelive.model.enums.StatusDespesa;
 import br.com.homelive.repository.DespesaRepository;
+import br.com.homelive.repository.LeituraConsumoRepository;
 import br.com.homelive.repository.MoradorRepository;
 import br.com.homelive.repository.RateioItemRepository;
 import br.com.homelive.security.UsuarioAutenticado;
 import br.com.homelive.strategy.CalculoRateioStrategy;
+import br.com.homelive.strategy.ContextoRateio;
 import br.com.homelive.strategy.RateioStrategyFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.YearMonth;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +37,7 @@ public class DespesaService {
     private final MoradorService moradorService;
     private final SindicoService sindicoService;
     private final RateioStrategyFactory rateioStrategyFactory;
+    private final LeituraConsumoRepository leituraConsumoRepository;
 
     @Transactional
     public DespesaDTO.Response lancarDespesa(DespesaDTO.Request request, UsuarioAutenticado ator) {
@@ -44,7 +52,8 @@ public class DespesaService {
                 request.getCategoria(),
                 request.getTipoDespesa(),
                 request.getTipoRateio(),
-                solicitante
+                solicitante,
+                request.getCompetencia() != null ? YearMonth.parse(request.getCompetencia()) : null
         );
 
         Despesa salva = despesaRepository.save(despesa);
@@ -66,7 +75,7 @@ public class DespesaService {
             }
 
             CalculoRateioStrategy strategy = rateioStrategyFactory.obterStrategy(despesa.getTipoRateio());
-            List<RateioItem> itensRateio = strategy.calcular(despesa, moradoresAtivos);
+            List<RateioItem> itensRateio = strategy.calcular(despesa, moradoresAtivos, contextoDoMes(despesa));
 
             despesa.marcarComoRateada(itensRateio);
         } else {
@@ -107,6 +116,13 @@ public class DespesaService {
                 .toList();
     }
 
+    /** Leituras de consumo do mês da despesa, no formato que as estratégias esperam. */
+    private ContextoRateio contextoDoMes(Despesa despesa) {
+        Map<Long, BigDecimal> consumo = leituraConsumoRepository.findByCompetencia(despesa.getCompetencia()).stream()
+                .collect(Collectors.toMap(l -> l.getMorador().getId(), LeituraConsumo::getKwh));
+        return new ContextoRateio(consumo);
+    }
+
     public Despesa buscarEntidade(Long id) {
         return despesaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Despesa não encontrada com o ID: " + id));
@@ -123,6 +139,7 @@ public class DespesaService {
                 d.getValorTotal(),
                 d.getDataVencimento(),
                 d.getDataLancamento(),
+                d.getMesCompetencia().toString(),
                 d.getCategoria(),
                 d.getTipoDespesa(),
                 d.getTipoRateio(),

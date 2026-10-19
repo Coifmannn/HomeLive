@@ -22,17 +22,14 @@ public class Morador extends Usuario {
 
     private Integer diasEstadia = 30;
 
-    private Double consumoDeclaradoKwh = 100.0;
-
     private Integer pontosConvivencia = 100;
 
     private LocalDate dataEntrada = LocalDate.now();
 
-    public Morador(String nome, String email, String senhaHash, String telefone, String numeroQuarto, Integer diasEstadia, Double consumoDeclaradoKwh) {
+    public Morador(String nome, String email, String senhaHash, String telefone, String numeroQuarto, Integer diasEstadia) {
         super(nome, email, senhaHash, telefone);
         this.numeroQuarto = numeroQuarto;
         this.diasEstadia = diasEstadia != null ? diasEstadia : 30;
-        this.consumoDeclaradoKwh = consumoDeclaradoKwh != null ? consumoDeclaradoKwh : 100.0;
         this.pontosConvivencia = 100;
         this.dataEntrada = LocalDate.now();
     }
@@ -54,13 +51,6 @@ public class Morador extends Usuario {
             throw new RegraNegocioException("A quantidade de pontos a deduzir não pode ser negativa.");
         }
         this.pontosConvivencia = Math.max(0, this.pontosConvivencia - pontos);
-    }
-
-    public void atualizarConsumo(Double consumoKwh) {
-        if (consumoKwh == null || consumoKwh < 0) {
-            throw new RegraNegocioException("O consumo declarado deve ser zero ou positivo.");
-        }
-        this.consumoDeclaradoKwh = consumoKwh;
     }
 
     public void atualizarEstadia(Integer dias) {

@@ -155,17 +155,62 @@ class RegrasDeDonoTest {
                 .andExpect(jsonPath("$.atribuidaPorNome").value("Dra. Helena Vance"));
     }
 
-    // ---------- Consumo ----------
+    // ---------- Leituras de consumo ----------
+
+    private String leitura(Long moradorId, String competencia, String kwh) {
+        return "{" + (moradorId != null ? "\"moradorId\":" + moradorId + "," : "")
+                + (competencia != null ? "\"competencia\":\"" + competencia + "\"," : "")
+                + "\"kwh\":" + kwh + "}";
+    }
 
     @Test
-    @DisplayName("Morador atualiza só o próprio consumo; síndico atualiza o de qualquer um")
-    void atualizarConsumo() throws Exception {
-        mvc.perform(como(LUCAS, patch("/api/moradores/{id}/consumo", sofia.getId()).param("consumoKwh", "150")))
+    @DisplayName("Morador registra a própria leitura, mas não a de outro; síndico registra a de qualquer um")
+    void registrarLeitura() throws Exception {
+        mvc.perform(json(como(LUCAS, post("/api/leituras-consumo")), leitura(null, null, "150")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.moradorNome").value("Lucas Silva"));
+
+        mvc.perform(json(como(LUCAS, post("/api/leituras-consumo")), leitura(sofia.getId(), null, "150")))
                 .andExpect(status().isForbidden());
-        mvc.perform(como(LUCAS, patch("/api/moradores/{id}/consumo", lucas.getId()).param("consumoKwh", "150")))
-                .andExpect(status().isOk());
-        mvc.perform(como(SINDICO, patch("/api/moradores/{id}/consumo", sofia.getId()).param("consumoKwh", "150")))
-                .andExpect(status().isOk());
+
+        mvc.perform(json(como(SINDICO, post("/api/leituras-consumo")), leitura(sofia.getId(), null, "150")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.moradorNome").value("Sofia Chen"));
+
+        mvc.perform(json(como(SINDICO, post("/api/leituras-consumo")), leitura(null, null, "150")))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Registrar de novo a leitura do mesmo mês corrige o valor, sem duplicar")
+    void leituraDoMesmoMesCorrige() throws Exception {
+        String competencia = java.time.YearMonth.now().minusMonths(2).toString();
+
+        String primeira = mvc.perform(json(como(LUCAS, post("/api/leituras-consumo")), leitura(null, competencia, "100")))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        mvc.perform(json(como(LUCAS, post("/api/leituras-consumo")), leitura(null, competencia, "180.5")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.kwh").value(180.5));
+
+        mvc.perform(como(LUCAS, org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/leituras-consumo").param("competencia", competencia)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+        org.junit.jupiter.api.Assertions.assertTrue(primeira.contains("\"competencia\":\"" + competencia + "\""));
+    }
+
+    @Test
+    @DisplayName("Leitura inválida é recusada: mês futuro, formato errado e consumo negativo")
+    void leituraInvalida() throws Exception {
+        String futuro = java.time.YearMonth.now().plusMonths(1).toString();
+
+        mvc.perform(json(como(LUCAS, post("/api/leituras-consumo")), leitura(null, futuro, "100")))
+                .andExpect(status().isBadRequest());
+        mvc.perform(json(como(LUCAS, post("/api/leituras-consumo")), leitura(null, "2026/09", "100")))
+                .andExpect(status().isBadRequest());
+        mvc.perform(json(como(LUCAS, post("/api/leituras-consumo")), leitura(null, null, "-5")))
+                .andExpect(status().isBadRequest());
+        mvc.perform(como(LUCAS, org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/leituras-consumo").param("competencia", "lixo")))
+                .andExpect(status().isBadRequest());
     }
 
     // ---------- Identidade: o corpo da requisição não decide quem você é ----------

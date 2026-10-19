@@ -3,6 +3,7 @@ package br.com.homelive.dto;
 import br.com.homelive.model.enums.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -39,6 +40,10 @@ public class DespesaDTO {
         private TipoDespesa tipoDespesa;
 
         private TipoRateio tipoRateio = TipoRateio.IGUALITARIO;
+
+        /** Mês a que a conta se refere (aaaa-MM). Se omitido, o mês corrente. Define as leituras usadas no rateio por consumo. */
+        @Pattern(regexp = "^\\d{4}-(0[1-9]|1[0-2])$", message = "A competência deve estar no formato aaaa-MM")
+        private String competencia;
     }
 
     @Getter
@@ -77,6 +82,7 @@ public class DespesaDTO {
         private BigDecimal valorTotal;
         private LocalDate dataVencimento;
         private LocalDate dataLancamento;
+        private String competencia;
         private CategoriaDespesa categoria;
         private TipoDespesa tipoDespesa;
         private TipoRateio tipoRateio;

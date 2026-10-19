@@ -16,7 +16,7 @@ No ano de **2050**, casas inteligentes compartilhadas (*co-living*) exigem gover
   * Concentra atributos e comportamentos comuns (`id`, `nome`, `email`, `senhaHash`, `telefone`, `ativo`, `dataCriacao`).
   * Declara o método abstrato `getTipoUsuario()`: cada perfil informa o próprio papel (polimorfismo), e a camada de segurança deriva as permissões daí.
   * Especializada via herança relacional (`JOINED`):
-    * **`Morador`**: Adiciona `numeroQuarto`, `diasEstadia`, `consumoDeclaradoKwh`, `pontosConvivencia` (gamificação) e métodos de negócio (`adicionarPontos`, `deduzirPontos`, `atualizarConsumo`, `atualizarEstadia`).
+    * **`Morador`**: Adiciona `numeroQuarto`, `diasEstadia`, `pontosConvivencia` (gamificação) e métodos de negócio (`adicionarPontos`, `deduzirPontos`, `atualizarEstadia`). O consumo de energia não fica no morador: vem das leituras mensais (`LeituraConsumo`).
     * **`Sindico`**: Responsável pela governança, aprovação/rejeição de despesas, cadastro de espaços e atribuição de tarefas.
 
 ### B. Padrões de Projeto: **Strategy + Template Method (GoF)**
@@ -25,8 +25,11 @@ Desacopla os algoritmos de rateio da entidade `Despesa`.
 * **Classe abstrata `RateioProporcionalStrategy`** (*Template Method*): contém o esqueleto do cálculo (validar, somar pesos, repartir e fechar os centavos no último morador). O método `calcular()` é `final`; as subclasses só definem o **peso** de cada morador:
   * `RateioIgualitarioStrategy`: peso 1 para todos (divisão homogênea).
   * `RateioPorEstadiaStrategy`: peso = dias de permanência na residência.
-  * `RateioPorConsumoStrategy`: peso = consumo declarado em kWh.
+  * `RateioPorConsumoStrategy`: peso = **leitura de consumo (kWh) do mês da conta**. Se algum morador não tiver leitura naquele mês, o rateio é recusado e a resposta diz quem falta.
+* **`ContextoRateio`**: dados de fora do morador (as leituras do mês) entregues prontos pelo service, para as estratégias continuarem puras e sem acesso a banco.
 * **`RateioStrategyFactory`**: Injeção e resolução dinâmica da estratégia correta via enum `TipoRateio`.
+
+**Fidelidade ao período:** cada despesa tem uma `competencia` (mês de referência). Uma conta de setembro lançada em outubro é dividida pelas leituras de setembro, e não pelo consumo atual de cada morador.
 
 ### C. Encapsulamento e Invariantes de Domínio
 * **Sem setters nas entidades:** o estado só muda por métodos de negócio que recusam transições inválidas (`Despesa.aprovar/rejeitar/marcarComoRateada`, `RateioItem.quitar`, `AgendamentoEspaco.cancelar`, `TarefaDomestica.concluir`). Um teste automatizado falha se alguém adicionar um setter público.
@@ -111,7 +114,7 @@ fetch('http://localhost:8080/api/dashboard', { headers: { Authorization: auth } 
 | Cancelar reserva | ✅ qualquer | só a própria |
 | Concluir tarefa | ✅ qualquer | só a própria |
 | Quitar item de rateio | ✅ qualquer | só o próprio |
-| Atualizar consumo | ✅ qualquer | só o próprio |
+| Registrar leitura de consumo | ✅ de qualquer morador | só a própria |
 | Consultas (dashboard, ranking, listagens) | ✅ | ✅ |
 
 ---
@@ -126,9 +129,11 @@ fetch('http://localhost:8080/api/dashboard', { headers: { Authorization: auth } 
 | **Moradores** | `GET` | `/api/moradores` | logado | Lista todos os moradores |
 | | `POST` | `/api/moradores` | síndico | Cadastra morador (corpo inclui `senha`, mín. 6 caracteres) |
 | | `GET` | `/api/moradores/ranking` | logado | Ranking por pontos de convivência |
-| | `PATCH` | `/api/moradores/{id}/consumo?consumoKwh=` | próprio ou síndico | Atualiza consumo em kWh |
 | | `PATCH` | `/api/moradores/{id}/estadia?dias=` | síndico | Atualiza dias de estadia |
 | | `DELETE` | `/api/moradores/{id}` | síndico | Desativa o morador |
+| **Leituras de consumo** | `POST` | `/api/leituras-consumo` | logado | Registra (ou corrige) a leitura do mês: `{ "kwh": 120.5, "competencia": "2026-09" }`. `competencia` é opcional (padrão: mês corrente). O síndico também informa `moradorId` |
+| | `GET` | `/api/leituras-consumo?competencia=2026-09` | logado | Leituras de um mês (sem parâmetro, o mês corrente) |
+| | `GET` | `/api/leituras-consumo/morador/{id}` | logado | Histórico de leituras de um morador |
 | **Síndicos** | `GET` | `/api/sindicos` | logado | Lista síndicos |
 | | `POST` | `/api/sindicos` | síndico | Cadastra síndico (corpo inclui `senha`) |
 | **Espaços** | `GET` | `/api/espacos` | logado | Lista espaços comuns |
@@ -137,7 +142,7 @@ fetch('http://localhost:8080/api/dashboard', { headers: { Authorization: auth } 
 | **Agendamentos** | `POST` | `/api/agendamentos` | logado | Cria reserva. `moradorId` só é necessário para o síndico |
 | | `GET` | `/api/agendamentos` | logado | Lista reservas |
 | | `PATCH` | `/api/agendamentos/{id}/cancelar` | dono ou síndico | Cancela a reserva |
-| **Despesas** | `POST` | `/api/despesas` | logado | Lança despesa (solicitante = quem está logado) |
+| **Despesas** | `POST` | `/api/despesas` | logado | Lança despesa (solicitante = quem está logado). `competencia` (`aaaa-MM`, opcional) é o mês a que a conta se refere e define quais leituras valem no rateio por consumo |
 | | `POST` | `/api/despesas/{id}/avaliar` | síndico | Corpo: `{ "aprovado": true, "motivoRejeicao": null }`. Aprova (dispara o rateio) ou rejeita |
 | | `PATCH` | `/api/despesas/rateio/{itemId}/quitar` | dono ou síndico | Quita a parcela do rateio |
 | | `GET` | `/api/despesas` | logado | Lista despesas (filtro opcional por status) |
@@ -164,4 +169,5 @@ Ao iniciar, o sistema carrega automaticamente as contas abaixo. **A senha de tod
 
 * **Espaços:** *Escritório Acústico VR*, *Lavanderia Inteligente IoT* e *Espaço Gourmet e Rooftop Hidropônico*.
 * **Escalas recorrentes:** *Retirada do lixo orgânico* (semanal, `SEQUENCIAL`), *Limpeza do Espaço Gourmet* (semanal, `MENOR_CARGA`) e *Troca dos filtros de água* (mensal, `MENOR_PONTUACAO`). As duas primeiras ficam devidas hoje: faça `POST /api/tarefas-recorrentes/gerar` como síndico para ver o rodízio distribuí-las.
-* **Despesas & Rateios:** demonstração prática do rateio por consumo e igualitário já calculados, e uma despesa pendente de aprovação.
+* **Leituras de consumo:** dos dois últimos meses para os quatro moradores.
+* **Despesas & Rateios:** a conta de energia de demonstração é do **mês anterior** e foi rateada com as leituras daquele mês. Há também um rateio igualitário já calculado e uma despesa pendente de aprovação.

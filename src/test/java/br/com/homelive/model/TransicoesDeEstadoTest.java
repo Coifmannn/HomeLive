@@ -21,7 +21,7 @@ class TransicoesDeEstadoTest {
 
     @BeforeEach
     void setUp() {
-        morador = new Morador("Lucas", "lucas@test.com", "hash", "11999990001", "101", 30, 100.0);
+        morador = new Morador("Lucas", "lucas@test.com", "hash", "11999990001", "101", 30);
         sindico = new Sindico("Helena", "helena@test.com", "hash", "11999990000", "Governança");
     }
 
@@ -162,17 +162,14 @@ class TransicoesDeEstadoTest {
     }
 
     @Test
-    @DisplayName("Consumo e estadia só aceitam valores válidos")
-    void moradorConsumoEEstadia() {
-        morador.atualizarConsumo(250.5);
+    @DisplayName("Estadia só aceita valores válidos")
+    void moradorEstadia() {
         morador.atualizarEstadia(12);
-        assertEquals(250.5, morador.getConsumoDeclaradoKwh());
         assertEquals(12, morador.getDiasEstadia());
 
-        assertThrows(RegraNegocioException.class, () -> morador.atualizarConsumo(-1.0));
-        assertThrows(RegraNegocioException.class, () -> morador.atualizarConsumo(null));
         assertThrows(RegraNegocioException.class, () -> morador.atualizarEstadia(-1));
-        assertEquals(250.5, morador.getConsumoDeclaradoKwh(), "valor inválido não pode alterar o estado");
+        assertThrows(RegraNegocioException.class, () -> morador.atualizarEstadia(null));
+        assertEquals(12, morador.getDiasEstadia(), "valor inválido não pode alterar o estado");
     }
 
     // ---------- AgendamentoEspaco ----------

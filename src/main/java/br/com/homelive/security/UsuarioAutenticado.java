@@ -1,5 +1,6 @@
 package br.com.homelive.security;
 
+import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.model.Usuario;
 import br.com.homelive.model.enums.TipoUsuario;
 import org.springframework.security.access.AccessDeniedException;
@@ -52,6 +53,21 @@ public class UsuarioAutenticado implements UserDetails {
         if (!isSindico() && !Objects.equals(id, donoId)) {
             throw new AccessDeniedException("Você só pode realizar esta ação sobre os seus próprios dados.");
         }
+    }
+
+    /**
+     * Em nome de qual morador a ação será feita. O morador age sempre em nome próprio (e não pode apontar
+     * outro); o síndico precisa dizer qual morador.
+     */
+    public Long moradorAlvo(Long moradorIdInformado) {
+        if (isSindico()) {
+            if (moradorIdInformado == null) {
+                throw new RegraNegocioException("O síndico deve informar o morador (moradorId).");
+            }
+            return moradorIdInformado;
+        }
+        exigirSindicoOuDono(moradorIdInformado != null ? moradorIdInformado : id);
+        return id;
     }
 
     @Override

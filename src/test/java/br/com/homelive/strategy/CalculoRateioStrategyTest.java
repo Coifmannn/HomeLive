@@ -1,5 +1,6 @@
 package br.com.homelive.strategy;
 
+import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.model.Despesa;
 import br.com.homelive.model.Morador;
 import br.com.homelive.model.RateioItem;
@@ -9,10 +10,13 @@ import br.com.homelive.model.enums.TipoRateio;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -24,145 +28,112 @@ class CalculoRateioStrategyTest {
     private Morador m3;
     private List<Morador> moradores;
 
+    /** Leituras do mês da despesa: m1=100 kWh (25%), m2=200 (50%), m3=100 (25%). */
+    private ContextoRateio leituras;
+
     @BeforeEach
     void setUp() {
-        m1 = new Morador("Lucas", "lucas@test.com", "hash", "11999990001", "101", 30, 100.0);
-
-        m2 = new Morador("Sofia", "sofia@test.com", "hash", "11999990002", "102", 30, 200.0);
-
-        m3 = new Morador("Mateus", "mateus@test.com", "hash", "11999990003", "103", 20, 100.0);
+        m1 = new Morador("Lucas", "lucas@test.com", "hash", "11999990001", "101", 30);
+        m2 = new Morador("Sofia", "sofia@test.com", "hash", "11999990002", "102", 30);
+        m3 = new Morador("Mateus", "mateus@test.com", "hash", "11999990003", "103", 20);
+        ReflectionTestUtils.setField(m1, "id", 1L);
+        ReflectionTestUtils.setField(m2, "id", 2L);
+        ReflectionTestUtils.setField(m3, "id", 3L);
 
         moradores = List.of(m1, m2, m3);
+        leituras = new ContextoRateio(Map.of(
+                1L, new BigDecimal("100.00"),
+                2L, new BigDecimal("200.00"),
+                3L, new BigDecimal("100.00")));
+    }
+
+    private Despesa despesa(String valor, TipoRateio tipo) {
+        return new Despesa("Conta", "teste", new BigDecimal(valor), LocalDate.now().plusDays(10),
+                CategoriaDespesa.ENERGIA_SOLAR, TipoDespesa.VARIAVEL, tipo, null);
+    }
+
+    private BigDecimal soma(List<RateioItem> itens) {
+        return itens.stream().map(RateioItem::getValorCalculado).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @Test
     @DisplayName("Rateio Igualitário deve dividir o valor em partes iguais e bater a soma exata")
     void testRateioIgualitario() {
-        Despesa despesa = new Despesa(
-                "Internet Quântica",
-                "Link",
-                new BigDecimal("100.00"),
-                LocalDate.now().plusDays(10),
-                CategoriaDespesa.INTERNET_QUANTICA,
-                TipoDespesa.FIXA,
-                TipoRateio.IGUALITARIO,
-                null
-        );
-
-        RateioIgualitarioStrategy strategy = new RateioIgualitarioStrategy();
-        List<RateioItem> itens = strategy.calcular(despesa, moradores);
+        List<RateioItem> itens = new RateioIgualitarioStrategy()
+                .calcular(despesa("100.00", TipoRateio.IGUALITARIO), moradores, ContextoRateio.vazio());
 
         assertEquals(3, itens.size());
-
-        // Soma deve ser exatamente 100.00 (33.33 + 33.33 + 33.34)
-        BigDecimal soma = itens.stream()
-                .map(RateioItem::getValorCalculado)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        assertEquals(new BigDecimal("100.00"), soma);
+        // 33.33 + 33.33 + 33.34
+        assertEquals(new BigDecimal("100.00"), soma(itens));
     }
 
     @Test
-    @DisplayName("Rateio por Consumo deve calcular valores proporcionais ao consumo em kWh")
+    @DisplayName("Rateio por Consumo deve calcular valores proporcionais às leituras em kWh")
     void testRateioPorConsumo() {
-        // Consumos: m1=100 (25%), m2=200 (50%), m3=100 (25%) -> Total = 400 kWh
-        Despesa despesa = new Despesa(
-                "Energia Solar",
-                "Fatura Solar",
-                new BigDecimal("400.00"),
-                LocalDate.now().plusDays(10),
-                CategoriaDespesa.ENERGIA_SOLAR,
-                TipoDespesa.VARIAVEL,
-                TipoRateio.POR_CONSUMO,
-                null
-        );
-
-        RateioPorConsumoStrategy strategy = new RateioPorConsumoStrategy();
-        List<RateioItem> itens = strategy.calcular(despesa, moradores);
+        List<RateioItem> itens = new RateioPorConsumoStrategy()
+                .calcular(despesa("400.00", TipoRateio.POR_CONSUMO), moradores, leituras);
 
         assertEquals(new BigDecimal("100.00"), itens.get(0).getValorCalculado());
         assertEquals(new BigDecimal("200.00"), itens.get(1).getValorCalculado());
         assertEquals(new BigDecimal("100.00"), itens.get(2).getValorCalculado());
-
-        BigDecimal soma = itens.stream()
-                .map(RateioItem::getValorCalculado)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        assertEquals(new BigDecimal("400.00"), soma);
+        assertEquals(new BigDecimal("400.00"), soma(itens));
     }
 
     @Test
     @DisplayName("Rateio por Estadia deve calcular valores proporcionais aos dias de estadia")
     void testRateioPorEstadia() {
         // Estadias: m1=30, m2=30, m3=20 -> Total = 80 dias
-        Despesa despesa = new Despesa(
-                "Manutenção Robôs",
-                "Revisão",
-                new BigDecimal("800.00"),
-                LocalDate.now().plusDays(10),
-                CategoriaDespesa.MANUTENCAO_ROBOS,
-                TipoDespesa.VARIAVEL,
-                TipoRateio.POR_ESTADIA,
-                null
-        );
-
-        RateioPorEstadiaStrategy strategy = new RateioPorEstadiaStrategy();
-        List<RateioItem> itens = strategy.calcular(despesa, moradores);
+        List<RateioItem> itens = new RateioPorEstadiaStrategy()
+                .calcular(despesa("800.00", TipoRateio.POR_ESTADIA), moradores, ContextoRateio.vazio());
 
         assertEquals(new BigDecimal("300.00"), itens.get(0).getValorCalculado());
         assertEquals(new BigDecimal("300.00"), itens.get(1).getValorCalculado());
         assertEquals(new BigDecimal("200.00"), itens.get(2).getValorCalculado());
-
-        BigDecimal soma = itens.stream()
-                .map(RateioItem::getValorCalculado)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        assertEquals(new BigDecimal("800.00"), soma);
+        assertEquals(new BigDecimal("800.00"), soma(itens));
     }
 
     @Test
     @DisplayName("A soma dos itens fecha exatamente no valor total mesmo com centavos quebrados")
     void testSomaExataComValorQuebrado() {
-        Despesa despesa = new Despesa(
-                "Conta quebrada", "Teste de arredondamento",
-                new BigDecimal("1000000.01"),
-                LocalDate.now().plusDays(10),
-                CategoriaDespesa.ENERGIA_SOLAR,
-                TipoDespesa.VARIAVEL,
-                TipoRateio.POR_CONSUMO,
-                null
-        );
+        Despesa despesa = despesa("1000000.01", TipoRateio.POR_CONSUMO);
 
         for (CalculoRateioStrategy strategy : List.of(
                 new RateioIgualitarioStrategy(), new RateioPorConsumoStrategy(), new RateioPorEstadiaStrategy())) {
-            BigDecimal soma = strategy.calcular(despesa, moradores).stream()
-                    .map(RateioItem::getValorCalculado)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-            assertEquals(new BigDecimal("1000000.01"), soma, strategy.getClass().getSimpleName());
+            assertEquals(new BigDecimal("1000000.01"), soma(strategy.calcular(despesa, moradores, leituras)),
+                    strategy.getClass().getSimpleName());
         }
     }
 
     @Test
     @DisplayName("Rateio sem moradores deve ser rejeitado")
     void testRateioSemMoradores() {
-        Despesa despesa = new Despesa("Conta", "x", new BigDecimal("10.00"), LocalDate.now().plusDays(1),
-                CategoriaDespesa.INTERNET_QUANTICA, TipoDespesa.FIXA, TipoRateio.IGUALITARIO, null);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> new RateioIgualitarioStrategy().calcular(despesa, List.of()));
+        assertThrows(RegraNegocioException.class, () -> new RateioIgualitarioStrategy()
+                .calcular(despesa("10.00", TipoRateio.IGUALITARIO), List.of(), ContextoRateio.vazio()));
     }
 
     @Test
-    @DisplayName("Rateio por consumo com consumo total zero deve ser rejeitado")
+    @DisplayName("Rateio por consumo com leituras todas zeradas deve ser rejeitado")
     void testRateioPorConsumoZerado() {
-        m1.atualizarConsumo(0.0);
-        m2.atualizarConsumo(0.0);
-        m3.atualizarConsumo(0.0);
-        Despesa despesa = new Despesa("Conta", "x", new BigDecimal("10.00"), LocalDate.now().plusDays(1),
-                CategoriaDespesa.ENERGIA_SOLAR, TipoDespesa.VARIAVEL, TipoRateio.POR_CONSUMO, null);
+        ContextoRateio zerado = new ContextoRateio(Map.of(
+                1L, BigDecimal.ZERO, 2L, BigDecimal.ZERO, 3L, BigDecimal.ZERO));
 
-        assertThrows(IllegalStateException.class,
-                () -> new RateioPorConsumoStrategy().calcular(despesa, moradores));
+        assertThrows(RegraNegocioException.class, () -> new RateioPorConsumoStrategy()
+                .calcular(despesa("10.00", TipoRateio.POR_CONSUMO), moradores, zerado));
+    }
+
+    @Test
+    @DisplayName("Rateio por consumo recusa a despesa e diz quem está sem leitura no mês")
+    void testRateioPorConsumoSemLeitura() {
+        ContextoRateio incompleto = new ContextoRateio(Map.of(1L, new BigDecimal("100.00")));
+        Despesa despesa = despesa("10.00", TipoRateio.POR_CONSUMO);
+
+        RegraNegocioException erro = assertThrows(RegraNegocioException.class,
+                () -> new RateioPorConsumoStrategy().calcular(despesa, moradores, incompleto));
+
+        assertTrue(erro.getMessage().contains("Sofia"), erro.getMessage());
+        assertTrue(erro.getMessage().contains("Mateus"), erro.getMessage());
+        assertFalse(erro.getMessage().contains("Lucas"), erro.getMessage());
+        assertTrue(erro.getMessage().contains(String.format("%02d/%d", YearMonth.now().getMonthValue(), YearMonth.now().getYear())),
+                "deve citar o mês da conta: " + erro.getMessage());
     }
 }

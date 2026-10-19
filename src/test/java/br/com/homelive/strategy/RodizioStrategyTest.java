@@ -25,7 +25,7 @@ class RodizioStrategyTest {
     private final RodizioPorCargaStrategy porCarga = new RodizioPorCargaStrategy();
 
     private static Morador morador(long id) {
-        Morador m = new Morador("M" + id, "m" + id + "@test.com", "hash", "1199999000" + id, "10" + id, 30, 100.0);
+        Morador m = new Morador("M" + id, "m" + id + "@test.com", "hash", "1199999000" + id, "10" + id, 30);
         ReflectionTestUtils.setField(m, "id", id);
         return m;
     }

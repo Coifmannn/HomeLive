@@ -6,7 +6,6 @@ import br.com.homelive.exception.RecursoNaoEncontradoException;
 import br.com.homelive.model.AgendamentoEspaco;
 import br.com.homelive.model.EspacoComum;
 import br.com.homelive.model.Morador;
-import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.repository.AgendamentoEspacoRepository;
 import br.com.homelive.security.UsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +27,7 @@ public class AgendamentoService {
 
     @Transactional
     public AgendamentoDTO.Response criarAgendamento(AgendamentoDTO.Request request, UsuarioAutenticado ator) {
-        Long moradorId = resolverMorador(request, ator);
+        Long moradorId = ator.moradorAlvo(request.getMoradorId());
         EspacoComum espaco = espacoComumService.buscarEntidade(request.getEspacoId());
         Morador morador = moradorService.buscarEntidade(moradorId);
 
@@ -57,18 +56,6 @@ public class AgendamentoService {
 
         AgendamentoEspaco salvo = agendamentoRepository.save(agendamento);
         return toResponse(salvo);
-    }
-
-    /** Morador reserva sempre em nome próprio; o síndico reserva em nome de um morador que informar. */
-    private Long resolverMorador(AgendamentoDTO.Request request, UsuarioAutenticado ator) {
-        if (!ator.isSindico()) {
-            ator.exigirSindicoOuDono(request.getMoradorId() != null ? request.getMoradorId() : ator.getId());
-            return ator.getId();
-        }
-        if (request.getMoradorId() == null) {
-            throw new RegraNegocioException("O síndico deve informar o morador da reserva (moradorId).");
-        }
-        return request.getMoradorId();
     }
 
     public List<AgendamentoDTO.Response> listarTodos() {

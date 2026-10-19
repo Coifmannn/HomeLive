@@ -3,6 +3,7 @@ package br.com.homelive.config;
 import br.com.homelive.dto.AgendamentoDTO;
 import br.com.homelive.dto.DespesaDTO;
 import br.com.homelive.model.EspacoComum;
+import br.com.homelive.model.LeituraConsumo;
 import br.com.homelive.model.Morador;
 import br.com.homelive.model.Sindico;
 import br.com.homelive.model.TarefaDomestica;
@@ -13,6 +14,7 @@ import br.com.homelive.model.enums.CategoriaDespesa;
 import br.com.homelive.model.enums.TipoDespesa;
 import br.com.homelive.model.enums.TipoRateio;
 import br.com.homelive.repository.EspacoComumRepository;
+import br.com.homelive.repository.LeituraConsumoRepository;
 import br.com.homelive.repository.MoradorRepository;
 import br.com.homelive.repository.SindicoRepository;
 import br.com.homelive.repository.TarefaDomesticaRepository;
@@ -28,6 +30,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 
 @Component
 @RequiredArgsConstructor
@@ -40,6 +43,7 @@ public class DataInitializer implements CommandLineRunner {
     private final AgendamentoService agendamentoService;
     private final TarefaDomesticaRepository tarefaRepository;
     private final TarefaRecorrenteRepository tarefaRecorrenteRepository;
+    private final LeituraConsumoRepository leituraConsumoRepository;
     private final PasswordEncoder passwordEncoder;
 
     /** Senha única das contas de demonstração. Só para desenvolvimento. */
@@ -60,16 +64,30 @@ public class DataInitializer implements CommandLineRunner {
         Sindico sindicoSalvo = sindicoRepository.save(sindico);
 
         // 2. Cadastrar Moradores
-        Morador m1 = moradorRepository.save(new Morador("Lucas Silva", "lucas.silva@homelive2050.io", senhaDemo, "(11) 99111-0001", "Suíte 101-A", 30, 140.0));
-        Morador m2 = moradorRepository.save(new Morador("Sofia Chen", "sofia.chen@homelive2050.io", senhaDemo, "(11) 99111-0002", "Suíte 102-B", 28, 95.0));
-        Morador m3 = moradorRepository.save(new Morador("Mateus Oliveira", "mateus.oliveira@homelive2050.io", senhaDemo, "(11) 99111-0003", "Suíte 201-A", 15, 60.0));
-        Morador m4 = moradorRepository.save(new Morador("Beatriz Santos", "beatriz.santos@homelive2050.io", senhaDemo, "(11) 99111-0004", "Suíte 202-B", 30, 165.0));
+        Morador m1 = moradorRepository.save(new Morador("Lucas Silva", "lucas.silva@homelive2050.io", senhaDemo, "(11) 99111-0001", "Suíte 101-A", 30));
+        Morador m2 = moradorRepository.save(new Morador("Sofia Chen", "sofia.chen@homelive2050.io", senhaDemo, "(11) 99111-0002", "Suíte 102-B", 28));
+        Morador m3 = moradorRepository.save(new Morador("Mateus Oliveira", "mateus.oliveira@homelive2050.io", senhaDemo, "(11) 99111-0003", "Suíte 201-A", 15));
+        Morador m4 = moradorRepository.save(new Morador("Beatriz Santos", "beatriz.santos@homelive2050.io", senhaDemo, "(11) 99111-0004", "Suíte 202-B", 30));
 
         // Ajusta pontuações iniciais para gamificação
         m2.adicionarPontos(30); // 130 pts
         m1.adicionarPontos(15); // 115 pts
         m3.deduzirPontos(10);   // 90 pts
         moradorRepository.saveAll(java.util.List.of(m1, m2, m3, m4));
+
+        // Leituras mensais de consumo: alimentam o rateio por consumo, sempre do mês da conta.
+        YearMonth mesAtual = YearMonth.now();
+        YearMonth mesAnterior = mesAtual.minusMonths(1);
+        leituraConsumoRepository.saveAll(java.util.List.of(
+                new LeituraConsumo(m1, mesAnterior, new BigDecimal("120.00")),
+                new LeituraConsumo(m2, mesAnterior, new BigDecimal("100.00")),
+                new LeituraConsumo(m3, mesAnterior, new BigDecimal("70.00")),
+                new LeituraConsumo(m4, mesAnterior, new BigDecimal("150.00")),
+                new LeituraConsumo(m1, mesAtual, new BigDecimal("140.00")),
+                new LeituraConsumo(m2, mesAtual, new BigDecimal("95.00")),
+                new LeituraConsumo(m3, mesAtual, new BigDecimal("60.00")),
+                new LeituraConsumo(m4, mesAtual, new BigDecimal("165.00"))
+        ));
 
         // 3. Cadastrar Espaços Comuns
         EspacoComum espaco1 = espacoComumRepository.save(new EspacoComum(
@@ -102,12 +120,13 @@ public class DataInitializer implements CommandLineRunner {
                 LocalDate.now().plusDays(10),
                 CategoriaDespesa.INTERNET_QUANTICA,
                 TipoDespesa.FIXA,
-                TipoRateio.IGUALITARIO
+                TipoRateio.IGUALITARIO,
+                null
         );
         DespesaDTO.Response r1 = despesaService.lancarDespesa(desp1, new UsuarioAutenticado(m1));
         despesaService.avaliarDespesa(r1.getId(), new DespesaDTO.AprovacaoRequest(true, null), sindicoSalvo.getId());
 
-        // Despesa B: Matriz Solar e Células de Hidrogênio (Rateio por Consumo)
+        // Despesa B: Matriz Solar e Células de Hidrogênio (Rateio por Consumo, conta do mês anterior)
         DespesaDTO.Request desp2 = new DespesaDTO.Request(
                 "Consumo de Energia e Baterias de Fusão",
                 "Fatura referente à medição inteligente de kWh consumidos",
@@ -115,7 +134,8 @@ public class DataInitializer implements CommandLineRunner {
                 LocalDate.now().plusDays(15),
                 CategoriaDespesa.ENERGIA_SOLAR,
                 TipoDespesa.VARIAVEL,
-                TipoRateio.POR_CONSUMO
+                TipoRateio.POR_CONSUMO,
+                mesAnterior.toString()
         );
         DespesaDTO.Response r2 = despesaService.lancarDespesa(desp2, new UsuarioAutenticado(m2));
         despesaService.avaliarDespesa(r2.getId(), new DespesaDTO.AprovacaoRequest(true, null), sindicoSalvo.getId());
@@ -128,7 +148,8 @@ public class DataInitializer implements CommandLineRunner {
                 LocalDate.now().plusDays(20),
                 CategoriaDespesa.MANUTENCAO_ROBOS,
                 TipoDespesa.VARIAVEL,
-                TipoRateio.POR_ESTADIA
+                TipoRateio.POR_ESTADIA,
+                null
         );
         despesaService.lancarDespesa(desp3, new UsuarioAutenticado(m3));
 
