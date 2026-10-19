@@ -13,7 +13,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/espacos")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class EspacoComumController {
 
     private final EspacoComumService espacoComumService;

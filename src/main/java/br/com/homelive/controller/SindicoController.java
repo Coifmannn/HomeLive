@@ -13,7 +13,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/sindicos")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class SindicoController {
 
     private final SindicoService sindicoService;

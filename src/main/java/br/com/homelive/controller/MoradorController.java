@@ -13,7 +13,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/moradores")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class MoradorController {
 
     private final MoradorService moradorService;
