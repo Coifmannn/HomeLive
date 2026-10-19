@@ -1,6 +1,8 @@
 package br.com.homelive.service;
 
 import br.com.homelive.dto.AgendamentoDTO;
+import br.com.homelive.event.MoradorNaoCompareceu;
+import br.com.homelive.event.ReservaCanceladaPeloMorador;
 import br.com.homelive.exception.ConflitoHorarioException;
 import br.com.homelive.exception.RecursoNaoEncontradoException;
 import br.com.homelive.model.AgendamentoEspaco;
@@ -9,9 +11,11 @@ import br.com.homelive.model.Morador;
 import br.com.homelive.repository.AgendamentoEspacoRepository;
 import br.com.homelive.security.UsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -22,6 +26,7 @@ public class AgendamentoService {
     private final AgendamentoEspacoRepository agendamentoRepository;
     private final EspacoComumService espacoComumService;
     private final MoradorService moradorService;
+    private final ApplicationEventPublisher eventPublisher;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
@@ -72,13 +77,32 @@ public class AgendamentoService {
 
     @Transactional
     public void cancelarAgendamento(Long agendamentoId, UsuarioAutenticado ator) {
-        AgendamentoEspaco agendamento = agendamentoRepository.findById(agendamentoId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Agendamento não encontrado com o ID: " + agendamentoId));
+        AgendamentoEspaco agendamento = buscarEntidade(agendamentoId);
 
         ator.exigirSindicoOuDono(agendamento.getMorador().getId());
 
         agendamento.cancelar();
         agendamentoRepository.save(agendamento);
+
+        // Só o cancelamento feito pelo próprio morador pode virar infração (o do síndico é administrativo).
+        if (!ator.isSindico()) {
+            eventPublisher.publishEvent(new ReservaCanceladaPeloMorador(agendamento, LocalDateTime.now()));
+        }
+    }
+
+    @Transactional
+    public AgendamentoDTO.Response registrarNaoComparecimento(Long agendamentoId) {
+        AgendamentoEspaco agendamento = buscarEntidade(agendamentoId);
+
+        agendamento.registrarNaoComparecimento(LocalDateTime.now());
+        agendamentoRepository.save(agendamento);
+        eventPublisher.publishEvent(new MoradorNaoCompareceu(agendamento));
+        return toResponse(agendamento);
+    }
+
+    private AgendamentoEspaco buscarEntidade(Long agendamentoId) {
+        return agendamentoRepository.findById(agendamentoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Agendamento não encontrado com o ID: " + agendamentoId));
     }
 
     public AgendamentoDTO.Response toResponse(AgendamentoEspaco a) {

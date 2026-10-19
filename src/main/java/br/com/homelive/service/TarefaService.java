@@ -2,6 +2,7 @@ package br.com.homelive.service;
 
 import br.com.homelive.dto.TarefaDTO;
 import br.com.homelive.exception.RecursoNaoEncontradoException;
+import br.com.homelive.event.TarefaMarcadaComoAtrasada;
 import br.com.homelive.model.Morador;
 import br.com.homelive.model.Sindico;
 import br.com.homelive.model.TarefaDomestica;
@@ -10,6 +11,7 @@ import br.com.homelive.repository.MoradorRepository;
 import br.com.homelive.repository.TarefaDomesticaRepository;
 import br.com.homelive.security.UsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,7 @@ public class TarefaService {
     private final MoradorService moradorService;
     private final SindicoService sindicoService;
     private final MoradorRepository moradorRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public TarefaDTO.Response criarTarefa(TarefaDTO.Request request, Long sindicoId) {
@@ -72,11 +75,11 @@ public class TarefaService {
         );
 
         for (TarefaDomestica tarefa : atrasadas) {
-            tarefa.penalizarAtraso();
-            if (tarefa.getResponsavel() != null) {
-                moradorRepository.save(tarefa.getResponsavel());
+            if (tarefa.marcarComoAtrasada()) {
+                tarefaRepository.save(tarefa);
+                // Quem quiser reagir (as regras de penalidade, por exemplo) escuta o evento.
+                eventPublisher.publishEvent(new TarefaMarcadaComoAtrasada(tarefa));
             }
-            tarefaRepository.save(tarefa);
         }
 
         return atrasadas.size();

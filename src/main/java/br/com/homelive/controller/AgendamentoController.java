@@ -41,6 +41,12 @@ public class AgendamentoController {
         return ResponseEntity.ok(agendamentoService.listarPorMorador(moradorId));
     }
 
+    /** Registra que o morador não usou o espaço reservado (só o síndico; vale depois do início da reserva). */
+    @PatchMapping("/{id}/nao-compareceu")
+    public ResponseEntity<AgendamentoDTO.Response> registrarNaoComparecimento(@PathVariable Long id) {
+        return ResponseEntity.ok(agendamentoService.registrarNaoComparecimento(id));
+    }
+
     @PatchMapping("/{id}/cancelar")
     public ResponseEntity<Void> cancelar(@PathVariable Long id, @AuthenticationPrincipal UsuarioAutenticado ator) {
         agendamentoService.cancelarAgendamento(id, ator);

@@ -117,13 +117,13 @@ class TransicoesDeEstadoTest {
     @DisplayName("Concluir tarefa já marcada como atrasada rende só 50% da recompensa")
     void tarefaAtrasadaRendeMetade() {
         TarefaDomestica t = new TarefaDomestica("Lixo", "x", LocalDate.now().minusDays(1), 25, 15, morador, sindico);
-        t.penalizarAtraso();              // 100 - 15 = 85
+        assertTrue(t.marcarComoAtrasada());
         assertEquals(StatusTarefa.ATRASADA, t.getStatus());
 
-        t.concluir();                     // + 25/2 = 12
+        t.concluir();                     // 100 + 25/2 = 112 (o desconto do atraso é das regras de penalidade)
 
         assertEquals(StatusTarefa.CONCLUIDA, t.getStatus());
-        assertEquals(97, morador.getPontosConvivencia());
+        assertEquals(112, morador.getPontosConvivencia());
     }
 
     @Test
@@ -138,15 +138,28 @@ class TransicoesDeEstadoTest {
     }
 
     @Test
-    @DisplayName("Tarefa atrasada penaliza o responsável uma única vez")
-    void tarefaAtrasadaPenalizaUmaVez() {
+    @DisplayName("Tarefa vencida vira atrasada uma única vez, e a própria tarefa não mexe nos pontos")
+    void tarefaMarcadaComoAtrasadaUmaVez() {
         TarefaDomestica t = new TarefaDomestica("Lixo", "x", LocalDate.now().minusDays(1), 25, 15, morador, sindico);
 
-        t.penalizarAtraso();
-        t.penalizarAtraso();
+        assertTrue(t.marcarComoAtrasada());
+        assertFalse(t.marcarComoAtrasada(), "já atrasada: não há nova transição");
 
         assertEquals(StatusTarefa.ATRASADA, t.getStatus());
-        assertEquals(85, morador.getPontosConvivencia());
+        assertEquals(100, morador.getPontosConvivencia(), "punir é papel das regras de penalidade");
+    }
+
+    @Test
+    @DisplayName("Tarefa dentro do prazo ou já concluída não vira atrasada")
+    void tarefaNaoAtrasada() {
+        TarefaDomestica noPrazo = new TarefaDomestica("Lixo", "x", LocalDate.now().plusDays(1), 25, 15, morador, sindico);
+        assertFalse(noPrazo.marcarComoAtrasada());
+        assertEquals(StatusTarefa.PENDENTE, noPrazo.getStatus());
+
+        TarefaDomestica concluida = new TarefaDomestica("Lixo", "x", LocalDate.now().minusDays(1), 25, 15, morador, sindico);
+        concluida.concluir();
+        assertFalse(concluida.marcarComoAtrasada());
+        assertEquals(StatusTarefa.CONCLUIDA, concluida.getStatus());
     }
 
     // ---------- Morador ----------
@@ -215,6 +228,32 @@ class TransicoesDeEstadoTest {
         a.cancelar();
         assertEquals(StatusAgendamento.CANCELADO, a.getStatus());
         assertThrows(RegraNegocioException.class, a::cancelar);
+    }
+
+    @Test
+    @DisplayName("Não comparecimento só vale para reserva confirmada que já começou")
+    void agendamentoNaoComparecimento() {
+        EspacoComum espaco = new EspacoComum("Lavanderia", "IoT", 2, "x");
+        AgendamentoEspaco futura = new AgendamentoEspaco(espaco, morador, amanha, amanha.plusHours(1), "ok");
+
+        assertThrows(RegraNegocioException.class, () -> futura.registrarNaoComparecimento(LocalDateTime.now()),
+                "a reserva ainda não começou");
+
+        futura.registrarNaoComparecimento(amanha.plusMinutes(5));
+        assertEquals(StatusAgendamento.NAO_COMPARECEU, futura.getStatus());
+        assertFalse(futura.conflitaCom(amanha, amanha.plusHours(1)), "libera o horário no histórico de conflitos");
+        assertThrows(RegraNegocioException.class, () -> futura.registrarNaoComparecimento(amanha.plusMinutes(10)));
+        assertThrows(RegraNegocioException.class, futura::cancelar, "reserva encerrada não pode ser cancelada");
+    }
+
+    @Test
+    @DisplayName("Reserva cancelada não aceita registro de não comparecimento")
+    void canceladaNaoPodeSerNaoComparecimento() {
+        EspacoComum espaco = new EspacoComum("Lavanderia", "IoT", 2, "x");
+        AgendamentoEspaco a = new AgendamentoEspaco(espaco, morador, amanha, amanha.plusHours(1), "ok");
+        a.cancelar();
+
+        assertThrows(RegraNegocioException.class, () -> a.registrarNaoComparecimento(amanha.plusMinutes(5)));
     }
 
     // ---------- EspacoComum ----------

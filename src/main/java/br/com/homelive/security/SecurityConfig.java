@@ -49,6 +49,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/despesas/*/avaliar").hasRole("SINDICO")
                         .requestMatchers(HttpMethod.PATCH, "/api/espacos/*/status", "/api/moradores/*/estadia").hasRole("SINDICO")
                         .requestMatchers(HttpMethod.DELETE, "/api/moradores/*").hasRole("SINDICO")
+                        .requestMatchers(HttpMethod.POST, "/api/regras-penalidade", "/api/penalidades").hasRole("SINDICO")
+                        .requestMatchers(HttpMethod.PATCH, "/api/regras-penalidade/*/ativar", "/api/regras-penalidade/*/desativar").hasRole("SINDICO")
+                        .requestMatchers(HttpMethod.PATCH, "/api/agendamentos/*/nao-compareceu").hasRole("SINDICO")
+                        // O histórico geral de penalidades é do síndico; o de cada morador ele e o dono consultam.
+                        .requestMatchers(HttpMethod.GET, "/api/penalidades").hasRole("SINDICO")
                         .requestMatchers(HttpMethod.POST, "/api/tarefas-recorrentes", "/api/tarefas-recorrentes/gerar").hasRole("SINDICO")
                         .requestMatchers(HttpMethod.PATCH, "/api/tarefas-recorrentes/*/ativar", "/api/tarefas-recorrentes/*/desativar").hasRole("SINDICO")
 

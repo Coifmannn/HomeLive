@@ -83,12 +83,15 @@ public class TarefaDomestica {
                 || (this.status == StatusTarefa.PENDENTE && LocalDate.now().isAfter(this.dataPrazo));
     }
 
-    public void penalizarAtraso() {
+    /**
+     * Marca como atrasada uma tarefa pendente cujo prazo venceu. Devolve se houve a mudança de estado.
+     * Se isso gera punição, e de quantos pontos, é decisão das regras de penalidade, não da tarefa.
+     */
+    public boolean marcarComoAtrasada() {
         if (this.status == StatusTarefa.PENDENTE && LocalDate.now().isAfter(this.dataPrazo)) {
             this.status = StatusTarefa.ATRASADA;
-            if (this.responsavel != null) {
-                this.responsavel.deduzirPontos(this.pontosPenalidade);
-            }
+            return true;
         }
+        return false;
     }
 }

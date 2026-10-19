@@ -213,6 +213,55 @@ class RegrasDeDonoTest {
                 .andExpect(status().isBadRequest());
     }
 
+    // ---------- Penalidades ----------
+
+    @Test
+    @DisplayName("Morador consulta só o próprio histórico de penalidades")
+    void historicoDePenalidades() throws Exception {
+        mvc.perform(como(LUCAS, org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/penalidades/morador/{id}", sofia.getId())))
+                .andExpect(status().isForbidden());
+        mvc.perform(como(LUCAS, org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/penalidades/morador/{id}", lucas.getId())))
+                .andExpect(status().isOk());
+        mvc.perform(como(SINDICO, org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/penalidades/morador/{id}", sofia.getId())))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Penalidade manual fica em nome do síndico logado, e aparece no histórico do morador")
+    void penalidadeManualPelaApi() throws Exception {
+        String corpo = "{\"moradorId\":" + lucas.getId() + ",\"pontos\":12,\"motivo\":\"Barulho após as 22h\",\"aplicadaPorId\":" + lucas.getId() + "}";
+
+        mvc.perform(json(como(SINDICO, post("/api/penalidades")), corpo))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.aplicadaPorNome").value("Dra. Helena Vance"))
+                .andExpect(jsonPath("$.tipoInfracao").value("MANUAL"));
+
+        mvc.perform(como(LUCAS, org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/penalidades/morador/{id}", lucas.getId())))
+                .andExpect(jsonPath("$[0].motivo").value("Barulho após as 22h"));
+    }
+
+    @Test
+    @DisplayName("Cancelar em cima da hora pela API gera penalidade visível no histórico")
+    void cancelamentoTardioPelaApi() throws Exception {
+        AgendamentoEspaco iminente = agendamentoRepository.findByMoradorId(lucas.getId()).get(0);
+
+        mvc.perform(como(LUCAS, patch("/api/agendamentos/{id}/cancelar", iminente.getId()))).andExpect(status().isNoContent());
+
+        mvc.perform(como(LUCAS, org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/penalidades/morador/{id}", lucas.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].tipoInfracao").value("CANCELAMENTO_TARDIO"))
+                .andExpect(jsonPath("$[0].aplicadaPorNome").value("Sistema Automático"));
+    }
+
+    @Test
+    @DisplayName("Registrar não comparecimento antes de a reserva começar é recusado")
+    void naoComparecimentoAntesDoInicio() throws Exception {
+        AgendamentoEspaco daSofia = agendamentoRepository.findByMoradorId(sofia.getId()).get(0);
+
+        mvc.perform(como(SINDICO, patch("/api/agendamentos/{id}/nao-compareceu", daSofia.getId())))
+                .andExpect(status().isBadRequest());
+    }
+
     // ---------- Identidade: o corpo da requisição não decide quem você é ----------
 
     private static final String DESPESA = "{\"titulo\":\"Teste\",\"valorTotal\":50.00,\"dataVencimento\":\"2030-01-01\","

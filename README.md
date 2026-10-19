@@ -41,7 +41,7 @@ Desacopla os algoritmos de rateio da entidade `Despesa`.
 * **Gamificação de Tarefas**:
   * Conclusão no prazo bonifica o morador com `pontosRecompensa`.
   * Conclusão **fora do prazo** rende só **50%** da recompensa.
-  * Processamento de tarefas atrasadas aplica dedução de pontos (`pontosPenalidade`).
+  * Tarefas vencidas viram `ATRASADA`, e a dedução de pontos segue as **regras de penalidade** (seção E). Sem regra ativa, vale o `pontosPenalidade` da própria tarefa.
 
 ### D. Escala Automática de Tarefas com Rodízio
 A `TarefaRecorrente` é o *modelo* de uma tarefa que se repete ("tirar o lixo, toda semana"). Quando fica devida, gera uma `TarefaDomestica` concreta e avança a própria data, e a escolha de **quem** pega a tarefa é uma **Strategy** plugável (`RodizioStrategy`, com *Template Method* e `RodizioStrategyFactory`, como no rateio):
@@ -56,6 +56,26 @@ A `TarefaRecorrente` é o *modelo* de uma tarefa que se repete ("tirar o lixo, t
 * **Idempotente:** gerar duas vezes no mesmo dia não duplica tarefas. Se o sistema ficou parado, gera uma só e salta para a próxima data futura.
 * Só participam moradores **ativos**. Tarefas geradas aparecem como atribuídas pelo "Sistema Automático".
 * `Periodicidade` (`DIARIA`, `SEMANAL`, `QUINZENAL`, `MENSAL`) é um enum que sabe calcular a própria data seguinte.
+
+### E. Regras de Penalidade Configuráveis (Observer + Strategy)
+O síndico define as regras; o sistema as aplica sozinho quando a infração acontece. Tarefas e reservas **não sabem que penalidades existem**: elas publicam *eventos* (`TarefaMarcadaComoAtrasada`, `ReservaCanceladaPeloMorador`, `MoradorNaoCompareceu`) e o `PenalidadeService` reage a eles (padrão **Observer**).
+
+| Infração (`tipoInfracao`) | Quando acontece |
+| :--- | :--- |
+| `TAREFA_ATRASADA` | A rotina diária (ou o síndico) marca uma tarefa vencida como atrasada |
+| `CANCELAMENTO_TARDIO` | O próprio morador cancela a reserva com menos de `limiteHorasAntecedencia` horas para o início. Cancelamento feito pelo síndico não penaliza |
+| `NAO_COMPARECIMENTO` | O síndico registra que o morador não usou o espaço (`PATCH /api/agendamentos/{id}/nao-compareceu`, só depois do início) |
+| `MANUAL` | O síndico aplica diretamente, informando pontos e motivo. Não usa regra |
+
+**Como calcular** (`modoCalculo`, uma *Strategy* implementada no próprio enum):
+* `FIXA`: sempre `pontosBase`.
+* `PROGRESSIVA`: `pontosBase + incrementoPorReincidencia × reincidências`, limitado por `tetoPontos` (opcional). Reincidência é uma penalidade do mesmo tipo recebida nos últimos `janelaReincidenciaDias` dias (padrão 30).
+
+Detalhes:
+* Só **uma regra ativa por tipo** de infração. Para trocar, desative a atual e crie a nova.
+* Uma regra ativa de `TAREFA_ATRASADA` **substitui** o `pontosPenalidade` de cada tarefa. Sem regra, vale o valor da tarefa. Para as demais infrações, sem regra ativa não há penalidade automática.
+* Cada punição fica registrada (`Penalidade`: morador, regra, pontos, motivo, data, quem aplicou ou "Sistema Automático"), o que dá trilha de auditoria e base para contar reincidências.
+* O morador consulta o próprio histórico; o síndico vê todos.
 
 ---
 
@@ -108,6 +128,9 @@ fetch('http://localhost:8080/api/dashboard', { headers: { Authorization: auth } 
 | Cadastrar espaço / ativar-desativar | ✅ | ❌ |
 | Criar tarefa / processar atrasos | ✅ | ❌ |
 | Criar, ativar/desativar escalas recorrentes e gerar tarefas | ✅ | ❌ |
+| Configurar regras de penalidade e aplicar penalidade manual | ✅ | ❌ |
+| Registrar não comparecimento a uma reserva | ✅ | ❌ |
+| Ver penalidades | ✅ todas | só as próprias |
 | Desativar morador / atualizar estadia | ✅ | ❌ |
 | Lançar despesa | ✅ (administrativa) | ✅ (em nome próprio) |
 | Reservar espaço | ✅ (informa `moradorId`) | ✅ (em nome próprio) |
@@ -141,14 +164,21 @@ fetch('http://localhost:8080/api/dashboard', { headers: { Authorization: auth } 
 | | `PATCH` | `/api/espacos/{id}/status` | síndico | Ativa/desativa o espaço |
 | **Agendamentos** | `POST` | `/api/agendamentos` | logado | Cria reserva. `moradorId` só é necessário para o síndico |
 | | `GET` | `/api/agendamentos` | logado | Lista reservas |
-| | `PATCH` | `/api/agendamentos/{id}/cancelar` | dono ou síndico | Cancela a reserva |
+| | `PATCH` | `/api/agendamentos/{id}/cancelar` | dono ou síndico | Cancela a reserva. Pode gerar penalidade de cancelamento tardio, se o morador cancelar |
+| | `PATCH` | `/api/agendamentos/{id}/nao-compareceu` | síndico | Registra que o morador não usou o espaço (só depois do início) |
 | **Despesas** | `POST` | `/api/despesas` | logado | Lança despesa (solicitante = quem está logado). `competencia` (`aaaa-MM`, opcional) é o mês a que a conta se refere e define quais leituras valem no rateio por consumo |
 | | `POST` | `/api/despesas/{id}/avaliar` | síndico | Corpo: `{ "aprovado": true, "motivoRejeicao": null }`. Aprova (dispara o rateio) ou rejeita |
 | | `PATCH` | `/api/despesas/rateio/{itemId}/quitar` | dono ou síndico | Quita a parcela do rateio |
 | | `GET` | `/api/despesas` | logado | Lista despesas (filtro opcional por status) |
 | **Tarefas** | `POST` | `/api/tarefas` | síndico | Cria tarefa (atribuída pelo síndico logado) |
 | | `PATCH` | `/api/tarefas/{id}/concluir` | responsável ou síndico | Conclui a tarefa (+pontos; 50% se atrasada) |
-| | `POST` | `/api/tarefas/processar-atrasos` | síndico | Processa penalidades das tarefas vencidas |
+| | `POST` | `/api/tarefas/processar-atrasos` | síndico | Marca tarefas vencidas como atrasadas e dispara as penalidades (a rotina diária já faz isso) |
+| **Regras de penalidade** | `GET` | `/api/regras-penalidade` | logado | Lista as regras (todos podem consultar as regras da casa) |
+| | `POST` | `/api/regras-penalidade` | síndico | Cria regra: `nome`, `tipoInfracao`, `modoCalculo`, `pontosBase` (opcionais: `incrementoPorReincidencia`, `tetoPontos`, `janelaReincidenciaDias`, `limiteHorasAntecedencia`) |
+| | `PATCH` | `/api/regras-penalidade/{id}/ativar` e `/desativar` | síndico | Liga ou desliga a regra (só uma ativa por tipo) |
+| **Penalidades** | `GET` | `/api/penalidades` | síndico | Histórico geral |
+| | `GET` | `/api/penalidades/morador/{id}` | dono ou síndico | Histórico de um morador |
+| | `POST` | `/api/penalidades` | síndico | Penalidade manual: `{ "moradorId": 3, "pontos": 10, "motivo": "..." }` |
 | **Tarefas recorrentes** | `GET` | `/api/tarefas-recorrentes` | logado | Lista as escalas com a próxima data e o último responsável |
 | | `POST` | `/api/tarefas-recorrentes` | síndico | Cria escala: `titulo`, `periodicidade`, `prazoEmDias`, `tipoRodizio` (opcionais: `descricao`, `pontosRecompensa`, `pontosPenalidade`, `primeiraGeracao`) |
 | | `PATCH` | `/api/tarefas-recorrentes/{id}/ativar` e `/desativar` | síndico | Liga ou pausa a escala |
@@ -168,6 +198,7 @@ Ao iniciar, o sistema carrega automaticamente as contas abaixo. **A senha de tod
 | Morador | Beatriz Santos | `beatriz.santos@homelive2050.io` |
 
 * **Espaços:** *Escritório Acústico VR*, *Lavanderia Inteligente IoT* e *Espaço Gourmet e Rooftop Hidropônico*.
+* **Regras de penalidade:** tarefa atrasada (progressiva: 10 pts +5 por reincidência, teto 30), cancelamento com menos de 2h de antecedência (fixa, 10 pts) e reserva não utilizada (fixa, 20 pts). Dá para testar processando os atrasos (`POST /api/tarefas/processar-atrasos`): a tarefa vencida do Mateus gera a primeira penalidade.
 * **Escalas recorrentes:** *Retirada do lixo orgânico* (semanal, `SEQUENCIAL`), *Limpeza do Espaço Gourmet* (semanal, `MENOR_CARGA`) e *Troca dos filtros de água* (mensal, `MENOR_PONTUACAO`). As duas primeiras ficam devidas hoje: faça `POST /api/tarefas-recorrentes/gerar` como síndico para ver o rodízio distribuí-las.
 * **Leituras de consumo:** dos dois últimos meses para os quatro moradores.
 * **Despesas & Rateios:** a conta de energia de demonstração é do **mês anterior** e foi rateada com as leituras daquele mês. Há também um rateio igualitário já calculado e uma despesa pendente de aprovação.

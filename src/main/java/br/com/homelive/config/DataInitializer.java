@@ -4,11 +4,14 @@ import br.com.homelive.dto.AgendamentoDTO;
 import br.com.homelive.dto.DespesaDTO;
 import br.com.homelive.model.EspacoComum;
 import br.com.homelive.model.LeituraConsumo;
+import br.com.homelive.model.RegraPenalidade;
 import br.com.homelive.model.Morador;
 import br.com.homelive.model.Sindico;
 import br.com.homelive.model.TarefaDomestica;
 import br.com.homelive.model.TarefaRecorrente;
+import br.com.homelive.model.enums.ModoCalculoPenalidade;
 import br.com.homelive.model.enums.Periodicidade;
+import br.com.homelive.model.enums.TipoInfracao;
 import br.com.homelive.model.enums.TipoRodizio;
 import br.com.homelive.model.enums.CategoriaDespesa;
 import br.com.homelive.model.enums.TipoDespesa;
@@ -16,6 +19,7 @@ import br.com.homelive.model.enums.TipoRateio;
 import br.com.homelive.repository.EspacoComumRepository;
 import br.com.homelive.repository.LeituraConsumoRepository;
 import br.com.homelive.repository.MoradorRepository;
+import br.com.homelive.repository.RegraPenalidadeRepository;
 import br.com.homelive.repository.SindicoRepository;
 import br.com.homelive.repository.TarefaDomesticaRepository;
 import br.com.homelive.repository.TarefaRecorrenteRepository;
@@ -44,6 +48,7 @@ public class DataInitializer implements CommandLineRunner {
     private final TarefaDomesticaRepository tarefaRepository;
     private final TarefaRecorrenteRepository tarefaRecorrenteRepository;
     private final LeituraConsumoRepository leituraConsumoRepository;
+    private final RegraPenalidadeRepository regraPenalidadeRepository;
     private final PasswordEncoder passwordEncoder;
 
     /** Senha única das contas de demonstração. Só para desenvolvimento. */
@@ -208,6 +213,16 @@ public class DataInitializer implements CommandLineRunner {
                 sindicoSalvo
         );
         tarefaRepository.save(t3);
+
+        // 6.1 Regras de penalidade configuradas pelo síndico
+        regraPenalidadeRepository.saveAll(java.util.List.of(
+                new RegraPenalidade("Tarefa atrasada (progressiva)", TipoInfracao.TAREFA_ATRASADA,
+                        ModoCalculoPenalidade.PROGRESSIVA, 10, 5, 30, 30, null),
+                new RegraPenalidade("Cancelamento em cima da hora", TipoInfracao.CANCELAMENTO_TARDIO,
+                        ModoCalculoPenalidade.FIXA, 10, null, null, null, 2),
+                new RegraPenalidade("Reserva não utilizada", TipoInfracao.NAO_COMPARECIMENTO,
+                        ModoCalculoPenalidade.FIXA, 20, null, null, null, null)
+        ));
 
         // 7. Tarefas recorrentes (escalas com rodízio). Devidas hoje: POST /api/tarefas-recorrentes/gerar as distribui.
         tarefaRecorrenteRepository.saveAll(java.util.List.of(

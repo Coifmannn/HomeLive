@@ -53,6 +53,12 @@ class PermissoesPorPerfilTest {
             "POST,   /api/tarefas-recorrentes/gerar",
             "PATCH,  /api/tarefas-recorrentes/1/ativar",
             "PATCH,  /api/tarefas-recorrentes/1/desativar",
+            "POST,   /api/regras-penalidade",
+            "PATCH,  /api/regras-penalidade/1/ativar",
+            "PATCH,  /api/regras-penalidade/1/desativar",
+            "POST,   /api/penalidades",
+            "GET,    /api/penalidades",
+            "PATCH,  /api/agendamentos/1/nao-compareceu",
     })
     void moradorNaoPodeAcoesDeSindico(String metodo, String url) throws Exception {
         assertEquals(403, chamar(HttpMethod.valueOf(metodo), url, MORADOR));
@@ -74,6 +80,12 @@ class PermissoesPorPerfilTest {
             "POST,   /api/tarefas-recorrentes/gerar",
             "PATCH,  /api/tarefas-recorrentes/1/ativar",
             "PATCH,  /api/tarefas-recorrentes/1/desativar",
+            "POST,   /api/regras-penalidade",
+            "PATCH,  /api/regras-penalidade/1/ativar",
+            "PATCH,  /api/regras-penalidade/1/desativar",
+            "POST,   /api/penalidades",
+            "GET,    /api/penalidades",
+            "PATCH,  /api/agendamentos/1/nao-compareceu",
     })
     void sindicoPassaPelaSeguranca(String metodo, String url) throws Exception {
         int status = chamar(HttpMethod.valueOf(metodo), url, SINDICO);
@@ -98,7 +110,7 @@ class PermissoesPorPerfilTest {
     @DisplayName("Consultas ficam abertas a qualquer perfil autenticado")
     @CsvSource({
             "/api/dashboard", "/api/moradores", "/api/moradores/ranking", "/api/espacos",
-            "/api/agendamentos", "/api/despesas", "/api/tarefas", "/api/sindicos", "/api/tarefas-recorrentes",
+            "/api/agendamentos", "/api/despesas", "/api/tarefas", "/api/sindicos", "/api/tarefas-recorrentes", "/api/regras-penalidade",
     })
     void consultasParaQualquerLogado(String url) throws Exception {
         assertEquals(200, chamar(HttpMethod.GET, url, MORADOR));

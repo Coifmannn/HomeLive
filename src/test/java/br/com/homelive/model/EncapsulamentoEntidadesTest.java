@@ -15,7 +15,8 @@ class EncapsulamentoEntidadesTest {
 
     private static final List<Class<?>> ENTIDADES = List.of(
             Usuario.class, Morador.class, Sindico.class, EspacoComum.class, AgendamentoEspaco.class,
-            Despesa.class, RateioItem.class, TarefaDomestica.class, TarefaRecorrente.class, LeituraConsumo.class);
+            Despesa.class, RateioItem.class, TarefaDomestica.class, TarefaRecorrente.class, LeituraConsumo.class,
+            RegraPenalidade.class, Penalidade.class);
 
     @Test
     @DisplayName("Nenhuma entidade tem método público setXxx(...)")
