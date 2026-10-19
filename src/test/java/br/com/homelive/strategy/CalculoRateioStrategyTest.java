@@ -122,4 +122,50 @@ class CalculoRateioStrategyTest {
 
         assertEquals(new BigDecimal("800.00"), soma);
     }
+
+    @Test
+    @DisplayName("A soma dos itens fecha exatamente no valor total mesmo com centavos quebrados")
+    void testSomaExataComValorQuebrado() {
+        Despesa despesa = new Despesa(
+                "Conta quebrada", "Teste de arredondamento",
+                new BigDecimal("1000000.01"),
+                LocalDate.now().plusDays(10),
+                CategoriaDespesa.ENERGIA_SOLAR,
+                TipoDespesa.VARIAVEL,
+                TipoRateio.POR_CONSUMO,
+                null
+        );
+
+        for (CalculoRateioStrategy strategy : List.of(
+                new RateioIgualitarioStrategy(), new RateioPorConsumoStrategy(), new RateioPorEstadiaStrategy())) {
+            BigDecimal soma = strategy.calcular(despesa, moradores).stream()
+                    .map(RateioItem::getValorCalculado)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            assertEquals(new BigDecimal("1000000.01"), soma, strategy.getClass().getSimpleName());
+        }
+    }
+
+    @Test
+    @DisplayName("Rateio sem moradores deve ser rejeitado")
+    void testRateioSemMoradores() {
+        Despesa despesa = new Despesa("Conta", "x", new BigDecimal("10.00"), LocalDate.now().plusDays(1),
+                CategoriaDespesa.INTERNET_QUANTICA, TipoDespesa.FIXA, TipoRateio.IGUALITARIO, null);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new RateioIgualitarioStrategy().calcular(despesa, List.of()));
+    }
+
+    @Test
+    @DisplayName("Rateio por consumo com consumo total zero deve ser rejeitado")
+    void testRateioPorConsumoZerado() {
+        m1.setConsumoDeclaradoKwh(0.0);
+        m2.setConsumoDeclaradoKwh(0.0);
+        m3.setConsumoDeclaradoKwh(0.0);
+        Despesa despesa = new Despesa("Conta", "x", new BigDecimal("10.00"), LocalDate.now().plusDays(1),
+                CategoriaDespesa.ENERGIA_SOLAR, TipoDespesa.VARIAVEL, TipoRateio.POR_CONSUMO, null);
+
+        assertThrows(IllegalStateException.class,
+                () -> new RateioPorConsumoStrategy().calcular(despesa, moradores));
+    }
 }
