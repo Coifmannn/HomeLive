@@ -2,11 +2,16 @@ package br.com.homelive.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
@@ -70,6 +75,45 @@ public class GlobalExceptionHandler {
         body.put("error", "Acesso Negado");
         body.put("message", ex.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
+    }
+
+    // Erros de uso da API que o framework detecta antes de chegar ao controller. Sem estes handlers
+    // caíam no genérico e viravam 500, como se o servidor tivesse falhado.
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleRotaInexistente(NoResourceFoundException ex) {
+        return resposta(HttpStatus.NOT_FOUND, "Rota Não Encontrada", "Não existe a rota " + ex.getResourcePath() + ".");
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, Object>> handleMetodoNaoSuportado(HttpRequestMethodNotSupportedException ex) {
+        return resposta(HttpStatus.METHOD_NOT_ALLOWED, "Método Não Permitido",
+                "Esta rota não aceita o método " + ex.getMethod() + ".");
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleCorpoIlegivel(HttpMessageNotReadableException ex) {
+        return resposta(HttpStatus.BAD_REQUEST, "Corpo da Requisição Inválido",
+                "O corpo da requisição está ausente ou não é um JSON válido para esta rota.");
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Map<String, Object>> handleParametroAusente(MissingServletRequestParameterException ex) {
+        return resposta(HttpStatus.BAD_REQUEST, "Parâmetro Ausente", "Falta o parâmetro '" + ex.getParameterName() + "'.");
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleTipoInvalido(MethodArgumentTypeMismatchException ex) {
+        return resposta(HttpStatus.BAD_REQUEST, "Parâmetro Inválido", "O valor de '" + ex.getName() + "' é inválido.");
+    }
+
+    private ResponseEntity<Map<String, Object>> resposta(HttpStatus status, String erro, String mensagem) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", status.value());
+        body.put("error", erro);
+        body.put("message", mensagem);
+        return ResponseEntity.status(status).body(body);
     }
 
     @ExceptionHandler(DateTimeParseException.class)
