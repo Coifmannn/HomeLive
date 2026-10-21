@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Cadastro - Homelive 2050">
+    <title>Homelive | Criar Conta</title>
+    <!-- Fontes do Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icones modernos Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- Folha de estilo principal em Portugues -->
+    <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body class="corpo-login">
+    <!-- Orbes animados de fundo para imersão 2050 -->
+    <div class="orbe-fundo orbe-1"></div>
+    <div class="orbe-fundo orbe-2"></div>
+    <div class="orbe-fundo orbe-3"></div>
+
+    <div class="container-login">
+        <div class="cartao-login painel-vidro">
+            <div class="cabecalho-login">
+                <div class="marca">
+                    <i class='bx bx-home-alt-2'></i>
+                    <span>Homelive<span>.</span></span>
+                </div>
+                <h2>Junte-se ao Futuro</h2>
+                <p>Crie seu perfil e conecte-se ao seu Co-living.</p>
+            </div>
+
+            <!-- Formulário de cadastro -->
+            <form id="formulario-cadastro" class="formulario-moderno">
+                <div class="grupo-formulario">
+                    <label for="nome">Nome Completo</label>
+                    <div class="input-com-icone">
+                        <i class='bx bx-id-card'></i>
+                        <input type="text" id="nome" class="input-vidro" placeholder="Ex: Felipe Sousa" required>
+                    </div>
+                </div>
+
+                <div class="linha-formulario">
+                    <div class="grupo-formulario">
+                        <label for="email">E-mail</label>
+                        <div class="input-com-icone">
+                            <i class='bx bx-envelope'></i>
+                            <input type="email" id="email" class="input-vidro" placeholder="felipe@exemplo.com" required>
+                        </div>
+                    </div>
+                    <div class="grupo-formulario">
+                        <label for="cpf">CPF</label>
+                        <div class="input-com-icone">
+                            <i class='bx bx-barcode'></i>
+                            <input type="text" id="cpf" class="input-vidro" placeholder="000.000.000-00" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="linha-formulario">
+                    <div class="grupo-formulario">
+                        <label for="senha">Criar Senha</label>
+                        <div class="input-com-icone">
+                            <i class='bx bx-lock-alt'></i>
+                            <input type="password" id="senha" class="input-vidro" placeholder="••••••••" required>
+                        </div>
+                    </div>
+                    <div class="grupo-formulario">
+                        <label for="confirma-senha">Confirmar Senha</label>
+                        <div class="input-com-icone">
+                            <i class='bx bx-check-shield'></i>
+                            <input type="password" id="confirma-senha" class="input-vidro" placeholder="••••••••" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="opcoes-login" style="margin-top: -10px; margin-bottom: 20px;">
+                    <label class="lembrar-mim" style="font-size: 0.8rem;">
+                        <input type="checkbox" required> Eu aceito os <a href="#" onclick="abrirModal('modalTermos'); return false;" style="color: var(--destaque-azul); text-decoration: underline;">Termos de Convivência (2050)</a>.
+                    </label>
+                </div>
+
+                <button type="submit" class="botao-primario largura-total">Criar Meu Perfil</button>
+            </form>
+
+            <div class="rodape-login">
+                <p>Já possui um perfil? <a href="login.html">Fazer Login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal dos Termos 2050 -->
+    <div class="sobreposicao-modal" id="modalTermos">
+        <div class="caixa-modal painel-vidro">
+            <div class="cabecalho-modal">
+                <h3>Termos de Convivência (Ano 2050)</h3>
+                <button class="botao-fechar" onclick="fecharModal('modalTermos')"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="corpo-modal" style="max-height: 300px; overflow-y: auto; color: var(--texto-suave); font-size: 0.85rem; line-height: 1.6; text-align: justify; padding-right: 15px;">
+                <p><strong>1. Gestão Inteligente:</strong> Ao ingressar na rede Homelive, você concorda que o algoritmo de inteligência artificial da residência terá acesso aos dados dos seus sensores de consumo (água, energia solar e banda larga quântica) para calcular o rateio híbrido.</p>
+                <p><strong>2. Penalidades em XP:</strong> O não cumprimento de tarefas de manutenção nas áreas comuns (como o esvaziamento de lixeiras ou reabastecimento do jardim hidropônico) resultará em multas automáticas no seu Nível XP (Experience Points).</p>
+                <p><strong>3. Espaços Compartilhados:</strong> Reservas para o Escritório Acústico ou Espaço Gourmet que não forem canceladas com 15 minutos de antecedência gerarão bloqueio no sistema de agendamento por 48 horas.</p>
+                <p><strong>4. Privacidade Holográfica:</strong> Toda gravação de áudio e vídeo holográfico feita nas áreas comuns é criptografada e apagada a cada 7 dias, servindo apenas para resolução de conflitos em assembleias.</p>
+                <button type="button" class="botao-primario largura-total mt-3" onclick="fecharModal('modalTermos')">Entendido e Aceito</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Homelive - Sistema de Gestão de Convivência Inteligente para 2050">
+    <title>Homelive | Painel de Controle</title>
+    <!-- Fontes do Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icones modernos Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="css/estilo.css">
+
+</head>
+
+<body>
+    <!-- Fundo de Gradientes Animados -->
+    <div class="orbe-fundo orbe-1"></div>
+    <div class="orbe-fundo orbe-2"></div>
+    <div class="orbe-fundo orbe-3"></div>
+
+    <div class="container-app">
+        <!-- Navegação Lateral -->
+        <nav class="menu-lateral painel-vidro">
+            <div class="marca">
+                <i class='bx bx-home-alt-2'></i>
+                <span>Homelive<span>.</span></span>
+            </div>
+
+            <ul class="links-navegacao">
+                <li class="ativo" data-alvo="visao-geral">
+                    <i class='bx bx-grid-alt'></i>
+                    <span>Visão Geral</span>
+                </li>
+                <li data-alvo="financas">
+                    <i class='bx bx-wallet'></i>
+                    <span>Finanças & Rateio</span>
+                </li>
+                <li data-alvo="tarefas">
+                    <i class='bx bx-check-shield'></i>
+                    <span>Escalas & Tarefas</span>
+                </li>
+                <li data-alvo="reservas">
+                    <i class='bx bx-calendar-event'></i>
+                    <span>Reservas</span>
+                </li>
+                <li data-alvo="moradores">
+                    <i class='bx bx-group'></i>
+                    <span>Moradores</span>
+                </li>
+                <li data-alvo="regras">
+                    <i class='bx bx-shield-alt-2'></i>
+                    <span>Regras & Penalidades</span>
+                </li>
+            </ul>
+
+            <div class="seletor-papel-usuario">
+                <a href="login.html" id="botao-sair" class="botao-sair mt-3"><i class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </nav>
+
+        <!-- Área Principal de Conteúdo -->
+        <main class="conteudo-principal">
+            <!-- Barra Superior -->
+            <header class="barra-topo">
+                <button class="toggle-menu" id="toggle-menu" aria-label="Abrir menu"><i class='bx bx-menu'></i></button>
+                <div class="texto-boas-vindas">
+                    <h1 id="titulo-pagina">Visão Geral</h1>
+                    <p id="exibicao-data"></p>
+                </div>
+
+                <div class="acoes-topo">
+                    <div class="emblema-gamificacao dica-ferramenta" data-dica="Seus Pontos de Convivência">
+                        <i class='bx bx-star'></i>
+                        <span id="pontos-usuario">—</span>
+                    </div>
+                    <div class="botao-notificacao dica-ferramenta" data-dica="Pendências">
+                        <i class='bx bx-bell'></i>
+                        <span class="distintivo" id="distintivo-pendencias">0</span>
+                    </div>
+                    <div class="cartao-perfil painel-vidro">
+                        <img id="avatar-usuario" src="" alt="Avatar do Usuário">
+                        <div class="info-perfil">
+                            <span class="nome" id="nome-usuario">...</span>
+                            <span class="papel" id="exibicao-papel">...</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Container das Telas (Views) -->
+            <div class="container-telas">
+
+                <!-- TELA 1: Visão Geral (Dashboard) -->
+                <section id="visao-geral" class="tela tela-ativa">
+                    <div class="grade-estatisticas">
+                        <div class="cartao-estatistica painel-vidro">
+                            <div class="icone-estatistica pulso-azul"><i class='bx bx-pie-chart-alt-2'></i></div>
+                            <div class="detalhes-estatistica">
+                                <h3 id="est1-titulo">Seu Rateio Pendente</h3>
+                                <h2 id="est1-valor">—</h2>
+                                <p id="est1-sub"></p>
+                            </div>
+                        </div>
+                        <div class="cartao-estatistica painel-vidro">
+                            <div class="icone-estatistica pulso-roxo"><i class='bx bx-water'></i></div>
+                            <div class="detalhes-estatistica">
+                                <h3 id="est2-titulo">Seu Consumo</h3>
+                                <h2 id="est2-valor">—</h2>
+                                <p id="est2-sub"></p>
+                            </div>
+                        </div>
+                        <div class="cartao-estatistica painel-vidro">
+                            <div class="icone-estatistica pulso-verde"><i class='bx bx-trophy'></i></div>
+                            <div class="detalhes-estatistica">
+                                <h3 id="est3-titulo">Ranking da Casa</h3>
+                                <h2 id="est3-valor">—</h2>
+                                <p id="est3-sub"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bento-dashboard">
+                        <div class="caixa-bento painel-vidro bento-grande">
+                            <div class="cabecalho-caixa">
+                                <h2 id="titulo-proximas-escalas">Suas Próximas Escalas</h2>
+                                <button class="botao-texto" onclick="navegarPara('tarefas')">Ver todas</button>
+                            </div>
+                            <ul class="lista-tarefas" id="dash-tarefas"></ul>
+                        </div>
+
+                        <div class="caixa-bento painel-vidro">
+                            <div class="cabecalho-caixa">
+                                <h2>Próximas Reservas</h2>
+                            </div>
+                            <div id="dash-reservas"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TELA 2: Finanças -->
+                <section id="financas" class="tela">
+                    <div class="cabecalho-secao">
+                        <h2>Rateio de Custos</h2>
+                        <div class="acoes-cabecalho">
+                            <button class="botao-contorno" onclick="abrirModal('modalLeitura')">Registrar Consumo (kWh)</button>
+                            <button class="botao-primario" onclick="abrirModal('modalNovaDespesa')">Lançar Gasto</button>
+                        </div>
+                    </div>
+
+                    <div class="algoritmo-financa painel-vidro">
+                        <div class="cabecalho-algo">
+                            <i class='bx bx-network-chart'></i>
+                            <div>
+                                <h3>Algoritmo de Divisão por Despesa</h3>
+                                <p>Cada gasto escolhe o seu: <strong>Igualitário</strong>, <strong>Por Estadia</strong> (dias na residência) ou <strong>Por Consumo</strong> (leituras de kWh do mês da conta).</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="container-tabela-despesas painel-vidro">
+                        <table class="tabela-moderna">
+                            <thead>
+                                <tr>
+                                    <th>Despesa</th>
+                                    <th>Tipo</th>
+                                    <th>Valor Total</th>
+                                    <th id="th-rateio">Seu Rateio</th>
+                                    <th>Status</th>
+                                    <th>Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-despesas"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- TELA 3: Escalas e Tarefas -->
+                <section id="tarefas" class="tela">
+                    <div class="cabecalho-secao">
+                        <h2>Tarefas da Casa</h2>
+                        <div class="acoes-cabecalho apenas-admin">
+                            <button class="botao-primario" onclick="abrirModal('modalNovaTarefa')">Nova Tarefa</button>
+                            <button class="botao-contorno" data-acao="processar-atrasos">Processar Atrasos</button>
+                            <button class="botao-perigo" onclick="abrirModal('modalPenalidade')">Aplicar Penalidade</button>
+                        </div>
+                    </div>
+                    <div id="lista-tarefas" class="grade-tarefas"></div>
+
+                    <div class="cabecalho-secao mt-4">
+                        <h2>Escalas Recorrentes (Rodízio)</h2>
+                        <div class="acoes-cabecalho apenas-admin">
+                            <button class="botao-primario" onclick="abrirModal('modalNovaEscala')">Nova Escala</button>
+                            <button class="botao-contorno" data-acao="gerar-escalas">Gerar Tarefas Devidas</button>
+                        </div>
+                    </div>
+                    <div id="lista-escalas" class="grade-tarefas"></div>
+                </section>
+
+                <!-- TELA 4: Reservas -->
+                <section id="reservas" class="tela">
+                    <div class="cabecalho-secao">
+                        <h2>Reservas de Espaços</h2>
+                        <p>Agende o uso das áreas compartilhadas para evitar conflitos de horários.</p>
+                    </div>
+
+                    <div class="grade-espacos" id="lista-espacos"></div>
+
+                    <div class="cabecalho-secao mt-4">
+                        <h2>Reservas Agendadas</h2>
+                    </div>
+                    <div class="container-tabela-despesas painel-vidro">
+                        <table class="tabela-moderna">
+                            <thead>
+                                <tr>
+                                    <th>Espaço</th>
+                                    <th>Morador</th>
+                                    <th>Horário</th>
+                                    <th>Status</th>
+                                    <th>Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-agendamentos"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- TELA 5: Moradores -->
+                <section id="moradores" class="tela">
+                    <div class="cabecalho-secao">
+                        <h2>Gerenciamento de Moradores</h2>
+                        <div class="acoes-cabecalho apenas-admin">
+                            <button class="botao-primario" onclick="abrirModal('modalAdicionarMorador')">Adicionar Morador</button>
+                        </div>
+                    </div>
+                    <div id="lista-moradores" class="grade-moradores"></div>
+                </section>
+
+                <!-- TELA 6: Regras & Penalidades -->
+                <section id="regras" class="tela">
+                    <div class="cabecalho-secao">
+                        <h2>Regras de Penalidade</h2>
+                        <p>As regras valem para todos e são aplicadas automaticamente quando a infração acontece.</p>
+                        <div class="acoes-cabecalho apenas-admin">
+                            <button class="botao-primario" onclick="abrirModal('modalNovaRegra')">Nova Regra</button>
+                        </div>
+                    </div>
+                    <div id="lista-regras" class="grade-votacoes"></div>
+
+                    <div class="cabecalho-secao mt-4">
+                        <h2 id="titulo-penalidades">Minhas Penalidades</h2>
+                    </div>
+                    <div class="container-tabela-despesas painel-vidro">
+                        <table class="tabela-moderna">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Morador</th>
+                                    <th>Infração</th>
+                                    <th>Pontos</th>
+                                    <th>Motivo</th>
+                                    <th>Aplicada por</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-penalidades"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    <div class="overlay-menu" id="overlay-menu"></div>
+
+    <!-- Modal de Reserva -->
+    <div class="sobreposicao-modal" id="modalReserva">
+        <div class="caixa-modal painel-vidro">
+            <div class="cabecalho-modal">
+                <h3 id="nome-espaco-modal">Reservar Espaço</h3>
+                <button class="botao-fechar" onclick="fecharModal('modalReserva')"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="corpo-modal">
+                <form id="formulario-reserva" class="formulario-moderno">
+                    <input type="hidden" id="reserva-espaco-id">
+                    <div class="grupo-formulario apenas-admin">
+                        <label>Reservar em nome de</label>
+                        <select id="reserva-morador" class="input-vidro"></select>
+                    </div>
+                    <div class="grupo-formulario">
+                        <label>Data da Reserva</label>
+                        <input type="date" id="reserva-data" class="input-vidro" required>
+                    </div>
+                    <div class="linha-formulario">
+                        <div class="grupo-formulario">
+                            <label>Horário de Início</label>
+                            <input type="time" id="reserva-inicio" class="input-vidro" required>
+                        </div>
+                        <div class="grupo-formulario">
+                            <label>Horário de Fim</label>
+                            <input type="time" id="reserva-fim" class="input-vidro" required>
+                        </div>
+                    </div>
+                    <div class="grupo-formulario">
+                        <label>Motivo (opcional)</label>
+                        <input type="text" id="reserva-motivo" class="input-vidro">
+                    </div>
+                    <div class="aviso-ia">
+                        <i class='bx bx-bot'></i>
+                        <p>O sistema recusa a reserva se o horário bater com outra já confirmada no mesmo espaço.</p>
+                    </div>
+                    <button type="submit" class="botao-primario largura-total mt-3">Confirmar Reserva de Espaço</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Adicionar Morador -->
+    <div class="sobreposicao-modal" id="modalAdicionarMorador">
+        <div class="caixa-modal painel-vidro">
+            <div class="cabecalho-modal">
+                <h3>Adicionar Novo Morador</h3>
+                <button class="botao-fechar" onclick="fecharModal('modalAdicionarMorador')"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="corpo-modal">
+                <form id="formulario-adicionar-morador" class="formulario-moderno">
+                    <div class="grupo-formulario">
+                        <label>Nome do Morador</label>
+                        <input type="text" id="novo-morador-nome" class="input-vidro" required>
+                    </div>
+                    <div class="linha-formulario">
+                        <div class="grupo-formulario">
+                            <label>E-mail</label>
+                            <input type="email" id="novo-morador-email" class="input-vidro" required>
+                        </div>
+                        <div class="grupo-formulario">
+                            <label>Senha (mín. 6)</label>
+                            <input type="password" id="novo-morador-senha" class="input-vidro" minlength="6" required>
+                        </div>
+                    </div>
+                    <div class="linha-formulario">
+                        <div class="grupo-formulario">
+                            <label>Quarto</label>
+                            <input type="text" id="novo-morador-quarto" class="input-vidro" required>
+                        </div>
+                        <div class="grupo-formulario">
+                            <label>Telefone</label>
+                            <input type="text" id="novo-morador-telefone" class="input-vidro">
+                        </div>
+                    </div>
+                    <button type="submit" class="botao-primario largura-total mt-3">Salvar Morador</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nova Despesa -->
+    <div class="sobreposicao-modal" id="modalNovaDespesa">
+        <div class="caixa-modal painel-vidro">
+            <div class="cabecalho-modal">
+                <h3>Lançar Novo Gasto</h3>
+                <button class="botao-fechar" onclick="fecharModal('modalNovaDespesa')"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="corpo-modal">
+                <form id="formulario-nova-despesa" class="formulario-moderno">
+                    <div class="grupo-formulario">
+                        <label>Título</label>
+                        <input type="text" id="nova-despesa-titulo" class="input-vidro" required>
+                    </div>
+                    <div class="grupo-formulario">
+                        <label>Descrição (opcional)</label>
+                        <input type="text" id="nova-despesa-desc" class="input-vidro">
+                    </div>
+                    <div class="linha-formulario">
+                        <div class="grupo-formulario">
+                            <label>Valor Total (R$)</label>
+                            <input type="number" id="nova-despesa-valor" step="0.01" min="0.01" class="input-vidro" required>
+                        </div>
+                        <div class="grupo-formulario">
+                            <label>Vencimento</label>
+                            <input type="date" id="nova-despesa-vencimento" class="input-vidro" required>
+                        </div>
+                    </div>
+                    <div class="linha-formulario">
+                        <div class="grupo-formulario">
+                            <label>Categoria</label>
+                            <select id="nova-despesa-categoria" class="input-vidro">
+                                <option value="ENERGIA_SOLAR">Energia</option>
+                                <option value="AGUA_REUTILIZAVEL">Água</option>
+                                <option value="INTERNET_QUANTICA">Internet</option>
+                                <option value="MANUTENCAO_ROBOS">Manutenção</option>
+                                <option value="ALIMENTACAO_INTELIGENTE">Alimentação</option>
+                                <option value="CONDOMINIO_GERAL">Condomínio</option>
+                                <option value="OUTROS">Outros</option>
+                            </select>
+                        </div>
+                        <div class="grupo-formulario">
+                            <label>Tipo</label>
+                            <select id="nova-despesa-tipo" class="input-vidro">
+                                <option value="FIXA">Fixa</option>
+                                <option value="VARIAVEL">Variável</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="linha-formulario">
+                        <div class="grupo-formulario">
+                            <label>Divisão</label>
+                            <select id="nova-despesa-rateio" class="input-vidro">
+                                <option value="IGUALITARIO">Igualitária</option>
+                                <option value="POR_ESTADIA">Por estadia</option>
+                                <option value="POR_CONSUMO">Por consumo (kWh)</option>
+                            </select>
+                        </div>
+                        <div class="grupo-formulario">
+                            <label>Mês da conta</label>
+                            <input type="month" id="nova-despesa-competencia" class="input-vidro">
+                        </div>
+                    </div>
+                    <button type="submit" class="botao-primario largura-total mt-3">Enviar para Aprovação</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Leitura de Consumo -->
+    <div class="sobreposicao-modal" id="modalLeitura">
+        <div class="caixa-modal painel-vidro">
+            <div class="cabecalho-modal">
+                <h3>Registrar Consumo</h3>
+                <button class="botao-fechar" onclick="fecharModal('modalLeitura')"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="corpo-modal">
+                <form id="formulario-leitura" class="formulario-moderno">
+                    <div class="grupo-formulario apenas-admin">
+                        <label>Morador</label>
+                        <select id="leitura-morador" class="input-vidro"></select>
+                    </div>
+                    <div class="linha-formulario">
+                        <div class="grupo-formulario">
+                            <label>Consumo (kWh)</label>
+                            <input type="number" id="leitura-kwh" step="0.01" min="0" class="input-vidro" required>
+                        </div>
+                        <div class="grupo-formulario">
+                            <label>Mês (padrão: atual)</label>
+                            <input type="month" id="leitura-competencia" class="input-vidro">
+                        </div>
+                    </div>
+                    <button type="submit" class="botao-primario largura-total mt-3">Salvar Leitura</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nova Tarefa -->
+    <div class="sobreposicao-modal" id="modalNovaTarefa">
+        <div class="caixa-modal painel-vidro">
+            <div class="cabecalho-modal">
+                <h3>Adicionar Nova Tarefa</h3>
+                <button class="botao-fechar" onclick="fecharModal('modalNovaTarefa')"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="corpo-modal">
+                <form id="formulario-nova-tarefa" class="formulario-moderno">
+                    <div class="grupo-formulario">
+                        <label>Título da Tarefa</label>
+                        <input type="text" id="nova-tarefa-titulo" class="input-vidro" required>
+                    </div>
+                    <div class="grupo-formulario">
+                        <label>Descrição</label>
+                        <input type="text" id="nova-tarefa-desc" class="input-vidro">
+                    </div>
+                    <div class="linha-formulario">
+                        <div class="grupo-formulario">
+                            <label>Responsável</label>
+                            <select id="nova-tarefa-responsavel" class="input-vidro" required></select>
+                        </div>
+                        <div class="grupo-formulario">
+                            <label>Prazo</label>
+                            <input type="date" id="nova-tarefa-prazo" class="input-vidro" required>
+                        </div>
+                    </div>
+                    <div class="linha-formulario">
+                        <div class="grupo-formulario">
+                            <label>Recompensa (pts)</label>
+                            <input type="number" id="nova-tarefa-xp" min="0" class="input-vidro">
+                        </div>
+                        <div class="grupo-formulario">
+                            <label>Penalidade (pts)</label>
+                            <input type="number" id="nova-tarefa-penalidade" min="0" class="input-vidro">
+                        </div>
+                    </div>
+                    <button type="submit" class="botao-primario largura-total mt-3">Criar Tarefa</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nova Escala -->
+    <div class="sobreposicao-modal" id="modalNovaEscala">
+        <div class="caixa-modal painel-vidro">
+            <div class="cabecalho-modal">
+                <h3>Nova Escala Recorrente</h3>
+                <button class="botao-fechar" onclick="fecharModal('modalNovaEscala')"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="corpo-modal">
+                <form id="formulario-nova-escala" class="formulario-moderno">
+                    <div class="grupo-formulario">
+                        <label>Título</label>
+                        <input type="text" id="escala-titulo" class="input-vidro" required>
+                    </div>
+                    <div class="grupo-formulario">
+                        <label>Descrição</label>
+                        <input type="text" id="escala-desc" class="input-vidro">
+                    </div>
+                    <div class="linha-formulario">
+                        <div class="grupo-formulario">
+                            <label>Repete</label>
+                            <select id="escala-periodicidade" class="input-vidro">
+                                <option value="DIARIA">Diária</option>
+                                <option value="SEMANAL" selected>Semanal</option>
+                                <option value="QUINZENAL">Quinzenal</option>
+                                <option value="MENSAL">Mensal</option>
+                            </select>
+                        </div>
+                        <div class="grupo-formulario">
+                            <label>Prazo (dias)</label>
+                            <input type="number" id="escala-prazo" min="1" value="2" class="input-vidro" required>
+                        </div>
+                    </div>
+                    <div class="grupo-formulario">
+                        <label>Rodízio</label>
+                        <select id="escala-rodizio" class="input-vidro">
+                            <option value="SEQUENCIAL">Sequencial (em ordem)</option>
+                            <option value="MENOR_PONTUACAO">Quem tem menos pontos</option>
+                            <option value="MENOR_CARGA">Quem tem menos tarefas abertas</option>
+                        </select>
+                    </div>
+                    <div class="linha-formulario">
+                        <div class="grupo-formulario">
+                            <label>Recompensa (pts)</label>
+                            <input type="number" id="escala-xp" min="0" class="input-vidro">
+                        </div>
+                        <div class="grupo-formulario">
+                            <label>Penalidade (pts)</label>
+                            <input type="number" id="escala-penalidade" min="0" class="input-vidro">
+                        </div>
+                    </div>
+                    <div class="grupo-formulario">
+                        <label>Primeira geração (padrão: hoje)</label>
+                        <input type="date" id="escala-primeira" class="input-vidro">
+                    </div>
+                    <button type="submit" class="botao-primario largura-total mt-3">Criar Escala</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Penalidade Manual -->
+    <div class="sobreposicao-modal" id="modalPenalidade">
+        <div class="caixa-modal painel-vidro">
+            <div class="cabecalho-modal">
+                <h3>Aplicar Penalidade</h3>
+                <button class="botao-fechar" onclick="fecharModal('modalPenalidade')"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="corpo-modal">
+                <form id="formulario-penalidade" class="formulario-moderno">
+                    <div class="grupo-formulario">
+                        <label>Morador</label>
+                        <select id="penalidade-morador" class="input-vidro" required></select>
+                    </div>
+                    <div class="grupo-formulario">
+                        <label>Pontos a descontar</label>
+                        <input type="number" id="penalidade-pontos" min="1" class="input-vidro" required>
+                    </div>
+                    <div class="grupo-formulario">
+                        <label>Motivo</label>
+                        <input type="text" id="penalidade-motivo" class="input-vidro" required>
+                    </div>
+                    <button type="submit" class="botao-perigo largura-total mt-3">Aplicar Penalidade</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nova Regra -->
+    <div class="sobreposicao-modal" id="modalNovaRegra">
+        <div class="caixa-modal painel-vidro">
+            <div class="cabecalho-modal">
+                <h3>Nova Regra de Penalidade</h3>
+                <button class="botao-fechar" onclick="fecharModal('modalNovaRegra')"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="corpo-modal">
+                <form id="formulario-nova-regra" class="formulario-moderno">
+                    <div class="grupo-formulario">
+                        <label>Nome da regra</label>
+                        <input type="text" id="regra-nome" class="input-vidro" required>
+                    </div>
+                    <div class="linha-formulario">
+                        <div class="grupo-formulario">
+                            <label>Infração</label>
+                            <select id="regra-infracao" class="input-vidro">
+                                <option value="TAREFA_ATRASADA">Tarefa atrasada</option>
+                                <option value="CANCELAMENTO_TARDIO">Cancelamento tardio</option>
+                                <option value="NAO_COMPARECIMENTO">Não comparecimento</option>
+                            </select>
+                        </div>
+                        <div class="grupo-formulario">
+                            <label>Cálculo</label>
+                            <select id="regra-modo" class="input-vidro">
+                                <option value="FIXA">Fixa</option>
+                                <option value="PROGRESSIVA">Progressiva (reincidência)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grupo-formulario">
+                        <label>Pontos base</label>
+                        <input type="number" id="regra-base" min="1" class="input-vidro" required>
+                    </div>
+                    <div id="regra-campos-progressiva">
+                        <div class="linha-formulario">
+                            <div class="grupo-formulario">
+                                <label>+ por reincidência</label>
+                                <input type="number" id="regra-incremento" min="0" class="input-vidro">
+                            </div>
+                            <div class="grupo-formulario">
+                                <label>Teto (opcional)</label>
+                                <input type="number" id="regra-teto" min="1" class="input-vidro">
+                            </div>
+                        </div>
+                        <div class="grupo-formulario">
+                            <label>Janela de reincidência em dias (padrão 30)</label>
+                            <input type="number" id="regra-janela" min="1" class="input-vidro">
+                        </div>
+                    </div>
+                    <div class="grupo-formulario" id="regra-campo-horas" style="display:none;">
+                        <label>Antecedência mínima (horas)</label>
+                        <input type="number" id="regra-horas" min="1" class="input-vidro">
+                    </div>
+                    <button type="submit" class="botao-primario largura-total mt-3">Criar Regra</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="container-toasts"></div>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>

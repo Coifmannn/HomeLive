@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Recuperar Senha - Homelive 2050">
+    <title>Homelive | Recuperar Senha</title>
+    <!-- Fontes do Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icones modernos Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- Folha de estilo principal em Portugues -->
+    <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body class="corpo-login">
+    <!-- Orbes animados de fundo para imersão 2050 -->
+    <div class="orbe-fundo orbe-1"></div>
+    <div class="orbe-fundo orbe-2"></div>
+    <div class="orbe-fundo orbe-3"></div>
+
+    <div class="container-login">
+        <div class="cartao-login painel-vidro">
+            <div class="cabecalho-login">
+                <div class="marca">
+                    <i class='bx bx-home-alt-2'></i>
+                    <span>Homelive<span>.</span></span>
+                </div>
+                <h2>Recuperar Acesso</h2>
+                <p>Esqueceu sua senha quântica? Não se preocupe, nós ajudamos você a redefini-la.</p>
+            </div>
+
+            <!-- Formulário de Recuperação -->
+            <form id="formulario-recuperacao" class="formulario-moderno">
+                <div class="grupo-formulario">
+                    <label for="credencial">E-mail ou CPF cadastrado</label>
+                    <div class="input-com-icone">
+                        <i class='bx bx-envelope'></i>
+                        <input type="text" id="credencial" class="input-vidro" placeholder="felipe@exemplo.com" required>
+                    </div>
+                </div>
+
+                <div class="aviso-ia" style="margin-bottom: 20px;">
+                    <i class='bx bx-shield-quarter'></i>
+                    <p>Por segurança, enviaremos um token de autenticação temporário para validar sua identidade.</p>
+                </div>
+
+                <button type="submit" class="botao-primario largura-total">Enviar Link de Recuperação</button>
+            </form>
+
+            <div class="rodape-login mt-3">
+                <p>Lembrou a senha? <a href="login.html">Voltar para o Login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

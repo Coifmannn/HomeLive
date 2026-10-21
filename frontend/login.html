@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Login - Homelive 2050">
+    <title>Homelive | Entrar</title>
+    <!-- Fontes do Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icones modernos Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- Folha de estilo principal em Portugues -->
+    <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body class="corpo-login">
+    <!-- Orbes animados de fundo para imersão 2050 -->
+    <div class="orbe-fundo orbe-1"></div>
+    <div class="orbe-fundo orbe-2"></div>
+    <div class="orbe-fundo orbe-3"></div>
+
+    <div class="container-login">
+        <div class="cartao-login painel-vidro">
+            <div class="cabecalho-login">
+                <div class="marca">
+                    <i class='bx bx-home-alt-2'></i>
+                    <span>Homelive<span>.</span></span>
+                </div>
+                <h2>Bem-vindo(a) de volta</h2>
+                <p>Acesse a gestão inteligente da sua residência.</p>
+            </div>
+
+            <!-- Formulario de login que futuramente vai enviar pro Spring Boot / PostgreSQL -->
+            <form id="formulario-login" class="formulario-moderno">
+                <div class="grupo-formulario">
+                    <label for="credencial">E-mail</label>
+                    <div class="input-com-icone">
+                        <i class='bx bx-user'></i>
+                        <input type="email" id="credencial" class="input-vidro" placeholder="morador@homelive2050.io" required>
+                    </div>
+                </div>
+
+                <div class="grupo-formulario">
+                    <label for="senha">Senha de Acesso Quântica</label>
+                    <div class="input-com-icone">
+                        <i class='bx bx-lock-alt'></i>
+                        <input type="password" id="senha" class="input-vidro" placeholder="••••••••" required>
+                    </div>
+                </div>
+
+                <div class="opcoes-login">
+                    <label class="lembrar-mim">
+                        <input type="checkbox" id="lembrar"> Lembrar de mim
+                    </label>
+                    <a href="esqueceu-senha.html" class="link-esqueci">Esqueceu a senha?</a>
+                </div>
+
+                <button type="submit" class="botao-primario largura-total mt-3">Acessar Homelive</button>
+            </form>
+
+            <div class="rodape-login">
+                <p>Ainda não faz parte de um Co-living? <a href="cadastro.html">Criar perfil</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script principal -->
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
