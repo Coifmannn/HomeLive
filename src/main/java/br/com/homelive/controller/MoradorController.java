@@ -18,12 +18,6 @@ public class MoradorController {
 
     private final MoradorService moradorService;
 
-    @PostMapping
-    public ResponseEntity<MoradorDTO.Response> cadastrar(@RequestBody @Valid MoradorDTO.Request request) {
-        MoradorDTO.Response response = moradorService.cadastrar(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
     @GetMapping
     public ResponseEntity<List<MoradorDTO.Response>> listarTodos(@RequestParam(required = false, defaultValue = "false") boolean apenasAtivos) {
         if (apenasAtivos) {

@@ -2,12 +2,9 @@ package br.com.homelive.service;
 
 import br.com.homelive.dto.MoradorDTO;
 import br.com.homelive.exception.RecursoNaoEncontradoException;
-import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.model.Morador;
 import br.com.homelive.repository.MoradorRepository;
-import br.com.homelive.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,27 +15,6 @@ import java.util.List;
 public class MoradorService {
 
     private final MoradorRepository moradorRepository;
-    private final UsuarioRepository usuarioRepository;
-    private final PasswordEncoder passwordEncoder;
-
-    @Transactional
-    public MoradorDTO.Response cadastrar(MoradorDTO.Request request) {
-        if (usuarioRepository.existsByEmail(request.getEmail())) {
-            throw new RegraNegocioException("Já existe um usuário cadastrado com o email: " + request.getEmail());
-        }
-
-        Morador morador = new Morador(
-                request.getNome(),
-                request.getEmail(),
-                passwordEncoder.encode(request.getSenha()),
-                request.getTelefone(),
-                request.getNumeroQuarto(),
-                request.getDiasEstadia()
-        );
-
-        Morador salvo = moradorRepository.save(morador);
-        return toResponse(salvo);
-    }
 
     public List<MoradorDTO.Response> listarTodos() {
         return moradorRepository.findAll().stream().map(this::toResponse).toList();

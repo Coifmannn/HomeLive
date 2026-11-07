@@ -1,9 +1,5 @@
 package br.com.homelive.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,31 +8,6 @@ import lombok.Setter;
 import java.time.LocalDate;
 
 public class MoradorDTO {
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Request {
-        @NotBlank(message = "O nome é obrigatório")
-        private String nome;
-
-        @Email(message = "Email inválido")
-        @NotBlank(message = "O email é obrigatório")
-        private String email;
-
-        @NotBlank(message = "A senha é obrigatória")
-        @Size(min = 6, message = "A senha deve ter ao menos 6 caracteres")
-        private String senha;
-
-        private String telefone;
-
-        @NotBlank(message = "O número do quarto é obrigatório")
-        private String numeroQuarto;
-
-        @PositiveOrZero(message = "Dias de estadia deve ser zero ou positivo")
-        private Integer diasEstadia;
-    }
 
     @Getter
     @Setter

@@ -40,8 +40,6 @@ class PermissoesPorPerfilTest {
     @ParameterizedTest(name = "{0} {1}: morador leva 403")
     @DisplayName("Ações exclusivas do síndico são negadas ao morador")
     @CsvSource({
-            "POST,   /api/moradores",
-            "POST,   /api/sindicos",
             "POST,   /api/espacos",
             "POST,   /api/tarefas",
             "POST,   /api/tarefas/processar-atrasos",
@@ -70,8 +68,6 @@ class PermissoesPorPerfilTest {
     @ParameterizedTest(name = "{0} {1}: síndico passa pela segurança")
     @DisplayName("O síndico não é barrado pela segurança nessas ações")
     @CsvSource({
-            "POST,   /api/moradores",
-            "POST,   /api/sindicos",
             "POST,   /api/espacos",
             "POST,   /api/tarefas",
             "POST,   /api/tarefas/processar-atrasos",
@@ -119,7 +115,7 @@ class PermissoesPorPerfilTest {
     @DisplayName("Consultas ficam abertas a qualquer perfil autenticado")
     @CsvSource({
             "/api/dashboard", "/api/moradores", "/api/moradores/ranking", "/api/espacos",
-            "/api/agendamentos", "/api/despesas", "/api/tarefas", "/api/sindicos", "/api/tarefas-recorrentes", "/api/regras-penalidade",
+            "/api/agendamentos", "/api/despesas", "/api/tarefas", "/api/tarefas-recorrentes", "/api/regras-penalidade",
     })
     void consultasParaQualquerLogado(String url) throws Exception {
         assertEquals(200, chamar(HttpMethod.GET, url, MORADOR));

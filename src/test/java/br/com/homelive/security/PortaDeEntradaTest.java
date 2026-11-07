@@ -72,7 +72,6 @@ class PortaDeEntradaTest {
             "GET,  /api/leituras-consumo",
             "POST, /api/leituras-consumo",
             "GET,  /api/regras-penalidade",
-            "GET,  /api/sindicos",
     })
     void dadosFechados(String metodo, String url) throws Exception {
         assertEquals(403, chamar(metodo, url, SEM_CASA, SENHA));

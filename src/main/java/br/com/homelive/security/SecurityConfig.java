@@ -47,7 +47,7 @@ public class SecurityConfig {
                         .requestMatchers("/h2-console/**").hasRole("SINDICO")
 
                         // Só o síndico governa a residência.
-                        .requestMatchers(HttpMethod.POST, "/api/moradores", "/api/sindicos", "/api/espacos").hasRole("SINDICO")
+                        .requestMatchers(HttpMethod.POST, "/api/espacos").hasRole("SINDICO")
                         .requestMatchers(HttpMethod.POST, "/api/tarefas", "/api/tarefas/processar-atrasos").hasRole("SINDICO")
                         .requestMatchers(HttpMethod.POST, "/api/despesas/*/avaliar").hasRole("SINDICO")
                         .requestMatchers(HttpMethod.PATCH, "/api/espacos/*/status", "/api/moradores/*/estadia").hasRole("SINDICO")

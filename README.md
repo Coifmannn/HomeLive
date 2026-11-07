@@ -136,7 +136,7 @@ O app abre **vazio**: ninguém é síndico de nascença. O fluxo é:
 | Ação | Síndico | Morador |
 | :--- | :---: | :---: |
 | Aprovar/rejeitar despesa | ✅ | ❌ |
-| Cadastrar moradores e síndicos | ✅ | ❌ |
+| Aprovar ou recusar quem pede para entrar na casa | ✅ | ❌ |
 | Cadastrar espaço / ativar-desativar | ✅ | ❌ |
 | Criar tarefa / processar atrasos | ✅ | ❌ |
 | Criar, ativar/desativar escalas recorrentes e gerar tarefas | ✅ | ❌ |
@@ -170,15 +170,12 @@ O app abre **vazio**: ninguém é síndico de nascença. O fluxo é:
 | | `POST` | `/api/casas/membros/{id}/recusar` | síndico | Recusa; a pessoa volta a `SEM_CASA` e pode tentar outro código |
 | **Dashboard** | `GET` | `/api/dashboard` | logado | Resumo consolidado com métricas, ranking e agendamentos |
 | **Moradores** | `GET` | `/api/moradores` | logado | Lista todos os moradores |
-| | `POST` | `/api/moradores` | síndico | Cadastra morador (corpo inclui `senha`, mín. 6 caracteres) |
 | | `GET` | `/api/moradores/ranking` | logado | Ranking por pontos de convivência |
 | | `PATCH` | `/api/moradores/{id}/estadia?dias=` | síndico | Atualiza dias de estadia |
 | | `DELETE` | `/api/moradores/{id}` | síndico | Desativa o morador |
 | **Leituras de consumo** | `POST` | `/api/leituras-consumo` | logado | Registra (ou corrige) a leitura do mês: `{ "kwh": 120.5, "competencia": "2026-09" }`. `competencia` é opcional (padrão: mês corrente). O síndico também informa `moradorId` |
 | | `GET` | `/api/leituras-consumo?competencia=2026-09` | logado | Leituras de um mês (sem parâmetro, o mês corrente) |
 | | `GET` | `/api/leituras-consumo/morador/{id}` | logado | Histórico de leituras de um morador |
-| **Síndicos** | `GET` | `/api/sindicos` | logado | Lista síndicos |
-| | `POST` | `/api/sindicos` | síndico | Cadastra síndico (corpo inclui `senha`) |
 | **Espaços** | `GET` | `/api/espacos` | logado | Lista espaços comuns |
 | | `POST` | `/api/espacos` | síndico | Cadastra espaço comum |
 | | `PATCH` | `/api/espacos/{id}/status` | síndico | Ativa/desativa o espaço |
