@@ -111,6 +111,7 @@ public class DataInitializer implements CommandLineRunner {
 
         // 3. Cadastrar Espaços Comuns
         EspacoComum espaco1 = espacoComumRepository.save(new EspacoComum(
+                casa,
                 "Escritório Acústico VR",
                 "Cabine individual com cancelamento de ruído holográfico e conexão neural de alta fidelidade",
                 2,
@@ -118,6 +119,7 @@ public class DataInitializer implements CommandLineRunner {
         ));
 
         EspacoComum espaco2 = espacoComumRepository.save(new EspacoComum(
+                casa,
                 "Lavanderia Inteligente IoT",
                 "Lavadoras e secadoras ecológicas por ultra-som com esterilização UV automática",
                 4,
@@ -125,6 +127,7 @@ public class DataInitializer implements CommandLineRunner {
         ));
 
         EspacoComum espaco3 = espacoComumRepository.save(new EspacoComum(
+                casa,
                 "Espaço Gourmet e Rooftop Hidropônico",
                 "Cozinha automatizada com fornos de convecção quântica e vista para a horta vertical",
                 12,
@@ -144,7 +147,7 @@ public class DataInitializer implements CommandLineRunner {
                 null
         );
         DespesaDTO.Response r1 = despesaService.lancarDespesa(desp1, new UsuarioAutenticado(m1));
-        despesaService.avaliarDespesa(r1.getId(), new DespesaDTO.AprovacaoRequest(true, null), sindicoSalvo.getId());
+        despesaService.avaliarDespesa(casa.getId(), r1.getId(), new DespesaDTO.AprovacaoRequest(true, null), sindicoSalvo.getId());
 
         // Despesa B: Matriz Solar e Células de Hidrogênio (Rateio por Consumo, conta do mês anterior)
         DespesaDTO.Request desp2 = new DespesaDTO.Request(
@@ -158,7 +161,7 @@ public class DataInitializer implements CommandLineRunner {
                 mesAnterior.toString()
         );
         DespesaDTO.Response r2 = despesaService.lancarDespesa(desp2, new UsuarioAutenticado(m2));
-        despesaService.avaliarDespesa(r2.getId(), new DespesaDTO.AprovacaoRequest(true, null), sindicoSalvo.getId());
+        despesaService.avaliarDespesa(casa.getId(), r2.getId(), new DespesaDTO.AprovacaoRequest(true, null), sindicoSalvo.getId());
 
         // Despesa C: Manutenção Preventiva dos Drones de Limpeza (Pendente para o Síndico aprovar)
         DespesaDTO.Request desp3 = new DespesaDTO.Request(
@@ -196,6 +199,7 @@ public class DataInitializer implements CommandLineRunner {
 
         // 6. Cadastrar Tarefas Domésticas com Gamificação
         TarefaDomestica t1 = new TarefaDomestica(
+                casa,
                 "Calibração dos Sensores dos Robôs Aspiradores",
                 "Garantir alinhamento dos emissores laser da base do corredor principal",
                 LocalDate.now().plusDays(2),
@@ -208,6 +212,7 @@ public class DataInitializer implements CommandLineRunner {
         tarefaRepository.save(t1);
 
         TarefaDomestica t2 = new TarefaDomestica(
+                casa,
                 "Higienização dos Filtros Hidropônicos do Rooftop",
                 "Lavagem preventiva dos reservatórios de nutrientes da horta",
                 LocalDate.now().plusDays(4),
@@ -219,6 +224,7 @@ public class DataInitializer implements CommandLineRunner {
         tarefaRepository.save(t2);
 
         TarefaDomestica t3 = new TarefaDomestica(
+                casa,
                 "Triagem e Descarte de Metais Raros",
                 "Organização das gavetas de lixo eletrônico na garagem",
                 LocalDate.now().minusDays(1), // Vencida para testar detecção de atraso
@@ -230,22 +236,15 @@ public class DataInitializer implements CommandLineRunner {
         tarefaRepository.save(t3);
 
         // 6.1 Regras de penalidade configuradas pelo síndico
-        regraPenalidadeRepository.saveAll(java.util.List.of(
-                new RegraPenalidade("Tarefa atrasada (progressiva)", TipoInfracao.TAREFA_ATRASADA,
-                        ModoCalculoPenalidade.PROGRESSIVA, 10, 5, 30, 30, null),
-                new RegraPenalidade("Cancelamento em cima da hora", TipoInfracao.CANCELAMENTO_TARDIO,
-                        ModoCalculoPenalidade.FIXA, 10, null, null, null, 2),
-                new RegraPenalidade("Reserva não utilizada", TipoInfracao.NAO_COMPARECIMENTO,
-                        ModoCalculoPenalidade.FIXA, 20, null, null, null, null)
-        ));
+        regraPenalidadeRepository.saveAll(RegraPenalidade.padroesDa(casa));
 
         // 7. Tarefas recorrentes (escalas com rodízio). Devidas hoje: POST /api/tarefas-recorrentes/gerar as distribui.
         tarefaRecorrenteRepository.saveAll(java.util.List.of(
-                new TarefaRecorrente("Retirada do lixo orgânico", "Levar ao biodigestor do térreo",
+                new TarefaRecorrente(casa, "Retirada do lixo orgânico", "Levar ao biodigestor do térreo",
                         Periodicidade.SEMANAL, 2, 20, 10, TipoRodizio.SEQUENCIAL, LocalDate.now()),
-                new TarefaRecorrente("Limpeza do Espaço Gourmet", "Higienizar bancadas e a cozinha automatizada",
+                new TarefaRecorrente(casa, "Limpeza do Espaço Gourmet", "Higienizar bancadas e a cozinha automatizada",
                         Periodicidade.SEMANAL, 3, 30, 15, TipoRodizio.MENOR_CARGA, LocalDate.now()),
-                new TarefaRecorrente("Troca dos filtros de água reciclada", "Substituir os cartuchos do sistema central",
+                new TarefaRecorrente(casa, "Troca dos filtros de água reciclada", "Substituir os cartuchos do sistema central",
                         Periodicidade.MENSAL, 5, 40, 20, TipoRodizio.MENOR_PONTUACAO, LocalDate.now().plusDays(7))
         ));
 

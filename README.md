@@ -133,6 +133,16 @@ O app abre **vazio**: ninguém é síndico de nascença. O fluxo é:
 
 `statusMembro` (`SEM_CASA`, `PENDENTE`, `ATIVO`) diz qual tela mostrar: criar/entrar, "aguardando aprovação" ou o app.
 
+### Isolamento entre casas
+
+* **Porta de entrada:** quem está `SEM_CASA` ou `PENDENTE` só usa `/api/auth/**` e `/api/casas/**`. Qualquer outra rota responde `403` com `"error": "Sem Casa Ativa"` e uma mensagem dizendo o que fazer (criar/entrar em uma casa ou aguardar a aprovação).
+* **Cada casa só enxerga os próprios dados:** espaços, reservas, despesas e rateios, tarefas, escalas, regras de penalidade, penalidades, leituras de consumo, moradores, ranking e dashboard. As listagens trazem só a casa de quem está logado.
+* **O que é de outra casa responde `404`**, como se não existisse (nunca `403`, para não revelar que o id existe). Vale para ler, alterar e também para apontar um `moradorId`, `espacoId` ou `responsavelId` de outra casa.
+* **`GET /api/moradores`** lista os moradores aprovados da casa (o síndico não entra na lista). O ranking e o dashboard contam só moradores aprovados e ativos.
+* **Casa nova já nasce com 3 regras de penalidade** (tarefa atrasada, cancelamento tardio e não comparecimento), que o síndico pode ajustar. Espaços, escalas e despesas começam vazios.
+* **Rotinas automáticas** (atrasos e geração de tarefas das 6h) rodam casa por casa, e o rodízio sorteia só entre moradores da própria casa.
+* **Mudou no contrato:** `POST /api/moradores`, `POST /api/sindicos` e `GET /api/sindicos` não existem mais. Para saber quem está logado, use `GET /api/auth/eu`.
+
 | Ação | Síndico | Morador |
 | :--- | :---: | :---: |
 | Aprovar/rejeitar despesa | ✅ | ❌ |

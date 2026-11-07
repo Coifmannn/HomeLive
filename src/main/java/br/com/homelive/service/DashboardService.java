@@ -1,5 +1,6 @@
 package br.com.homelive.service;
 
+import br.com.homelive.model.enums.StatusMembro;
 import br.com.homelive.dto.AgendamentoDTO;
 import br.com.homelive.dto.DashboardDTO;
 import br.com.homelive.dto.MoradorDTO;
@@ -28,26 +29,26 @@ public class DashboardService {
     private final MoradorService moradorService;
     private final AgendamentoService agendamentoService;
 
-    public DashboardDTO.Response obterResumoGeral() {
+    public DashboardDTO.Response obterResumoGeral(Long casaId) {
         LocalDate hoje = LocalDate.now();
         LocalDateTime agora = LocalDateTime.now();
 
-        long totalMoradores = moradorRepository.count();
+        long totalMoradores = moradorRepository.countByCasaIdAndStatusMembroAndAtivoTrue(casaId, StatusMembro.ATIVO);
 
         // Intervalos semiabertos [inicio, fim): não perdem a última fração do dia e distinguem o ano.
         LocalDate inicioMes = hoje.withDayOfMonth(1);
-        BigDecimal totalDespesasMes = despesaRepository.somarValorLancadoEntre(inicioMes, inicioMes.plusMonths(1));
+        BigDecimal totalDespesasMes = despesaRepository.somarValorLancadoEntre(casaId, inicioMes, inicioMes.plusMonths(1));
 
-        long totalTarefasPendentes = tarefaRepository.countByStatus(StatusTarefa.PENDENTE);
+        long totalTarefasPendentes = tarefaRepository.countByCasaIdAndStatus(casaId, StatusTarefa.PENDENTE);
 
         long totalAgendamentosHoje = agendamentoRepository
-                .countByStatusAndDataHoraInicioGreaterThanEqualAndDataHoraInicioLessThan(
-                        StatusAgendamento.CONFIRMADO, hoje.atStartOfDay(), hoje.plusDays(1).atStartOfDay());
+                .countByEspacoComumCasaIdAndStatusAndDataHoraInicioGreaterThanEqualAndDataHoraInicioLessThan(
+                        casaId, StatusAgendamento.CONFIRMADO, hoje.atStartOfDay(), hoje.plusDays(1).atStartOfDay());
 
-        List<MoradorDTO.Response> ranking = moradorService.obterRankingGamificacao();
+        List<MoradorDTO.Response> ranking = moradorService.obterRankingGamificacao(casaId);
 
         List<AgendamentoDTO.Response> proximos = agendamentoRepository
-                .findTop5ByStatusAndDataHoraInicioAfterOrderByDataHoraInicioAsc(StatusAgendamento.CONFIRMADO, agora)
+                .findTop5ByEspacoComumCasaIdAndStatusAndDataHoraInicioAfterOrderByDataHoraInicioAsc(casaId, StatusAgendamento.CONFIRMADO, agora)
                 .stream()
                 .map(agendamentoService::toResponse)
                 .toList();

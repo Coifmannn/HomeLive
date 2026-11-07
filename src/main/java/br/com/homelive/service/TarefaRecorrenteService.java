@@ -1,5 +1,7 @@
 package br.com.homelive.service;
 
+import br.com.homelive.model.enums.StatusMembro;
+import br.com.homelive.repository.CasaRepository;
 import br.com.homelive.dto.TarefaDTO;
 import br.com.homelive.dto.TarefaRecorrenteDTO;
 import br.com.homelive.exception.RecursoNaoEncontradoException;
@@ -34,10 +36,12 @@ public class TarefaRecorrenteService {
     private final MoradorRepository moradorRepository;
     private final RodizioStrategyFactory rodizioStrategyFactory;
     private final TarefaService tarefaService;
+    private final CasaRepository casaRepository;
 
     @Transactional
-    public TarefaRecorrenteDTO.Response criar(TarefaRecorrenteDTO.Request request) {
+    public TarefaRecorrenteDTO.Response criar(Long casaId, TarefaRecorrenteDTO.Request request) {
         TarefaRecorrente recorrente = new TarefaRecorrente(
+                casaRepository.getReferenceById(casaId),
                 request.getTitulo(),
                 request.getDescricao(),
                 request.getPeriodicidade(),
@@ -50,24 +54,24 @@ public class TarefaRecorrenteService {
         return toResponse(recorrenteRepository.save(recorrente));
     }
 
-    public List<TarefaRecorrenteDTO.Response> listarTodas() {
-        return recorrenteRepository.findAll().stream().map(this::toResponse).toList();
+    public List<TarefaRecorrenteDTO.Response> listarTodas(Long casaId) {
+        return recorrenteRepository.findByCasaId(casaId).stream().map(this::toResponse).toList();
     }
 
-    public TarefaRecorrenteDTO.Response obterPorId(Long id) {
-        return toResponse(buscarEntidade(id));
+    public TarefaRecorrenteDTO.Response obterPorId(Long casaId, Long id) {
+        return toResponse(buscarEntidade(casaId, id));
     }
 
     @Transactional
-    public TarefaRecorrenteDTO.Response ativar(Long id) {
-        TarefaRecorrente recorrente = buscarEntidade(id);
+    public TarefaRecorrenteDTO.Response ativar(Long casaId, Long id) {
+        TarefaRecorrente recorrente = buscarEntidade(casaId, id);
         recorrente.ativar();
         return toResponse(recorrente);
     }
 
     @Transactional
-    public TarefaRecorrenteDTO.Response desativar(Long id) {
-        TarefaRecorrente recorrente = buscarEntidade(id);
+    public TarefaRecorrenteDTO.Response desativar(Long casaId, Long id) {
+        TarefaRecorrente recorrente = buscarEntidade(casaId, id);
         recorrente.desativar();
         return toResponse(recorrente);
     }
@@ -77,24 +81,24 @@ public class TarefaRecorrenteService {
      * rodízio de cada um. É idempotente: depois de gerar, o modelo avança a data e não dispara de novo.
      */
     @Transactional
-    public List<TarefaDTO.Response> gerarTarefasDevidas() {
+    public List<TarefaDTO.Response> gerarTarefasDevidas(Long casaId) {
         LocalDate hoje = LocalDate.now();
 
-        List<TarefaRecorrente> devidas = recorrenteRepository.findByAtivaTrueOrderByIdAsc().stream()
+        List<TarefaRecorrente> devidas = recorrenteRepository.findByCasaIdAndAtivaTrueOrderByIdAsc(casaId).stream()
                 .filter(r -> r.devidaEm(hoje))
                 .toList();
         if (devidas.isEmpty()) {
             return List.of();
         }
 
-        List<Morador> candidatos = moradorRepository.findByAtivoTrue().stream()
+        List<Morador> candidatos = moradorRepository.findByCasaIdAndStatusMembroAndAtivoTrue(casaId, StatusMembro.ATIVO).stream()
                 .sorted(Comparator.comparing(Morador::getId))
                 .toList();
         if (candidatos.isEmpty()) {
             // Nada a fazer hoje: os modelos continuam devidos e a rotina tenta de novo amanhã.
             return List.of();
         }
-        Map<Long, Long> cargaAberta = carregarTarefasAbertas();
+        Map<Long, Long> cargaAberta = carregarTarefasAbertas(casaId);
 
         List<TarefaDTO.Response> geradas = new ArrayList<>();
         for (TarefaRecorrente recorrente : devidas) {
@@ -114,16 +118,16 @@ public class TarefaRecorrenteService {
     }
 
     /** Tarefas ainda não cumpridas (pendentes ou atrasadas), contadas por responsável. Mapa mutável. */
-    private Map<Long, Long> carregarTarefasAbertas() {
+    private Map<Long, Long> carregarTarefasAbertas(Long casaId) {
         return Stream.concat(
-                        tarefaRepository.findByStatus(StatusTarefa.PENDENTE).stream(),
-                        tarefaRepository.findByStatus(StatusTarefa.ATRASADA).stream())
+                        tarefaRepository.findByCasaIdAndStatus(casaId, StatusTarefa.PENDENTE).stream(),
+                        tarefaRepository.findByCasaIdAndStatus(casaId, StatusTarefa.ATRASADA).stream())
                 .filter(t -> t.getResponsavel() != null)
                 .collect(Collectors.groupingBy(t -> t.getResponsavel().getId(), HashMap::new, Collectors.counting()));
     }
 
-    public TarefaRecorrente buscarEntidade(Long id) {
-        return recorrenteRepository.findById(id)
+    public TarefaRecorrente buscarEntidade(Long casaId, Long id) {
+        return recorrenteRepository.findByIdAndCasaId(id, casaId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Tarefa recorrente não encontrada com o ID: " + id));
     }
 

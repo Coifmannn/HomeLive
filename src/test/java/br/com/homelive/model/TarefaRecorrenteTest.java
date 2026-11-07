@@ -1,5 +1,6 @@
 package br.com.homelive.model;
 
+import br.com.homelive.Fixtures;
 import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.model.enums.Periodicidade;
 import br.com.homelive.model.enums.StatusTarefa;
@@ -25,7 +26,7 @@ class TarefaRecorrenteTest {
     }
 
     private TarefaRecorrente semanal() {
-        return new TarefaRecorrente("Lixo", "Levar ao térreo", Periodicidade.SEMANAL, 2, 20, 10,
+        return new TarefaRecorrente(Fixtures.casa(), "Lixo", "Levar ao térreo", Periodicidade.SEMANAL, 2, 20, 10,
                 TipoRodizio.SEQUENCIAL, hoje);
     }
 
@@ -44,21 +45,21 @@ class TarefaRecorrenteTest {
     @DisplayName("Construtor recusa dados inválidos")
     void construtorValida() {
         assertThrows(RegraNegocioException.class, () ->
-                new TarefaRecorrente(" ", "x", Periodicidade.SEMANAL, 2, null, null, TipoRodizio.SEQUENCIAL, hoje));
+                new TarefaRecorrente(Fixtures.casa(), " ", "x", Periodicidade.SEMANAL, 2, null, null, TipoRodizio.SEQUENCIAL, hoje));
         assertThrows(RegraNegocioException.class, () ->
-                new TarefaRecorrente("Lixo", "x", null, 2, null, null, TipoRodizio.SEQUENCIAL, hoje));
+                new TarefaRecorrente(Fixtures.casa(), "Lixo", "x", null, 2, null, null, TipoRodizio.SEQUENCIAL, hoje));
         assertThrows(RegraNegocioException.class, () ->
-                new TarefaRecorrente("Lixo", "x", Periodicidade.SEMANAL, 2, null, null, null, hoje));
+                new TarefaRecorrente(Fixtures.casa(), "Lixo", "x", Periodicidade.SEMANAL, 2, null, null, null, hoje));
         assertThrows(RegraNegocioException.class, () ->
-                new TarefaRecorrente("Lixo", "x", Periodicidade.SEMANAL, 0, null, null, TipoRodizio.SEQUENCIAL, hoje));
+                new TarefaRecorrente(Fixtures.casa(), "Lixo", "x", Periodicidade.SEMANAL, 0, null, null, TipoRodizio.SEQUENCIAL, hoje));
         assertThrows(RegraNegocioException.class, () ->
-                new TarefaRecorrente("Lixo", "x", Periodicidade.SEMANAL, 2, null, null, TipoRodizio.SEQUENCIAL, hoje.minusDays(1)));
+                new TarefaRecorrente(Fixtures.casa(), "Lixo", "x", Periodicidade.SEMANAL, 2, null, null, TipoRodizio.SEQUENCIAL, hoje.minusDays(1)));
     }
 
     @Test
     @DisplayName("Sem data de início, a primeira geração é hoje e os pontos têm valor padrão")
     void padroes() {
-        TarefaRecorrente t = new TarefaRecorrente("Lixo", null, Periodicidade.DIARIA, 1, null, null, TipoRodizio.MENOR_CARGA, null);
+        TarefaRecorrente t = new TarefaRecorrente(Fixtures.casa(), "Lixo", null, Periodicidade.DIARIA, 1, null, null, TipoRodizio.MENOR_CARGA, null);
 
         assertEquals(hoje, t.getProximaGeracao());
         assertTrue(t.devidaEm(hoje));
@@ -110,7 +111,7 @@ class TarefaRecorrenteTest {
     @Test
     @DisplayName("Modelo inativo ou ainda não devido não gera; sem responsável também não")
     void naoGeraQuandoNaoDevida() {
-        TarefaRecorrente futuro = new TarefaRecorrente("Lixo", "x", Periodicidade.SEMANAL, 2, null, null,
+        TarefaRecorrente futuro = new TarefaRecorrente(Fixtures.casa(), "Lixo", "x", Periodicidade.SEMANAL, 2, null, null,
                 TipoRodizio.SEQUENCIAL, hoje.plusDays(3));
         assertFalse(futuro.devidaEm(hoje));
         assertThrows(RegraNegocioException.class, () -> futuro.gerarTarefa(lucas, hoje));

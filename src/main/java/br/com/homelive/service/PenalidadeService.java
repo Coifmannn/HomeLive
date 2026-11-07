@@ -54,7 +54,7 @@ public class PenalidadeService {
         }
         String motivo = "Tarefa '" + tarefa.getTitulo() + "' não cumprida até " + tarefa.getDataPrazo() + ".";
 
-        Optional<RegraPenalidade> regra = regraRepository.findByTipoInfracaoAndAtivaTrue(TipoInfracao.TAREFA_ATRASADA);
+        Optional<RegraPenalidade> regra = regraRepository.findByCasaIdAndTipoInfracaoAndAtivaTrue(tarefa.getCasa().getId(), TipoInfracao.TAREFA_ATRASADA);
         if (regra.isPresent()) {
             aplicarRegra(responsavel, regra.get(), motivo);
         } else if (tarefa.getPontosPenalidade() != null && tarefa.getPontosPenalidade() > 0) {
@@ -67,7 +67,7 @@ public class PenalidadeService {
     @Transactional
     public void aoReservaCancelada(ReservaCanceladaPeloMorador evento) {
         AgendamentoEspaco reserva = evento.agendamento();
-        regraRepository.findByTipoInfracaoAndAtivaTrue(TipoInfracao.CANCELAMENTO_TARDIO)
+        regraRepository.findByCasaIdAndTipoInfracaoAndAtivaTrue(reserva.getEspacoComum().getCasa().getId(), TipoInfracao.CANCELAMENTO_TARDIO)
                 .filter(regra -> regra.cancelamentoEhTardio(reserva.getDataHoraInicio(), evento.quando()))
                 .ifPresent(regra -> aplicarRegra(reserva.getMorador(), regra,
                         "Cancelamento tardio da reserva de '" + reserva.getEspacoComum().getNome() + "' (início previsto: "
@@ -78,7 +78,7 @@ public class PenalidadeService {
     @Transactional
     public void aoNaoComparecer(MoradorNaoCompareceu evento) {
         AgendamentoEspaco reserva = evento.agendamento();
-        regraRepository.findByTipoInfracaoAndAtivaTrue(TipoInfracao.NAO_COMPARECIMENTO)
+        regraRepository.findByCasaIdAndTipoInfracaoAndAtivaTrue(reserva.getEspacoComum().getCasa().getId(), TipoInfracao.NAO_COMPARECIMENTO)
                 .ifPresent(regra -> aplicarRegra(reserva.getMorador(), regra,
                         "Não comparecimento à reserva de '" + reserva.getEspacoComum().getNome() + "' (início: "
                                 + reserva.getDataHoraInicio() + ")."));
@@ -87,19 +87,19 @@ public class PenalidadeService {
     // ---------- Aplicação manual e consultas ----------
 
     @Transactional
-    public PenalidadeDTO.Response aplicarManual(PenalidadeDTO.ManualRequest request, Long sindicoId) {
-        Morador morador = moradorService.buscarEntidade(request.getMoradorId());
+    public PenalidadeDTO.Response aplicarManual(Long casaId, PenalidadeDTO.ManualRequest request, Long sindicoId) {
+        Morador morador = moradorService.buscarEntidade(casaId, request.getMoradorId());
         Sindico sindico = sindicoService.buscarEntidade(sindicoId);
         return toResponse(registrar(morador, null, TipoInfracao.MANUAL, request.getPontos(), request.getMotivo(), sindico));
     }
 
-    public List<PenalidadeDTO.Response> listarTodas() {
-        return penalidadeRepository.findAllByOrderByDataAplicacaoDescIdDesc().stream().map(this::toResponse).toList();
+    public List<PenalidadeDTO.Response> listarTodas(Long casaId) {
+        return penalidadeRepository.findByMoradorCasaIdOrderByDataAplicacaoDescIdDesc(casaId).stream().map(this::toResponse).toList();
     }
 
     public List<PenalidadeDTO.Response> listarPorMorador(Long moradorId, UsuarioAutenticado ator) {
         ator.exigirSindicoOuDono(moradorId);
-        moradorService.buscarEntidade(moradorId);
+        moradorService.buscarEntidade(ator.getCasaId(), moradorId);
         return penalidadeRepository.findByMoradorIdOrderByDataAplicacaoDescIdDesc(moradorId).stream()
                 .map(this::toResponse).toList();
     }

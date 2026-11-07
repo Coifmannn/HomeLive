@@ -41,6 +41,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("Regras de dono e identidade vinda do login")
 class RegrasDeDonoTest {
 
+    @Autowired br.com.homelive.repository.CasaRepository casaRepository;
+    br.com.homelive.model.Casa casa;
+
     private static final String SINDICO = "helena.vance@homelive2050.io";
     private static final String LUCAS = "lucas.silva@homelive2050.io";
     private static final String SOFIA = "sofia.chen@homelive2050.io";
@@ -58,6 +61,7 @@ class RegrasDeDonoTest {
 
     @BeforeEach
     void setUp() {
+        casa = casaRepository.findAll().get(0);
         lucas = moradorRepository.findAll().stream().filter(m -> m.getEmail().equals(LUCAS)).findFirst().orElseThrow();
         sofia = moradorRepository.findAll().stream().filter(m -> m.getEmail().equals(SOFIA)).findFirst().orElseThrow();
     }
@@ -134,9 +138,9 @@ class RegrasDeDonoTest {
     @Test
     @DisplayName("Morador conclui só a própria tarefa; síndico conclui a de qualquer um")
     void concluirTarefa() throws Exception {
-        TarefaDomestica doLucas = tarefaRepository.findByResponsavelId(lucas.getId()).stream()
+        TarefaDomestica doLucas = tarefaRepository.findByCasaIdAndResponsavelId(casa.getId(), lucas.getId()).stream()
                 .filter(t -> t.getStatus() == StatusTarefa.PENDENTE).findFirst().orElseThrow();
-        TarefaDomestica doMateus = tarefaRepository.findByStatus(StatusTarefa.PENDENTE).stream()
+        TarefaDomestica doMateus = tarefaRepository.findByCasaIdAndStatus(casa.getId(), StatusTarefa.PENDENTE).stream()
                 .filter(t -> !t.getResponsavel().getId().equals(lucas.getId())).findFirst().orElseThrow();
 
         mvc.perform(como(SOFIA, patch("/api/tarefas/{id}/concluir", doLucas.getId()))).andExpect(status().isForbidden());
@@ -288,7 +292,7 @@ class RegrasDeDonoTest {
     @Test
     @DisplayName("Quem aprova é o síndico logado, mesmo que o corpo tente forjar outro aprovador")
     void avaliarDespesaUsaSindicoLogado() throws Exception {
-        Despesa pendente = despesaRepository.findByStatus(StatusDespesa.PENDENTE_APROVACAO).get(0);
+        Despesa pendente = despesaRepository.findByCasaIdAndStatus(casa.getId(), StatusDespesa.PENDENTE_APROVACAO).get(0);
         String forjado = "{\"aprovado\":true,\"sindicoId\":" + lucas.getId() + "}";
 
         mvc.perform(json(como(SINDICO, post("/api/despesas/{id}/avaliar", pendente.getId())), forjado))

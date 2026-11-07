@@ -33,6 +33,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Rateio por consumo usa as leituras do mês da conta")
 class RateioPorCompetenciaIntegracaoTest {
 
+    @Autowired br.com.homelive.repository.CasaRepository casaRepository;
+    br.com.homelive.model.Casa casa;
+
     @Autowired DespesaService despesaService;
     @Autowired SindicoRepository sindicoRepository;
     @Autowired MoradorRepository moradorRepository;
@@ -43,6 +46,7 @@ class RateioPorCompetenciaIntegracaoTest {
 
     @BeforeEach
     void setUp() {
+        casa = casaRepository.findAll().get(0);
         sindico = sindicoRepository.findAll().get(0);
         ator = new UsuarioAutenticado(sindico);
     }
@@ -62,7 +66,7 @@ class RateioPorCompetenciaIntegracaoTest {
 
         DespesaDTO.AprovacaoRequest aprovacao = new DespesaDTO.AprovacaoRequest();
         aprovacao.setAprovado(true);
-        return despesaService.avaliarDespesa(lancada.getId(), aprovacao, sindico.getId()).getItensRateio().stream()
+        return despesaService.avaliarDespesa(casa.getId(), lancada.getId(), aprovacao, sindico.getId()).getItensRateio().stream()
                 .collect(Collectors.toMap(DespesaDTO.RateioItemResponse::getMoradorNome,
                         DespesaDTO.RateioItemResponse::getValorCalculado));
     }
@@ -111,7 +115,7 @@ class RateioPorCompetenciaIntegracaoTest {
     @DisplayName("Com leitura incompleta, a recusa cita só quem falta")
     void leituraIncompleta() {
         YearMonth mes = YearMonth.now().minusMonths(2);
-        List<Morador> moradores = moradorRepository.findByAtivoTrue();
+        List<Morador> moradores = moradorRepository.findByCasaIdAndStatusMembroAndAtivoTrue(casa.getId(), br.com.homelive.model.enums.StatusMembro.ATIVO);
         Morador semLeitura = moradores.get(moradores.size() - 1);
         moradores.stream().filter(m -> !m.equals(semLeitura))
                 .forEach(m -> leituraRepository.save(new LeituraConsumo(m, mes, new BigDecimal("50.00"))));
@@ -145,6 +149,6 @@ class RateioPorCompetenciaIntegracaoTest {
         DespesaDTO.AprovacaoRequest aprovacao = new DespesaDTO.AprovacaoRequest();
         aprovacao.setAprovado(true);
 
-        assertEquals(4, despesaService.avaliarDespesa(id, aprovacao, sindico.getId()).getItensRateio().size());
+        assertEquals(4, despesaService.avaliarDespesa(casa.getId(), id, aprovacao, sindico.getId()).getItensRateio().size());
     }
 }

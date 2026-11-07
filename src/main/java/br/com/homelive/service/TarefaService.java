@@ -1,5 +1,6 @@
 package br.com.homelive.service;
 
+import br.com.homelive.repository.CasaRepository;
 import br.com.homelive.dto.TarefaDTO;
 import br.com.homelive.exception.RecursoNaoEncontradoException;
 import br.com.homelive.event.TarefaMarcadaComoAtrasada;
@@ -26,18 +27,20 @@ public class TarefaService {
     private final MoradorService moradorService;
     private final SindicoService sindicoService;
     private final MoradorRepository moradorRepository;
+    private final CasaRepository casaRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public TarefaDTO.Response criarTarefa(TarefaDTO.Request request, Long sindicoId) {
+    public TarefaDTO.Response criarTarefa(Long casaId, TarefaDTO.Request request, Long sindicoId) {
         Morador responsavel = null;
         if (request.getResponsavelId() != null) {
-            responsavel = moradorService.buscarEntidade(request.getResponsavelId());
+            responsavel = moradorService.buscarEntidade(casaId, request.getResponsavelId());
         }
 
         Sindico atribuidaPor = sindicoService.buscarEntidade(sindicoId);
 
         TarefaDomestica tarefa = new TarefaDomestica(
+                casaRepository.getReferenceById(casaId),
                 request.getTitulo(),
                 request.getDescricao(),
                 request.getDataPrazo(),
@@ -53,7 +56,7 @@ public class TarefaService {
 
     @Transactional
     public TarefaDTO.Response concluirTarefa(Long tarefaId, UsuarioAutenticado ator) {
-        TarefaDomestica tarefa = buscarEntidade(tarefaId);
+        TarefaDomestica tarefa = buscarEntidade(ator.getCasaId(), tarefaId);
 
         // Tarefa sem responsável não tem dono: só o síndico conclui.
         ator.exigirSindicoOuDono(tarefa.getResponsavel() != null ? tarefa.getResponsavel().getId() : null);
@@ -68,8 +71,9 @@ public class TarefaService {
     }
 
     @Transactional
-    public int verificarEProcessarAtrasos() {
-        List<TarefaDomestica> atrasadas = tarefaRepository.findByStatusAndDataPrazoBefore(
+    public int verificarEProcessarAtrasos(Long casaId) {
+        List<TarefaDomestica> atrasadas = tarefaRepository.findByCasaIdAndStatusAndDataPrazoBefore(
+                casaId,
                 StatusTarefa.PENDENTE,
                 LocalDate.now()
         );
@@ -85,20 +89,21 @@ public class TarefaService {
         return atrasadas.size();
     }
 
-    public List<TarefaDTO.Response> listarTodas() {
-        return tarefaRepository.findAll().stream().map(this::toResponse).toList();
+    public List<TarefaDTO.Response> listarTodas(Long casaId) {
+        return tarefaRepository.findByCasaId(casaId).stream().map(this::toResponse).toList();
     }
 
-    public List<TarefaDTO.Response> listarPorMorador(Long moradorId) {
-        return tarefaRepository.findByResponsavelId(moradorId).stream().map(this::toResponse).toList();
+    public List<TarefaDTO.Response> listarPorMorador(Long casaId, Long moradorId) {
+        moradorService.buscarEntidade(casaId, moradorId);
+        return tarefaRepository.findByCasaIdAndResponsavelId(casaId, moradorId).stream().map(this::toResponse).toList();
     }
 
-    public List<TarefaDTO.Response> listarPorStatus(StatusTarefa status) {
-        return tarefaRepository.findByStatus(status).stream().map(this::toResponse).toList();
+    public List<TarefaDTO.Response> listarPorStatus(Long casaId, StatusTarefa status) {
+        return tarefaRepository.findByCasaIdAndStatus(casaId, status).stream().map(this::toResponse).toList();
     }
 
-    public TarefaDomestica buscarEntidade(Long id) {
-        return tarefaRepository.findById(id)
+    public TarefaDomestica buscarEntidade(Long casaId, Long id) {
+        return tarefaRepository.findByIdAndCasaId(id, casaId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Tarefa não encontrada com o ID: " + id));
     }
 

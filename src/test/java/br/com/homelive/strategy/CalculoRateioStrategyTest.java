@@ -1,5 +1,6 @@
 package br.com.homelive.strategy;
 
+import br.com.homelive.Fixtures;
 import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.model.Despesa;
 import br.com.homelive.model.Morador;
@@ -48,7 +49,7 @@ class CalculoRateioStrategyTest {
     }
 
     private Despesa despesa(String valor, TipoRateio tipo) {
-        return new Despesa("Conta", "teste", new BigDecimal(valor), LocalDate.now().plusDays(10),
+        return new Despesa(Fixtures.casa(), "Conta", "teste", new BigDecimal(valor), LocalDate.now().plusDays(10),
                 CategoriaDespesa.ENERGIA_SOLAR, TipoDespesa.VARIAVEL, tipo, null);
     }
 

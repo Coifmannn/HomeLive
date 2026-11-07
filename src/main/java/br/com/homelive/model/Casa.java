@@ -42,4 +42,12 @@ public class Casa {
         this.codigoConvite = codigoConvite;
         this.dataCriacao = LocalDateTime.now();
     }
+
+    /** Todo registro de uma casa precisa apontar para ela; sem isso o isolamento entre casas se perde. */
+    public static Casa exigir(Casa casa) {
+        if (casa == null) {
+            throw new RegraNegocioException("A casa é obrigatória.");
+        }
+        return casa;
+    }
 }

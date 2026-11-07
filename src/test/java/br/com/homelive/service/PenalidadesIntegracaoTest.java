@@ -38,6 +38,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Penalidades configuráveis (fluxo completo com banco)")
 class PenalidadesIntegracaoTest {
 
+    @Autowired br.com.homelive.repository.CasaRepository casaRepository;
+    br.com.homelive.model.Casa casa;
+
     @Autowired TarefaService tarefaService;
     @Autowired AgendamentoService agendamentoService;
     @Autowired PenalidadeService penalidadeService;
@@ -55,6 +58,7 @@ class PenalidadesIntegracaoTest {
 
     @BeforeEach
     void setUp() {
+        casa = casaRepository.findAll().get(0);
         lucas = moradorRepository.findAll().stream().filter(m -> m.getNome().equals("Lucas Silva")).findFirst().orElseThrow();
         sofia = moradorRepository.findAll().stream().filter(m -> m.getNome().equals("Sofia Chen")).findFirst().orElseThrow();
         helena = sindicoRepository.findAll().get(0);
@@ -62,7 +66,7 @@ class PenalidadesIntegracaoTest {
 
     private void criarTarefasVencidasDoLucas(int quantidade) {
         for (int i = 1; i <= quantidade; i++) {
-            tarefaRepository.save(new TarefaDomestica("Vencida " + i, "x", LocalDate.now().minusDays(1), 25, 15, lucas, null));
+            tarefaRepository.save(new TarefaDomestica(casa, "Vencida " + i, "x", LocalDate.now().minusDays(1), 25, 15, lucas, null));
         }
         tarefaRepository.flush();
     }
@@ -80,7 +84,7 @@ class PenalidadesIntegracaoTest {
         int antes = lucas.getPontosConvivencia();
         criarTarefasVencidasDoLucas(4);
 
-        tarefaService.verificarEProcessarAtrasos();
+        tarefaService.verificarEProcessarAtrasos(casa.getId());
 
         // Regra de demonstração: base 10, +5 por reincidência, teto 30.
         List<Integer> cobrados = penalidadesDe(lucas, TipoInfracao.TAREFA_ATRASADA).stream()
@@ -95,7 +99,7 @@ class PenalidadesIntegracaoTest {
     void tarefaAtrasadaRespeitaTeto() {
         criarTarefasVencidasDoLucas(7);
 
-        tarefaService.verificarEProcessarAtrasos();
+        tarefaService.verificarEProcessarAtrasos(casa.getId());
 
         List<Integer> cobrados = penalidadesDe(lucas, TipoInfracao.TAREFA_ATRASADA).stream()
                 .map(Penalidade::getPontos).sorted().toList();
@@ -106,13 +110,13 @@ class PenalidadesIntegracaoTest {
     @DisplayName("Penalidade antiga, fora da janela de reincidência, não conta como reincidência")
     void janelaDeReincidencia() {
         criarTarefasVencidasDoLucas(1);
-        tarefaService.verificarEProcessarAtrasos();
+        tarefaService.verificarEProcessarAtrasos(casa.getId());
         Penalidade antiga = penalidadesDe(lucas, TipoInfracao.TAREFA_ATRASADA).get(0);
         ReflectionTestUtils.setField(antiga, "dataAplicacao", LocalDateTime.now().minusDays(40));
         penalidadeRepository.saveAndFlush(antiga);
 
         criarTarefasVencidasDoLucas(1);
-        tarefaService.verificarEProcessarAtrasos();
+        tarefaService.verificarEProcessarAtrasos(casa.getId());
 
         List<Integer> cobrados = penalidadesDe(lucas, TipoInfracao.TAREFA_ATRASADA).stream().map(Penalidade::getPontos).toList();
         assertEquals(List.of(10, 10), cobrados, "a segunda recomeça do valor base");
@@ -126,7 +130,7 @@ class PenalidadesIntegracaoTest {
         int antes = lucas.getPontosConvivencia();
         criarTarefasVencidasDoLucas(1);
 
-        tarefaService.verificarEProcessarAtrasos();
+        tarefaService.verificarEProcessarAtrasos(casa.getId());
 
         List<Penalidade> aplicadas = penalidadesDe(lucas, TipoInfracao.TAREFA_ATRASADA);
         assertEquals(1, aplicadas.size());
@@ -140,8 +144,8 @@ class PenalidadesIntegracaoTest {
     void naoPuneDuasVezes() {
         criarTarefasVencidasDoLucas(1);
 
-        tarefaService.verificarEProcessarAtrasos();
-        tarefaService.verificarEProcessarAtrasos();
+        tarefaService.verificarEProcessarAtrasos(casa.getId());
+        tarefaService.verificarEProcessarAtrasos(casa.getId());
 
         assertEquals(1, penalidadesDe(lucas, TipoInfracao.TAREFA_ATRASADA).size());
     }
@@ -190,7 +194,7 @@ class PenalidadesIntegracaoTest {
     @Test
     @DisplayName("Sem regra ativa de cancelamento tardio, ninguém é penalizado")
     void cancelamentoSemRegra() {
-        regraRepository.findByTipoInfracaoAndAtivaTrue(TipoInfracao.CANCELAMENTO_TARDIO).orElseThrow().desativar();
+        regraRepository.findByCasaIdAndTipoInfracaoAndAtivaTrue(casa.getId(), TipoInfracao.CANCELAMENTO_TARDIO).orElseThrow().desativar();
         regraRepository.flush();
 
         agendamentoService.cancelarAgendamento(reservaDe(lucas).getId(), new UsuarioAutenticado(lucas));
@@ -205,7 +209,7 @@ class PenalidadesIntegracaoTest {
         int antes = lucas.getPontosConvivencia();
 
         // Antes de a reserva começar, não dá para registrar.
-        assertThrows(RegraNegocioException.class, () -> agendamentoService.registrarNaoComparecimento(reserva.getId()));
+        assertThrows(RegraNegocioException.class, () -> agendamentoService.registrarNaoComparecimento(casa.getId(), reserva.getId()));
         assertTrue(penalidadesDe(lucas, TipoInfracao.NAO_COMPARECIMENTO).isEmpty());
 
         // Passa o tempo: a reserva já começou.
@@ -213,7 +217,7 @@ class PenalidadesIntegracaoTest {
         ReflectionTestUtils.setField(reserva, "dataHoraFim", LocalDateTime.now().plusHours(1));
         agendamentoRepository.saveAndFlush(reserva);
 
-        assertEquals(StatusAgendamento.NAO_COMPARECEU, agendamentoService.registrarNaoComparecimento(reserva.getId()).getStatus());
+        assertEquals(StatusAgendamento.NAO_COMPARECEU, agendamentoService.registrarNaoComparecimento(casa.getId(), reserva.getId()).getStatus());
 
         List<Penalidade> aplicadas = penalidadesDe(lucas, TipoInfracao.NAO_COMPARECIMENTO);
         assertEquals(1, aplicadas.size());
@@ -229,7 +233,7 @@ class PenalidadesIntegracaoTest {
         int antes = lucas.getPontosConvivencia();
         PenalidadeDTO.ManualRequest req = new PenalidadeDTO.ManualRequest(lucas.getId(), 12, "Barulho após as 22h");
 
-        PenalidadeDTO.Response resposta = penalidadeService.aplicarManual(req, helena.getId());
+        PenalidadeDTO.Response resposta = penalidadeService.aplicarManual(casa.getId(), req, helena.getId());
 
         assertEquals(TipoInfracao.MANUAL, resposta.getTipoInfracao());
         assertEquals(12, resposta.getPontos());
@@ -242,7 +246,7 @@ class PenalidadesIntegracaoTest {
     @DisplayName("Penalidade automática aparece como aplicada pelo sistema")
     void penalidadeAutomaticaSemSindico() {
         criarTarefasVencidasDoLucas(1);
-        tarefaService.verificarEProcessarAtrasos();
+        tarefaService.verificarEProcessarAtrasos(casa.getId());
 
         PenalidadeDTO.Response resposta = penalidadeService.listarPorMorador(lucas.getId(), new UsuarioAutenticado(lucas)).get(0);
 
@@ -253,7 +257,7 @@ class PenalidadesIntegracaoTest {
     @Test
     @DisplayName("Morador consulta só o próprio histórico; o síndico consulta o de qualquer um")
     void historicoSoDoDono() {
-        penalidadeService.aplicarManual(new PenalidadeDTO.ManualRequest(lucas.getId(), 5, "x"), helena.getId());
+        penalidadeService.aplicarManual(casa.getId(), new PenalidadeDTO.ManualRequest(lucas.getId(), 5, "x"), helena.getId());
 
         assertEquals(1, penalidadeService.listarPorMorador(lucas.getId(), new UsuarioAutenticado(lucas)).size());
         assertEquals(1, penalidadeService.listarPorMorador(lucas.getId(), new UsuarioAutenticado(helena)).size());
@@ -276,38 +280,38 @@ class PenalidadesIntegracaoTest {
     @DisplayName("Só uma regra ativa por tipo de infração")
     void umaRegraAtivaPorTipo() {
         assertThrows(RegraNegocioException.class,
-                () -> regraService.criar(pedido(TipoInfracao.NAO_COMPARECIMENTO, ModoCalculoPenalidade.FIXA, 50)));
+                () -> regraService.criar(casa.getId(), pedido(TipoInfracao.NAO_COMPARECIMENTO, ModoCalculoPenalidade.FIXA, 50)));
     }
 
     @Test
     @DisplayName("Trocar a regra: desativa a atual, cria a nova, e ela passa a valer")
     void trocarDeRegra() {
-        Long atual = regraRepository.findByTipoInfracaoAndAtivaTrue(TipoInfracao.NAO_COMPARECIMENTO).orElseThrow().getId();
-        regraService.desativar(atual);
-        regraService.criar(pedido(TipoInfracao.NAO_COMPARECIMENTO, ModoCalculoPenalidade.FIXA, 50));
+        Long atual = regraRepository.findByCasaIdAndTipoInfracaoAndAtivaTrue(casa.getId(), TipoInfracao.NAO_COMPARECIMENTO).orElseThrow().getId();
+        regraService.desativar(casa.getId(), atual);
+        regraService.criar(casa.getId(), pedido(TipoInfracao.NAO_COMPARECIMENTO, ModoCalculoPenalidade.FIXA, 50));
 
         AgendamentoEspaco reserva = reservaDe(lucas);
         ReflectionTestUtils.setField(reserva, "dataHoraInicio", LocalDateTime.now().minusHours(1));
         ReflectionTestUtils.setField(reserva, "dataHoraFim", LocalDateTime.now().plusHours(1));
         agendamentoRepository.saveAndFlush(reserva);
-        agendamentoService.registrarNaoComparecimento(reserva.getId());
+        agendamentoService.registrarNaoComparecimento(casa.getId(), reserva.getId());
 
         assertEquals(50, penalidadesDe(lucas, TipoInfracao.NAO_COMPARECIMENTO).get(0).getPontos());
-        assertThrows(RegraNegocioException.class, () -> regraService.ativar(atual),
+        assertThrows(RegraNegocioException.class, () -> regraService.ativar(casa.getId(), atual),
                 "reativar a antiga conflita com a nova que já está ativa");
     }
 
     @Test
     @DisplayName("Regra inválida é recusada na criação")
     void regraInvalida() {
-        regraRepository.findByTipoInfracaoAndAtivaTrue(TipoInfracao.TAREFA_ATRASADA).orElseThrow().desativar();
+        regraRepository.findByCasaIdAndTipoInfracaoAndAtivaTrue(casa.getId(), TipoInfracao.TAREFA_ATRASADA).orElseThrow().desativar();
         regraRepository.flush();
 
         assertThrows(RegraNegocioException.class,
-                () -> regraService.criar(pedido(TipoInfracao.TAREFA_ATRASADA, ModoCalculoPenalidade.PROGRESSIVA, 10)),
+                () -> regraService.criar(casa.getId(), pedido(TipoInfracao.TAREFA_ATRASADA, ModoCalculoPenalidade.PROGRESSIVA, 10)),
                 "progressiva sem incremento");
         assertThrows(RegraNegocioException.class,
-                () -> regraService.criar(pedido(TipoInfracao.MANUAL, ModoCalculoPenalidade.FIXA, 10)),
+                () -> regraService.criar(casa.getId(), pedido(TipoInfracao.MANUAL, ModoCalculoPenalidade.FIXA, 10)),
                 "manual não tem regra");
     }
 }

@@ -50,8 +50,14 @@ public class TarefaDomestica {
 
     private LocalDateTime dataConclusao;
 
-    public TarefaDomestica(String titulo, String descricao, LocalDate dataPrazo, Integer pontosRecompensa,
+    /** A casa dona deste registro: toda consulta filtra por ela, e ela nunca muda. */
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "casa_id", nullable = false)
+    private Casa casa;
+
+    public TarefaDomestica(Casa casa, String titulo, String descricao, LocalDate dataPrazo, Integer pontosRecompensa,
                            Integer pontosPenalidade, Morador responsavel, Sindico atribuidaPor) {
+        this.casa = Casa.exigir(casa);
         this.titulo = titulo;
         this.descricao = descricao;
         this.dataPrazo = dataPrazo;

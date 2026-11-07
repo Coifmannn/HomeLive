@@ -26,19 +26,23 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Rodízio de tarefas (fluxo completo com banco)")
 class RodizioDeTarefasIntegracaoTest {
 
+    @Autowired br.com.homelive.repository.CasaRepository casaRepository;
+    br.com.homelive.model.Casa casa;
+
     @Autowired TarefaRecorrenteService service;
     @Autowired TarefaRecorrenteRepository recorrenteRepository;
     @Autowired MoradorRepository moradorRepository;
 
     @BeforeEach
     void isolar() {
+        casa = casaRepository.findAll().get(0);
         // Os modelos do DataInitializer também estão devidos hoje; cada teste cria só o que precisa.
         recorrenteRepository.findAll().forEach(TarefaRecorrente::desativar);
         recorrenteRepository.flush();
     }
 
     private TarefaRecorrente criar(TipoRodizio tipo) {
-        return recorrenteRepository.saveAndFlush(new TarefaRecorrente("Teste " + tipo, "x",
+        return recorrenteRepository.saveAndFlush(new TarefaRecorrente(casa, "Teste " + tipo, "x",
                 Periodicidade.SEMANAL, 2, 20, 10, tipo, LocalDate.now()));
     }
 
@@ -48,7 +52,7 @@ class RodizioDeTarefasIntegracaoTest {
     }
 
     private String gerarUma() {
-        List<TarefaDTO.Response> geradas = service.gerarTarefasDevidas();
+        List<TarefaDTO.Response> geradas = service.gerarTarefasDevidas(casa.getId());
         assertEquals(1, geradas.size());
         return geradas.get(0).getResponsavelNome();
     }
@@ -57,7 +61,7 @@ class RodizioDeTarefasIntegracaoTest {
     @DisplayName("Sequencial: depois da primeira vez, passa por todos em ordem circular e volta a quem começou")
     void sequencialGiraPorTodos() {
         TarefaRecorrente modelo = criar(TipoRodizio.SEQUENCIAL);
-        List<String> ordemDeId = moradorRepository.findByAtivoTrue().stream()
+        List<String> ordemDeId = moradorRepository.findByCasaIdAndStatusMembroAndAtivoTrue(casa.getId(), br.com.homelive.model.enums.StatusMembro.ATIVO).stream()
                 .sorted(Comparator.comparing(Morador::getId)).map(Morador::getNome).toList();
 
         List<String> sorteados = new java.util.ArrayList<>();
@@ -82,7 +86,7 @@ class RodizioDeTarefasIntegracaoTest {
                 criar(TipoRodizio.SEQUENCIAL), criar(TipoRodizio.SEQUENCIAL), criar(TipoRodizio.SEQUENCIAL));
 
         for (int semana = 1; semana <= 4; semana++) {
-            List<String> responsaveis = service.gerarTarefasDevidas().stream()
+            List<String> responsaveis = service.gerarTarefasDevidas(casa.getId()).stream()
                     .map(TarefaDTO.Response::getResponsavelNome).toList();
 
             assertEquals(3, responsaveis.size());
@@ -97,15 +101,15 @@ class RodizioDeTarefasIntegracaoTest {
     void naoDuplica() {
         criar(TipoRodizio.SEQUENCIAL);
 
-        assertEquals(1, service.gerarTarefasDevidas().size());
-        assertTrue(service.gerarTarefasDevidas().isEmpty());
+        assertEquals(1, service.gerarTarefasDevidas(casa.getId()).size());
+        assertTrue(service.gerarTarefasDevidas(casa.getId()).isEmpty());
     }
 
     @Test
     @DisplayName("Quem foi desativado sai do rodízio")
     void ignoraMoradorInativo() {
         TarefaRecorrente modelo = criar(TipoRodizio.SEQUENCIAL);
-        List<Morador> ativos = moradorRepository.findByAtivoTrue().stream()
+        List<Morador> ativos = moradorRepository.findByCasaIdAndStatusMembroAndAtivoTrue(casa.getId(), br.com.homelive.model.enums.StatusMembro.ATIVO).stream()
                 .sorted(Comparator.comparing(Morador::getId)).toList();
         Morador segundo = ativos.get(1);
         segundo.desativar();
@@ -141,7 +145,7 @@ class RodizioDeTarefasIntegracaoTest {
         criar(TipoRodizio.MENOR_CARGA);
         criar(TipoRodizio.MENOR_CARGA);
 
-        List<TarefaDTO.Response> geradas = service.gerarTarefasDevidas();
+        List<TarefaDTO.Response> geradas = service.gerarTarefasDevidas(casa.getId());
 
         assertEquals(2, geradas.size());
         assertNotEquals(geradas.get(0).getResponsavelNome(), geradas.get(1).getResponsavelNome(),
@@ -152,7 +156,7 @@ class RodizioDeTarefasIntegracaoTest {
     @DisplayName("Menor pontuação: dá a tarefa a quem tem menos pontos de convivência")
     void menorPontuacao() {
         criar(TipoRodizio.MENOR_PONTUACAO);
-        Morador esperado = moradorRepository.findByAtivoTrue().stream()
+        Morador esperado = moradorRepository.findByCasaIdAndStatusMembroAndAtivoTrue(casa.getId(), br.com.homelive.model.enums.StatusMembro.ATIVO).stream()
                 .min(Comparator.comparingInt(Morador::getPontosConvivencia).thenComparing(Morador::getId))
                 .orElseThrow();
 
@@ -162,16 +166,16 @@ class RodizioDeTarefasIntegracaoTest {
     @Test
     @DisplayName("Modelo ainda não devido ou desativado não gera tarefa")
     void respeitaDataEAtivacao() {
-        TarefaRecorrente futuro = recorrenteRepository.saveAndFlush(new TarefaRecorrente("Futuro", "x",
+        TarefaRecorrente futuro = recorrenteRepository.saveAndFlush(new TarefaRecorrente(casa, "Futuro", "x",
                 Periodicidade.MENSAL, 3, null, null, TipoRodizio.SEQUENCIAL, LocalDate.now().plusDays(5)));
-        assertTrue(service.gerarTarefasDevidas().isEmpty());
+        assertTrue(service.gerarTarefasDevidas(casa.getId()).isEmpty());
 
         TarefaRecorrente desativado = criar(TipoRodizio.SEQUENCIAL);
-        service.desativar(desativado.getId());
-        assertTrue(service.gerarTarefasDevidas().isEmpty());
+        service.desativar(casa.getId(), desativado.getId());
+        assertTrue(service.gerarTarefasDevidas(casa.getId()).isEmpty());
 
-        service.ativar(desativado.getId());
-        assertEquals(1, service.gerarTarefasDevidas().size());
+        service.ativar(casa.getId(), desativado.getId());
+        assertEquals(1, service.gerarTarefasDevidas(casa.getId()).size());
         assertNotNull(futuro.getId());
     }
 
@@ -179,9 +183,9 @@ class RodizioDeTarefasIntegracaoTest {
     @DisplayName("Sem moradores ativos, a rotina não falha: apenas não gera nada")
     void semMoradoresAtivos() {
         criar(TipoRodizio.SEQUENCIAL);
-        moradorRepository.findByAtivoTrue().forEach(Morador::desativar);
+        moradorRepository.findByCasaIdAndStatusMembroAndAtivoTrue(casa.getId(), br.com.homelive.model.enums.StatusMembro.ATIVO).forEach(Morador::desativar);
         moradorRepository.flush();
 
-        assertTrue(service.gerarTarefasDevidas().isEmpty());
+        assertTrue(service.gerarTarefasDevidas(casa.getId()).isEmpty());
     }
 }

@@ -10,10 +10,7 @@ import java.util.Optional;
 
 @Repository
 public interface LeituraConsumoRepository extends JpaRepository<LeituraConsumo, Long> {
-
     Optional<LeituraConsumo> findByMoradorIdAndCompetencia(Long moradorId, LocalDate competencia);
-
-    List<LeituraConsumo> findByCompetencia(LocalDate competencia);
-
+    List<LeituraConsumo> findByMoradorCasaIdAndCompetencia(Long casaId, LocalDate competencia);
     List<LeituraConsumo> findByMoradorIdOrderByCompetenciaDesc(Long moradorId);
 }

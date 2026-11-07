@@ -29,13 +29,13 @@ public class LeituraConsumoController {
     /** Leituras de um mês (aaaa-MM); sem parâmetro, o mês corrente. */
     @GetMapping
     public ResponseEntity<List<LeituraConsumoDTO.Response>> listarPorCompetencia(
-            @RequestParam(required = false) String competencia) {
+            @RequestParam(required = false) String competencia, @AuthenticationPrincipal UsuarioAutenticado logado) {
         YearMonth mes = competencia != null ? YearMonth.parse(competencia) : YearMonth.now();
-        return ResponseEntity.ok(leituraService.listarPorCompetencia(mes));
+        return ResponseEntity.ok(leituraService.listarPorCompetencia(logado.getCasaId(), mes));
     }
 
     @GetMapping("/morador/{moradorId}")
-    public ResponseEntity<List<LeituraConsumoDTO.Response>> listarPorMorador(@PathVariable Long moradorId) {
-        return ResponseEntity.ok(leituraService.listarPorMorador(moradorId));
+    public ResponseEntity<List<LeituraConsumoDTO.Response>> listarPorMorador(@PathVariable Long moradorId, @AuthenticationPrincipal UsuarioAutenticado logado) {
+        return ResponseEntity.ok(leituraService.listarPorMorador(logado.getCasaId(), moradorId));
     }
 }

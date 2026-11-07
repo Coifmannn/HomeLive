@@ -1,5 +1,6 @@
 package br.com.homelive.model;
 
+import br.com.homelive.Fixtures;
 import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.model.enums.ModoCalculoPenalidade;
 import br.com.homelive.model.enums.TipoInfracao;
@@ -14,11 +15,11 @@ import static org.junit.jupiter.api.Assertions.*;
 class RegraPenalidadeTest {
 
     private RegraPenalidade fixa(int pontos) {
-        return new RegraPenalidade("Fixa", TipoInfracao.NAO_COMPARECIMENTO, ModoCalculoPenalidade.FIXA, pontos, null, null, null, null);
+        return new RegraPenalidade(Fixtures.casa(), "Fixa", TipoInfracao.NAO_COMPARECIMENTO, ModoCalculoPenalidade.FIXA, pontos, null, null, null, null);
     }
 
     private RegraPenalidade progressiva(int base, int incremento, Integer teto) {
-        return new RegraPenalidade("Progressiva", TipoInfracao.TAREFA_ATRASADA, ModoCalculoPenalidade.PROGRESSIVA,
+        return new RegraPenalidade(Fixtures.casa(), "Progressiva", TipoInfracao.TAREFA_ATRASADA, ModoCalculoPenalidade.PROGRESSIVA,
                 base, incremento, teto, null, null);
     }
 
@@ -56,7 +57,7 @@ class RegraPenalidadeTest {
     @Test
     @DisplayName("Cancelamento é tardio quando falta menos que o limite de horas, ou já passou do início")
     void cancelamentoTardio() {
-        RegraPenalidade r = new RegraPenalidade("Tardio", TipoInfracao.CANCELAMENTO_TARDIO,
+        RegraPenalidade r = new RegraPenalidade(Fixtures.casa(), "Tardio", TipoInfracao.CANCELAMENTO_TARDIO,
                 ModoCalculoPenalidade.FIXA, 10, null, null, null, 2);
         LocalDateTime inicio = LocalDateTime.of(2030, 5, 10, 14, 0);
 
@@ -82,27 +83,27 @@ class RegraPenalidadeTest {
     @DisplayName("Recusa configurações inválidas")
     void validacoes() {
         // nome, tipo, modo e pontos
-        assertThrows(RegraNegocioException.class, () -> new RegraPenalidade(" ", TipoInfracao.NAO_COMPARECIMENTO, ModoCalculoPenalidade.FIXA, 5, null, null, null, null));
-        assertThrows(RegraNegocioException.class, () -> new RegraPenalidade("x", null, ModoCalculoPenalidade.FIXA, 5, null, null, null, null));
-        assertThrows(RegraNegocioException.class, () -> new RegraPenalidade("x", TipoInfracao.NAO_COMPARECIMENTO, null, 5, null, null, null, null));
+        assertThrows(RegraNegocioException.class, () -> new RegraPenalidade(Fixtures.casa(), " ", TipoInfracao.NAO_COMPARECIMENTO, ModoCalculoPenalidade.FIXA, 5, null, null, null, null));
+        assertThrows(RegraNegocioException.class, () -> new RegraPenalidade(Fixtures.casa(), "x", null, ModoCalculoPenalidade.FIXA, 5, null, null, null, null));
+        assertThrows(RegraNegocioException.class, () -> new RegraPenalidade(Fixtures.casa(), "x", TipoInfracao.NAO_COMPARECIMENTO, null, 5, null, null, null, null));
         assertThrows(RegraNegocioException.class, () -> fixa(0));
         // MANUAL não tem regra
-        assertThrows(RegraNegocioException.class, () -> new RegraPenalidade("x", TipoInfracao.MANUAL, ModoCalculoPenalidade.FIXA, 5, null, null, null, null));
+        assertThrows(RegraNegocioException.class, () -> new RegraPenalidade(Fixtures.casa(), "x", TipoInfracao.MANUAL, ModoCalculoPenalidade.FIXA, 5, null, null, null, null));
         // progressiva exige incremento; fixa não aceita
         assertThrows(RegraNegocioException.class, () -> progressiva(10, 0, null));
-        assertThrows(RegraNegocioException.class, () -> new RegraPenalidade("x", TipoInfracao.NAO_COMPARECIMENTO, ModoCalculoPenalidade.FIXA, 5, 3, null, null, null));
+        assertThrows(RegraNegocioException.class, () -> new RegraPenalidade(Fixtures.casa(), "x", TipoInfracao.NAO_COMPARECIMENTO, ModoCalculoPenalidade.FIXA, 5, 3, null, null, null));
         // teto e janela
         assertThrows(RegraNegocioException.class, () -> progressiva(10, 5, 9));
-        assertThrows(RegraNegocioException.class, () -> new RegraPenalidade("x", TipoInfracao.NAO_COMPARECIMENTO, ModoCalculoPenalidade.FIXA, 5, null, null, 0, null));
+        assertThrows(RegraNegocioException.class, () -> new RegraPenalidade(Fixtures.casa(), "x", TipoInfracao.NAO_COMPARECIMENTO, ModoCalculoPenalidade.FIXA, 5, null, null, 0, null));
     }
 
     @Test
     @DisplayName("Limite de horas é obrigatório para cancelamento tardio e proibido nos outros tipos")
     void limiteDeHoras() {
-        assertThrows(RegraNegocioException.class, () -> new RegraPenalidade("x", TipoInfracao.CANCELAMENTO_TARDIO, ModoCalculoPenalidade.FIXA, 5, null, null, null, null));
-        assertThrows(RegraNegocioException.class, () -> new RegraPenalidade("x", TipoInfracao.CANCELAMENTO_TARDIO, ModoCalculoPenalidade.FIXA, 5, null, null, null, 0));
-        assertThrows(RegraNegocioException.class, () -> new RegraPenalidade("x", TipoInfracao.TAREFA_ATRASADA, ModoCalculoPenalidade.FIXA, 5, null, null, null, 2));
-        assertDoesNotThrow(() -> new RegraPenalidade("x", TipoInfracao.CANCELAMENTO_TARDIO, ModoCalculoPenalidade.FIXA, 5, null, null, null, 1));
+        assertThrows(RegraNegocioException.class, () -> new RegraPenalidade(Fixtures.casa(), "x", TipoInfracao.CANCELAMENTO_TARDIO, ModoCalculoPenalidade.FIXA, 5, null, null, null, null));
+        assertThrows(RegraNegocioException.class, () -> new RegraPenalidade(Fixtures.casa(), "x", TipoInfracao.CANCELAMENTO_TARDIO, ModoCalculoPenalidade.FIXA, 5, null, null, null, 0));
+        assertThrows(RegraNegocioException.class, () -> new RegraPenalidade(Fixtures.casa(), "x", TipoInfracao.TAREFA_ATRASADA, ModoCalculoPenalidade.FIXA, 5, null, null, null, 2));
+        assertDoesNotThrow(() -> new RegraPenalidade(Fixtures.casa(), "x", TipoInfracao.CANCELAMENTO_TARDIO, ModoCalculoPenalidade.FIXA, 5, null, null, null, 1));
     }
 
     @Test

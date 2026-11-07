@@ -23,7 +23,7 @@ public class LeituraConsumoService {
     @Transactional
     public LeituraConsumoDTO.Response registrar(LeituraConsumoDTO.Request request, UsuarioAutenticado ator) {
         Long moradorId = ator.moradorAlvo(request.getMoradorId());
-        Morador morador = moradorService.buscarEntidade(moradorId);
+        Morador morador = moradorService.buscarEntidade(ator.getCasaId(), moradorId);
         YearMonth mes = request.getCompetencia() != null ? YearMonth.parse(request.getCompetencia()) : YearMonth.now();
 
         LeituraConsumo leitura = leituraRepository.findByMoradorIdAndCompetencia(moradorId, mes.atDay(1))
@@ -35,12 +35,12 @@ public class LeituraConsumoService {
         return toResponse(leitura);
     }
 
-    public List<LeituraConsumoDTO.Response> listarPorCompetencia(YearMonth mes) {
-        return leituraRepository.findByCompetencia(mes.atDay(1)).stream().map(this::toResponse).toList();
+    public List<LeituraConsumoDTO.Response> listarPorCompetencia(Long casaId, YearMonth mes) {
+        return leituraRepository.findByMoradorCasaIdAndCompetencia(casaId, mes.atDay(1)).stream().map(this::toResponse).toList();
     }
 
-    public List<LeituraConsumoDTO.Response> listarPorMorador(Long moradorId) {
-        moradorService.buscarEntidade(moradorId);
+    public List<LeituraConsumoDTO.Response> listarPorMorador(Long casaId, Long moradorId) {
+        moradorService.buscarEntidade(casaId, moradorId);
         return leituraRepository.findByMoradorIdOrderByCompetenciaDesc(moradorId).stream().map(this::toResponse).toList();
     }
 

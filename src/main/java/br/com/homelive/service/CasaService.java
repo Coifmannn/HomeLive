@@ -5,11 +5,13 @@ import br.com.homelive.exception.RecursoNaoEncontradoException;
 import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.model.Casa;
 import br.com.homelive.model.Morador;
+import br.com.homelive.model.RegraPenalidade;
 import br.com.homelive.model.Sindico;
 import br.com.homelive.model.Usuario;
 import br.com.homelive.model.enums.StatusMembro;
 import br.com.homelive.repository.CasaRepository;
 import br.com.homelive.repository.MoradorRepository;
+import br.com.homelive.repository.RegraPenalidadeRepository;
 import br.com.homelive.repository.UsuarioRepository;
 import br.com.homelive.security.UsuarioAutenticado;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,7 @@ public class CasaService {
     private final CasaRepository casaRepository;
     private final UsuarioRepository usuarioRepository;
     private final MoradorRepository moradorRepository;
+    private final RegraPenalidadeRepository regraPenalidadeRepository;
 
     /**
      * Funda uma casa. A pessoa se cadastrou como morador sem casa; ao fundar, esse perfil vazio é
@@ -47,6 +50,7 @@ public class CasaService {
             throw new RegraNegocioException("Você já pertence a uma casa.");
         }
         Casa casa = casaRepository.save(new Casa(request.getNome(), gerarCodigoUnico()));
+        regraPenalidadeRepository.saveAll(RegraPenalidade.padroesDa(casa));
 
         if (usuario instanceof Morador moradorSemCasa) {
             Sindico sindico = new Sindico(moradorSemCasa.getNome(), moradorSemCasa.getEmail(),

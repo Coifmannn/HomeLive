@@ -32,7 +32,7 @@ public class DespesaController {
             @PathVariable Long id,
             @RequestBody @Valid DespesaDTO.AprovacaoRequest request,
             @AuthenticationPrincipal UsuarioAutenticado sindico) {
-        DespesaDTO.Response response = despesaService.avaliarDespesa(id, request, sindico.getId());
+        DespesaDTO.Response response = despesaService.avaliarDespesa(sindico.getCasaId(), id, request, sindico.getId());
         return ResponseEntity.ok(response);
     }
 
@@ -44,20 +44,20 @@ public class DespesaController {
 
     @GetMapping
     public ResponseEntity<List<DespesaDTO.Response>> listarTodas(
-            @RequestParam(required = false) StatusDespesa status) {
+            @RequestParam(required = false) StatusDespesa status, @AuthenticationPrincipal UsuarioAutenticado logado) {
         if (status != null) {
-            return ResponseEntity.ok(despesaService.listarPorStatus(status));
+            return ResponseEntity.ok(despesaService.listarPorStatus(logado.getCasaId(), status));
         }
-        return ResponseEntity.ok(despesaService.listarTodas());
+        return ResponseEntity.ok(despesaService.listarTodas(logado.getCasaId()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DespesaDTO.Response> obterPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(despesaService.obterPorId(id));
+    public ResponseEntity<DespesaDTO.Response> obterPorId(@PathVariable Long id, @AuthenticationPrincipal UsuarioAutenticado logado) {
+        return ResponseEntity.ok(despesaService.obterPorId(logado.getCasaId(), id));
     }
 
     @GetMapping("/morador/{moradorId}/rateios")
-    public ResponseEntity<List<DespesaDTO.RateioItemResponse>> listarRateiosPorMorador(@PathVariable Long moradorId) {
-        return ResponseEntity.ok(despesaService.listarRateiosPorMorador(moradorId));
+    public ResponseEntity<List<DespesaDTO.RateioItemResponse>> listarRateiosPorMorador(@PathVariable Long moradorId, @AuthenticationPrincipal UsuarioAutenticado logado) {
+        return ResponseEntity.ok(despesaService.listarRateiosPorMorador(logado.getCasaId(), moradorId));
     }
 }

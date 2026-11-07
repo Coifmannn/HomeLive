@@ -10,14 +10,17 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface DespesaRepository extends JpaRepository<Despesa, Long> {
-    List<Despesa> findByStatus(StatusDespesa status);
-    List<Despesa> findBySolicitanteId(Long solicitanteId);
+    List<Despesa> findByCasaId(Long casaId);
+    List<Despesa> findByCasaIdAndStatus(Long casaId, StatusDespesa status);
+    Optional<Despesa> findByIdAndCasaId(Long id, Long casaId);
 
-    /** Soma o valor das despesas lançadas no intervalo [inicio, fim). */
+    /** Soma o valor das despesas da casa lançadas no intervalo [inicio, fim). */
     @Query("SELECT COALESCE(SUM(d.valorTotal), 0) FROM Despesa d " +
-           "WHERE d.dataLancamento >= :inicio AND d.dataLancamento < :fim")
-    BigDecimal somarValorLancadoEntre(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
+           "WHERE d.casa.id = :casaId AND d.dataLancamento >= :inicio AND d.dataLancamento < :fim")
+    BigDecimal somarValorLancadoEntre(@Param("casaId") Long casaId,
+                                      @Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 }

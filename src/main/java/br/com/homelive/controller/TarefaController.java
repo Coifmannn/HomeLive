@@ -24,7 +24,7 @@ public class TarefaController {
     @PostMapping
     public ResponseEntity<TarefaDTO.Response> criar(@RequestBody @Valid TarefaDTO.Request request,
                                                 @AuthenticationPrincipal UsuarioAutenticado sindico) {
-        TarefaDTO.Response response = tarefaService.criarTarefa(request, sindico.getId());
+        TarefaDTO.Response response = tarefaService.criarTarefa(sindico.getCasaId(), request, sindico.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -34,8 +34,8 @@ public class TarefaController {
     }
 
     @PostMapping("/processar-atrasos")
-    public ResponseEntity<Map<String, Object>> processarAtrasos() {
-        int penalizadas = tarefaService.verificarEProcessarAtrasos();
+    public ResponseEntity<Map<String, Object>> processarAtrasos(@AuthenticationPrincipal UsuarioAutenticado logado) {
+        int penalizadas = tarefaService.verificarEProcessarAtrasos(logado.getCasaId());
         return ResponseEntity.ok(Map.of(
                 "mensagem", "Processamento de atrasos concluído com sucesso",
                 "tarefasPenalizadas", penalizadas
@@ -44,20 +44,20 @@ public class TarefaController {
 
     @GetMapping
     public ResponseEntity<List<TarefaDTO.Response>> listarTodas(
-            @RequestParam(required = false) StatusTarefa status) {
+            @RequestParam(required = false) StatusTarefa status, @AuthenticationPrincipal UsuarioAutenticado logado) {
         if (status != null) {
-            return ResponseEntity.ok(tarefaService.listarPorStatus(status));
+            return ResponseEntity.ok(tarefaService.listarPorStatus(logado.getCasaId(), status));
         }
-        return ResponseEntity.ok(tarefaService.listarTodas());
+        return ResponseEntity.ok(tarefaService.listarTodas(logado.getCasaId()));
     }
 
     @GetMapping("/morador/{moradorId}")
-    public ResponseEntity<List<TarefaDTO.Response>> listarPorMorador(@PathVariable Long moradorId) {
-        return ResponseEntity.ok(tarefaService.listarPorMorador(moradorId));
+    public ResponseEntity<List<TarefaDTO.Response>> listarPorMorador(@PathVariable Long moradorId, @AuthenticationPrincipal UsuarioAutenticado logado) {
+        return ResponseEntity.ok(tarefaService.listarPorMorador(logado.getCasaId(), moradorId));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TarefaDTO.Response> obterPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(tarefaService.toResponse(tarefaService.buscarEntidade(id)));
+    public ResponseEntity<TarefaDTO.Response> obterPorId(@PathVariable Long id, @AuthenticationPrincipal UsuarioAutenticado logado) {
+        return ResponseEntity.ok(tarefaService.toResponse(tarefaService.buscarEntidade(logado.getCasaId(), id)));
     }
 }

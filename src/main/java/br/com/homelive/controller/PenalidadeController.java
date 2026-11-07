@@ -23,12 +23,12 @@ public class PenalidadeController {
     @PostMapping
     public ResponseEntity<PenalidadeDTO.Response> aplicarManual(@RequestBody @Valid PenalidadeDTO.ManualRequest request,
                                                                 @AuthenticationPrincipal UsuarioAutenticado sindico) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(penalidadeService.aplicarManual(request, sindico.getId()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(penalidadeService.aplicarManual(sindico.getCasaId(), request, sindico.getId()));
     }
 
     @GetMapping
-    public ResponseEntity<List<PenalidadeDTO.Response>> listarTodas() {
-        return ResponseEntity.ok(penalidadeService.listarTodas());
+    public ResponseEntity<List<PenalidadeDTO.Response>> listarTodas(@AuthenticationPrincipal UsuarioAutenticado logado) {
+        return ResponseEntity.ok(penalidadeService.listarTodas(logado.getCasaId()));
     }
 
     @GetMapping("/morador/{moradorId}")

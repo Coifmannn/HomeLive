@@ -22,6 +22,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @DisplayName("Dashboard: totais do mês")
 class DashboardServiceTest {
 
+    @Autowired br.com.homelive.repository.CasaRepository casaRepository;
+    br.com.homelive.model.Casa casa;
+
+    @org.junit.jupiter.api.BeforeEach
+    void carregarCasa() {
+        casa = casaRepository.findAll().get(0);
+    }
+
     @Autowired
     private DashboardService dashboardService;
 
@@ -29,7 +37,7 @@ class DashboardServiceTest {
     private DespesaRepository despesaRepository;
 
     private Despesa despesaLancadaEm(LocalDate data, String valor) {
-        Despesa d = new Despesa("Conta", "teste", new BigDecimal(valor), LocalDate.now().plusDays(5),
+        Despesa d = new Despesa(casa, "Conta", "teste", new BigDecimal(valor), LocalDate.now().plusDays(5),
                 CategoriaDespesa.INTERNET_QUANTICA, TipoDespesa.FIXA, TipoRateio.IGUALITARIO, null);
         ReflectionTestUtils.setField(d, "dataLancamento", data);
         return despesaRepository.saveAndFlush(d);
@@ -38,33 +46,33 @@ class DashboardServiceTest {
     @Test
     @DisplayName("Despesa do mesmo mês do ano passado não entra no total do mês")
     void ignoraMesmoMesDeOutroAno() {
-        BigDecimal antes = dashboardService.obterResumoGeral().getTotalDespesasMes();
+        BigDecimal antes = dashboardService.obterResumoGeral(casa.getId()).getTotalDespesasMes();
 
         despesaLancadaEm(LocalDate.now().minusYears(1), "999.00");
 
-        assertEquals(0, antes.compareTo(dashboardService.obterResumoGeral().getTotalDespesasMes()));
+        assertEquals(0, antes.compareTo(dashboardService.obterResumoGeral(casa.getId()).getTotalDespesasMes()));
     }
 
     @Test
     @DisplayName("Despesa do mês corrente entra no total, e a do mês anterior não")
     void somenteMesCorrente() {
-        BigDecimal antes = dashboardService.obterResumoGeral().getTotalDespesasMes();
+        BigDecimal antes = dashboardService.obterResumoGeral(casa.getId()).getTotalDespesasMes();
 
         despesaLancadaEm(LocalDate.now(), "10.00");
         despesaLancadaEm(LocalDate.now().withDayOfMonth(1).minusDays(1), "500.00");
 
-        assertEquals(0, antes.add(new BigDecimal("10.00")).compareTo(dashboardService.obterResumoGeral().getTotalDespesasMes()));
+        assertEquals(0, antes.add(new BigDecimal("10.00")).compareTo(dashboardService.obterResumoGeral(casa.getId()).getTotalDespesasMes()));
     }
 
     @Test
     @DisplayName("Primeiro e último dia do mês corrente entram no total")
     void bordasDoMes() {
-        BigDecimal antes = dashboardService.obterResumoGeral().getTotalDespesasMes();
+        BigDecimal antes = dashboardService.obterResumoGeral(casa.getId()).getTotalDespesasMes();
 
         LocalDate primeiro = LocalDate.now().withDayOfMonth(1);
         despesaLancadaEm(primeiro, "1.00");
         despesaLancadaEm(primeiro.plusMonths(1).minusDays(1), "2.00");
 
-        assertEquals(0, antes.add(new BigDecimal("3.00")).compareTo(dashboardService.obterResumoGeral().getTotalDespesasMes()));
+        assertEquals(0, antes.add(new BigDecimal("3.00")).compareTo(dashboardService.obterResumoGeral(casa.getId()).getTotalDespesasMes()));
     }
 }

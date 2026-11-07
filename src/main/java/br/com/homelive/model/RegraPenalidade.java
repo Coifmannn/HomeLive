@@ -1,5 +1,6 @@
 package br.com.homelive.model;
 
+import java.util.List;
 import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.model.enums.ModoCalculoPenalidade;
 import br.com.homelive.model.enums.TipoInfracao;
@@ -53,9 +54,29 @@ public class RegraPenalidade {
 
     private boolean ativa = true;
 
-    public RegraPenalidade(String nome, TipoInfracao tipoInfracao, ModoCalculoPenalidade modoCalculo, int pontosBase,
+    /** A casa dona deste registro: toda consulta filtra por ela, e ela nunca muda. */
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "casa_id", nullable = false)
+    private Casa casa;
+
+    /**
+     * Regras com que toda casa nasce, para a gamificação funcionar desde o primeiro dia
+     * (o síndico pode desativá-las ou criar outras).
+     */
+    public static List<RegraPenalidade> padroesDa(Casa casa) {
+        return List.of(
+                new RegraPenalidade(casa, "Tarefa atrasada (progressiva)", TipoInfracao.TAREFA_ATRASADA,
+                        ModoCalculoPenalidade.PROGRESSIVA, 10, 5, 30, 30, null),
+                new RegraPenalidade(casa, "Cancelamento em cima da hora", TipoInfracao.CANCELAMENTO_TARDIO,
+                        ModoCalculoPenalidade.FIXA, 10, null, null, null, 2),
+                new RegraPenalidade(casa, "Reserva não utilizada", TipoInfracao.NAO_COMPARECIMENTO,
+                        ModoCalculoPenalidade.FIXA, 20, null, null, null, null));
+    }
+
+    public RegraPenalidade(Casa casa, String nome, TipoInfracao tipoInfracao, ModoCalculoPenalidade modoCalculo, int pontosBase,
                            Integer incrementoPorReincidencia, Integer tetoPontos, Integer janelaReincidenciaDias,
                            Integer limiteHorasAntecedencia) {
+        this.casa = Casa.exigir(casa);
         if (nome == null || nome.isBlank()) {
             throw new RegraNegocioException("O nome da regra é obrigatório.");
         }

@@ -1,5 +1,6 @@
 package br.com.homelive.service;
 
+import br.com.homelive.repository.CasaRepository;
 import br.com.homelive.dto.RegraPenalidadeDTO;
 import br.com.homelive.exception.RecursoNaoEncontradoException;
 import br.com.homelive.exception.RegraNegocioException;
@@ -16,10 +17,12 @@ import java.util.List;
 public class RegraPenalidadeService {
 
     private final RegraPenalidadeRepository regraRepository;
+    private final CasaRepository casaRepository;
 
     @Transactional
-    public RegraPenalidadeDTO.Response criar(RegraPenalidadeDTO.Request request) {
+    public RegraPenalidadeDTO.Response criar(Long casaId, RegraPenalidadeDTO.Request request) {
         RegraPenalidade regra = new RegraPenalidade(
+                casaRepository.getReferenceById(casaId),
                 request.getNome(),
                 request.getTipoInfracao(),
                 request.getModoCalculo(),
@@ -33,17 +36,17 @@ public class RegraPenalidadeService {
         return toResponse(regraRepository.save(regra));
     }
 
-    public List<RegraPenalidadeDTO.Response> listarTodas() {
-        return regraRepository.findAll().stream().map(this::toResponse).toList();
+    public List<RegraPenalidadeDTO.Response> listarTodas(Long casaId) {
+        return regraRepository.findByCasaId(casaId).stream().map(this::toResponse).toList();
     }
 
-    public RegraPenalidadeDTO.Response obterPorId(Long id) {
-        return toResponse(buscarEntidade(id));
+    public RegraPenalidadeDTO.Response obterPorId(Long casaId, Long id) {
+        return toResponse(buscarEntidade(casaId, id));
     }
 
     @Transactional
-    public RegraPenalidadeDTO.Response ativar(Long id) {
-        RegraPenalidade regra = buscarEntidade(id);
+    public RegraPenalidadeDTO.Response ativar(Long casaId, Long id) {
+        RegraPenalidade regra = buscarEntidade(casaId, id);
         if (!regra.isAtiva()) {
             exigirSemOutraAtiva(regra);
             regra.ativar();
@@ -52,22 +55,22 @@ public class RegraPenalidadeService {
     }
 
     @Transactional
-    public RegraPenalidadeDTO.Response desativar(Long id) {
-        RegraPenalidade regra = buscarEntidade(id);
+    public RegraPenalidadeDTO.Response desativar(Long casaId, Long id) {
+        RegraPenalidade regra = buscarEntidade(casaId, id);
         regra.desativar();
         return toResponse(regra);
     }
 
     /** Duas regras ativas para a mesma infração tornariam ambíguo qual vale, então só uma por tipo. */
     private void exigirSemOutraAtiva(RegraPenalidade regra) {
-        if (regraRepository.existsByTipoInfracaoAndAtivaTrue(regra.getTipoInfracao())) {
+        if (regraRepository.existsByCasaIdAndTipoInfracaoAndAtivaTrue(regra.getCasa().getId(), regra.getTipoInfracao())) {
             throw new RegraNegocioException("Já existe uma regra ativa para " + regra.getTipoInfracao()
                     + ". Desative-a antes de ativar ou criar outra.");
         }
     }
 
-    public RegraPenalidade buscarEntidade(Long id) {
-        return regraRepository.findById(id)
+    public RegraPenalidade buscarEntidade(Long casaId, Long id) {
+        return regraRepository.findByIdAndCasaId(id, casaId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Regra de penalidade não encontrada com o ID: " + id));
     }
 

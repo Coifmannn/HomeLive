@@ -33,8 +33,8 @@ public class AgendamentoService {
     @Transactional
     public AgendamentoDTO.Response criarAgendamento(AgendamentoDTO.Request request, UsuarioAutenticado ator) {
         Long moradorId = ator.moradorAlvo(request.getMoradorId());
-        EspacoComum espaco = espacoComumService.buscarEntidade(request.getEspacoId());
-        Morador morador = moradorService.buscarEntidade(moradorId);
+        EspacoComum espaco = espacoComumService.buscarEntidade(ator.getCasaId(), request.getEspacoId());
+        Morador morador = moradorService.buscarEntidade(ator.getCasaId(), moradorId);
 
         // As invariantes da reserva (datas, passado, espaço/morador ativos) são validadas pelo próprio construtor.
         AgendamentoEspaco agendamento = new AgendamentoEspaco(
@@ -63,21 +63,23 @@ public class AgendamentoService {
         return toResponse(salvo);
     }
 
-    public List<AgendamentoDTO.Response> listarTodos() {
-        return agendamentoRepository.findAll().stream().map(this::toResponse).toList();
+    public List<AgendamentoDTO.Response> listarTodos(Long casaId) {
+        return agendamentoRepository.findByEspacoComumCasaId(casaId).stream().map(this::toResponse).toList();
     }
 
-    public List<AgendamentoDTO.Response> listarPorEspaco(Long espacoId) {
+    public List<AgendamentoDTO.Response> listarPorEspaco(Long casaId, Long espacoId) {
+        espacoComumService.buscarEntidade(casaId, espacoId);
         return agendamentoRepository.findByEspacoComumId(espacoId).stream().map(this::toResponse).toList();
     }
 
-    public List<AgendamentoDTO.Response> listarPorMorador(Long moradorId) {
+    public List<AgendamentoDTO.Response> listarPorMorador(Long casaId, Long moradorId) {
+        moradorService.buscarEntidade(casaId, moradorId);
         return agendamentoRepository.findByMoradorId(moradorId).stream().map(this::toResponse).toList();
     }
 
     @Transactional
     public void cancelarAgendamento(Long agendamentoId, UsuarioAutenticado ator) {
-        AgendamentoEspaco agendamento = buscarEntidade(agendamentoId);
+        AgendamentoEspaco agendamento = buscarEntidade(ator.getCasaId(), agendamentoId);
 
         ator.exigirSindicoOuDono(agendamento.getMorador().getId());
 
@@ -91,8 +93,8 @@ public class AgendamentoService {
     }
 
     @Transactional
-    public AgendamentoDTO.Response registrarNaoComparecimento(Long agendamentoId) {
-        AgendamentoEspaco agendamento = buscarEntidade(agendamentoId);
+    public AgendamentoDTO.Response registrarNaoComparecimento(Long casaId, Long agendamentoId) {
+        AgendamentoEspaco agendamento = buscarEntidade(casaId, agendamentoId);
 
         agendamento.registrarNaoComparecimento(LocalDateTime.now());
         agendamentoRepository.save(agendamento);
@@ -100,8 +102,8 @@ public class AgendamentoService {
         return toResponse(agendamento);
     }
 
-    private AgendamentoEspaco buscarEntidade(Long agendamentoId) {
-        return agendamentoRepository.findById(agendamentoId)
+    private AgendamentoEspaco buscarEntidade(Long casaId, Long agendamentoId) {
+        return agendamentoRepository.findByIdAndEspacoComumCasaId(agendamentoId, casaId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Agendamento não encontrado com o ID: " + agendamentoId));
     }
 

@@ -9,20 +9,23 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface AgendamentoEspacoRepository extends JpaRepository<AgendamentoEspaco, Long> {
 
+    List<AgendamentoEspaco> findByEspacoComumCasaId(Long casaId);
+    Optional<AgendamentoEspaco> findByIdAndEspacoComumCasaId(Long id, Long casaId);
     List<AgendamentoEspaco> findByEspacoComumId(Long espacoId);
 
     List<AgendamentoEspaco> findByMoradorId(Long moradorId);
 
     /** Conta reservas com o status dado que começam em [inicio, fim). */
-    long countByStatusAndDataHoraInicioGreaterThanEqualAndDataHoraInicioLessThan(
-            StatusAgendamento status, LocalDateTime inicio, LocalDateTime fim);
+    long countByEspacoComumCasaIdAndStatusAndDataHoraInicioGreaterThanEqualAndDataHoraInicioLessThan(
+            Long casaId, StatusAgendamento status, LocalDateTime inicio, LocalDateTime fim);
 
-    List<AgendamentoEspaco> findTop5ByStatusAndDataHoraInicioAfterOrderByDataHoraInicioAsc(
-            StatusAgendamento status, LocalDateTime depoisDe);
+    List<AgendamentoEspaco> findTop5ByEspacoComumCasaIdAndStatusAndDataHoraInicioAfterOrderByDataHoraInicioAsc(
+            Long casaId, StatusAgendamento status, LocalDateTime depoisDe);
 
     /**
      * Busca agendamentos confirmados que colidam temporalmente com o intervalo informado:

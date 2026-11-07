@@ -1,5 +1,6 @@
 package br.com.homelive.service;
 
+import br.com.homelive.repository.CasaRepository;
 import br.com.homelive.dto.EspacoComumDTO;
 import br.com.homelive.exception.RecursoNaoEncontradoException;
 import br.com.homelive.model.EspacoComum;
@@ -15,10 +16,12 @@ import java.util.List;
 public class EspacoComumService {
 
     private final EspacoComumRepository espacoComumRepository;
+    private final CasaRepository casaRepository;
 
     @Transactional
-    public EspacoComumDTO.Response cadastrar(EspacoComumDTO.Request request) {
+    public EspacoComumDTO.Response cadastrar(Long casaId, EspacoComumDTO.Request request) {
         EspacoComum espaco = new EspacoComum(
+                casaRepository.getReferenceById(casaId),
                 request.getNome(),
                 request.getDescricao(),
                 request.getCapacidadeMaxima() != null ? request.getCapacidadeMaxima() : 4,
@@ -27,27 +30,27 @@ public class EspacoComumService {
         return toResponse(espacoComumRepository.save(espaco));
     }
 
-    public List<EspacoComumDTO.Response> listarTodos() {
-        return espacoComumRepository.findAll().stream().map(this::toResponse).toList();
+    public List<EspacoComumDTO.Response> listarTodos(Long casaId) {
+        return espacoComumRepository.findByCasaId(casaId).stream().map(this::toResponse).toList();
     }
 
-    public List<EspacoComumDTO.Response> listarAtivos() {
-        return espacoComumRepository.findByAtivoTrue().stream().map(this::toResponse).toList();
+    public List<EspacoComumDTO.Response> listarAtivos(Long casaId) {
+        return espacoComumRepository.findByCasaIdAndAtivoTrue(casaId).stream().map(this::toResponse).toList();
     }
 
-    public EspacoComumDTO.Response obterPorId(Long id) {
-        return toResponse(buscarEntidade(id));
+    public EspacoComumDTO.Response obterPorId(Long casaId, Long id) {
+        return toResponse(buscarEntidade(casaId, id));
     }
 
     @Transactional
-    public void alternarStatus(Long id) {
-        EspacoComum espaco = buscarEntidade(id);
+    public void alternarStatus(Long casaId, Long id) {
+        EspacoComum espaco = buscarEntidade(casaId, id);
         espaco.alternarStatus();
         espacoComumRepository.save(espaco);
     }
 
-    public EspacoComum buscarEntidade(Long id) {
-        return espacoComumRepository.findById(id)
+    public EspacoComum buscarEntidade(Long casaId, Long id) {
+        return espacoComumRepository.findByIdAndCasaId(id, casaId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Espaço comum não encontrado com o ID: " + id));
     }
 

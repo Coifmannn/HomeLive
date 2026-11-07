@@ -30,7 +30,13 @@ public class EspacoComum {
 
     private boolean ativo = true;
 
-    public EspacoComum(String nome, String descricao, Integer capacidadeMaxima, String regrasUso) {
+    /** A casa dona deste registro: toda consulta filtra por ela, e ela nunca muda. */
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "casa_id", nullable = false)
+    private Casa casa;
+
+    public EspacoComum(Casa casa, String nome, String descricao, Integer capacidadeMaxima, String regrasUso) {
+        this.casa = Casa.exigir(casa);
         this.nome = nome;
         this.descricao = descricao;
         this.capacidadeMaxima = capacidadeMaxima;

@@ -1,5 +1,7 @@
 package br.com.homelive.service;
 
+import br.com.homelive.model.enums.StatusMembro;
+import br.com.homelive.repository.CasaRepository;
 import br.com.homelive.dto.DespesaDTO;
 import br.com.homelive.exception.RecursoNaoEncontradoException;
 import br.com.homelive.exception.RegraNegocioException;
@@ -38,13 +40,15 @@ public class DespesaService {
     private final SindicoService sindicoService;
     private final RateioStrategyFactory rateioStrategyFactory;
     private final LeituraConsumoRepository leituraConsumoRepository;
+    private final CasaRepository casaRepository;
 
     @Transactional
     public DespesaDTO.Response lancarDespesa(DespesaDTO.Request request, UsuarioAutenticado ator) {
         // Morador lança em nome próprio; lançamento do síndico é administrativo (sem solicitante).
-        Morador solicitante = ator.isSindico() ? null : moradorService.buscarEntidade(ator.getId());
+        Morador solicitante = ator.isSindico() ? null : moradorService.buscarEntidade(ator.getCasaId(), ator.getId());
 
         Despesa despesa = new Despesa(
+                casaRepository.getReferenceById(ator.getCasaId()),
                 request.getTitulo(),
                 request.getDescricao(),
                 request.getValorTotal(),
@@ -61,15 +65,15 @@ public class DespesaService {
     }
 
     @Transactional
-    public DespesaDTO.Response avaliarDespesa(Long despesaId, DespesaDTO.AprovacaoRequest request, Long sindicoId) {
-        Despesa despesa = buscarEntidade(despesaId);
+    public DespesaDTO.Response avaliarDespesa(Long casaId, Long despesaId, DespesaDTO.AprovacaoRequest request, Long sindicoId) {
+        Despesa despesa = buscarEntidade(casaId, despesaId);
         Sindico sindico = sindicoService.buscarEntidade(sindicoId);
 
         if (Boolean.TRUE.equals(request.getAprovado())) {
             despesa.aprovar(sindico);
 
             // Executa o rateio imediatamente com a Strategy apropriada
-            List<Morador> moradoresAtivos = moradorRepository.findByAtivoTrue();
+            List<Morador> moradoresAtivos = moradorRepository.findByCasaIdAndStatusMembroAndAtivoTrue(casaId, StatusMembro.ATIVO);
             if (moradoresAtivos.isEmpty()) {
                 throw new RegraNegocioException("Não há moradores ativos no sistema para calcular o rateio.");
             }
@@ -88,7 +92,7 @@ public class DespesaService {
 
     @Transactional
     public DespesaDTO.RateioItemResponse quitarItemRateio(Long itemId, UsuarioAutenticado ator) {
-        RateioItem item = rateioItemRepository.findById(itemId)
+        RateioItem item = rateioItemRepository.findByIdAndDespesaCasaId(itemId, ator.getCasaId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Item de rateio não encontrado com ID: " + itemId));
 
         ator.exigirSindicoOuDono(item.getMorador().getId());
@@ -98,19 +102,20 @@ public class DespesaService {
         return toRateioItemResponse(salvo);
     }
 
-    public List<DespesaDTO.Response> listarTodas() {
-        return despesaRepository.findAll().stream().map(this::toResponse).toList();
+    public List<DespesaDTO.Response> listarTodas(Long casaId) {
+        return despesaRepository.findByCasaId(casaId).stream().map(this::toResponse).toList();
     }
 
-    public List<DespesaDTO.Response> listarPorStatus(StatusDespesa status) {
-        return despesaRepository.findByStatus(status).stream().map(this::toResponse).toList();
+    public List<DespesaDTO.Response> listarPorStatus(Long casaId, StatusDespesa status) {
+        return despesaRepository.findByCasaIdAndStatus(casaId, status).stream().map(this::toResponse).toList();
     }
 
-    public DespesaDTO.Response obterPorId(Long id) {
-        return toResponse(buscarEntidade(id));
+    public DespesaDTO.Response obterPorId(Long casaId, Long id) {
+        return toResponse(buscarEntidade(casaId, id));
     }
 
-    public List<DespesaDTO.RateioItemResponse> listarRateiosPorMorador(Long moradorId) {
+    public List<DespesaDTO.RateioItemResponse> listarRateiosPorMorador(Long casaId, Long moradorId) {
+        moradorService.buscarEntidade(casaId, moradorId);
         return rateioItemRepository.findByMoradorId(moradorId).stream()
                 .map(this::toRateioItemResponse)
                 .toList();
@@ -118,13 +123,13 @@ public class DespesaService {
 
     /** Leituras de consumo do mês da despesa, no formato que as estratégias esperam. */
     private ContextoRateio contextoDoMes(Despesa despesa) {
-        Map<Long, BigDecimal> consumo = leituraConsumoRepository.findByCompetencia(despesa.getCompetencia()).stream()
+        Map<Long, BigDecimal> consumo = leituraConsumoRepository.findByMoradorCasaIdAndCompetencia(despesa.getCasa().getId(), despesa.getCompetencia()).stream()
                 .collect(Collectors.toMap(l -> l.getMorador().getId(), LeituraConsumo::getKwh));
         return new ContextoRateio(consumo);
     }
 
-    public Despesa buscarEntidade(Long id) {
-        return despesaRepository.findById(id)
+    public Despesa buscarEntidade(Long casaId, Long id) {
+        return despesaRepository.findByIdAndCasaId(id, casaId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Despesa não encontrada com o ID: " + id));
     }
 

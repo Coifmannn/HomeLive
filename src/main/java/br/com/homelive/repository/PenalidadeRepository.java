@@ -10,11 +10,8 @@ import java.util.List;
 
 @Repository
 public interface PenalidadeRepository extends JpaRepository<Penalidade, Long> {
-
-    List<Penalidade> findAllByOrderByDataAplicacaoDescIdDesc();
-
+    List<Penalidade> findByMoradorCasaIdOrderByDataAplicacaoDescIdDesc(Long casaId);
     List<Penalidade> findByMoradorIdOrderByDataAplicacaoDescIdDesc(Long moradorId);
-
     long countByMoradorIdAndTipoInfracaoAndDataAplicacaoGreaterThanEqual(
             Long moradorId, TipoInfracao tipoInfracao, LocalDateTime desde);
 }

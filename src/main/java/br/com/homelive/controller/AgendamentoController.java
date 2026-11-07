@@ -27,24 +27,24 @@ public class AgendamentoController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AgendamentoDTO.Response>> listarTodos() {
-        return ResponseEntity.ok(agendamentoService.listarTodos());
+    public ResponseEntity<List<AgendamentoDTO.Response>> listarTodos(@AuthenticationPrincipal UsuarioAutenticado logado) {
+        return ResponseEntity.ok(agendamentoService.listarTodos(logado.getCasaId()));
     }
 
     @GetMapping("/espaco/{espacoId}")
-    public ResponseEntity<List<AgendamentoDTO.Response>> listarPorEspaco(@PathVariable Long espacoId) {
-        return ResponseEntity.ok(agendamentoService.listarPorEspaco(espacoId));
+    public ResponseEntity<List<AgendamentoDTO.Response>> listarPorEspaco(@PathVariable Long espacoId, @AuthenticationPrincipal UsuarioAutenticado logado) {
+        return ResponseEntity.ok(agendamentoService.listarPorEspaco(logado.getCasaId(), espacoId));
     }
 
     @GetMapping("/morador/{moradorId}")
-    public ResponseEntity<List<AgendamentoDTO.Response>> listarPorMorador(@PathVariable Long moradorId) {
-        return ResponseEntity.ok(agendamentoService.listarPorMorador(moradorId));
+    public ResponseEntity<List<AgendamentoDTO.Response>> listarPorMorador(@PathVariable Long moradorId, @AuthenticationPrincipal UsuarioAutenticado logado) {
+        return ResponseEntity.ok(agendamentoService.listarPorMorador(logado.getCasaId(), moradorId));
     }
 
     /** Registra que o morador não usou o espaço reservado (só o síndico; vale depois do início da reserva). */
     @PatchMapping("/{id}/nao-compareceu")
-    public ResponseEntity<AgendamentoDTO.Response> registrarNaoComparecimento(@PathVariable Long id) {
-        return ResponseEntity.ok(agendamentoService.registrarNaoComparecimento(id));
+    public ResponseEntity<AgendamentoDTO.Response> registrarNaoComparecimento(@PathVariable Long id, @AuthenticationPrincipal UsuarioAutenticado logado) {
+        return ResponseEntity.ok(agendamentoService.registrarNaoComparecimento(logado.getCasaId(), id));
     }
 
     @PatchMapping("/{id}/cancelar")

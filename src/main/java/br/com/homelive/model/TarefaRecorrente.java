@@ -58,9 +58,15 @@ public class TarefaRecorrente {
     @JoinColumn(name = "ultimo_responsavel_id")
     private Morador ultimoResponsavel;
 
-    public TarefaRecorrente(String titulo, String descricao, Periodicidade periodicidade, int prazoEmDias,
+    /** A casa dona deste registro: toda consulta filtra por ela, e ela nunca muda. */
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "casa_id", nullable = false)
+    private Casa casa;
+
+    public TarefaRecorrente(Casa casa, String titulo, String descricao, Periodicidade periodicidade, int prazoEmDias,
                             Integer pontosRecompensa, Integer pontosPenalidade, TipoRodizio tipoRodizio,
                             LocalDate primeiraGeracao) {
+        this.casa = Casa.exigir(casa);
         if (titulo == null || titulo.isBlank()) {
             throw new RegraNegocioException("O título da tarefa recorrente é obrigatório.");
         }
@@ -106,7 +112,7 @@ public class TarefaRecorrente {
         }
 
         // Sem síndico atribuidor: o sistema mostra "Sistema Automático".
-        TarefaDomestica tarefa = new TarefaDomestica(titulo, descricao, hoje.plusDays(prazoEmDias),
+        TarefaDomestica tarefa = new TarefaDomestica(this.casa, titulo, descricao, hoje.plusDays(prazoEmDias),
                 pontosRecompensa, pontosPenalidade, responsavel, null);
 
         this.ultimoResponsavel = responsavel;

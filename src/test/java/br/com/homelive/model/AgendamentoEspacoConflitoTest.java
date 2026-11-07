@@ -1,5 +1,6 @@
 package br.com.homelive.model;
 
+import br.com.homelive.Fixtures;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ class AgendamentoEspacoConflitoTest {
 
     @BeforeEach
     void setUp() {
-        espaco = new EspacoComum("Escritório Acústico", "Sala silenciosa", 4, "Silêncio");
+        espaco = new EspacoComum(Fixtures.casa(), "Escritório Acústico", "Sala silenciosa", 4, "Silêncio");
         morador = new Morador("Lucas", "lucas@test.com", "hash", "11999990001", "101", 30);
     }
 

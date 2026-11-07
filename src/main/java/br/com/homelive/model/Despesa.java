@@ -84,15 +84,21 @@ public class Despesa {
     @OneToMany(mappedBy = "despesa", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<RateioItem> itensRateio = new ArrayList<>();
 
-    public Despesa(String titulo, String descricao, BigDecimal valorTotal, LocalDate dataVencimento,
+    /** A casa dona deste registro: toda consulta filtra por ela, e ela nunca muda. */
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "casa_id", nullable = false)
+    private Casa casa;
+
+    public Despesa(Casa casa, String titulo, String descricao, BigDecimal valorTotal, LocalDate dataVencimento,
                    CategoriaDespesa categoria, TipoDespesa tipoDespesa, TipoRateio tipoRateio, Morador solicitante) {
-        this(titulo, descricao, valorTotal, dataVencimento, categoria, tipoDespesa, tipoRateio, solicitante, null);
+        this(casa, titulo, descricao, valorTotal, dataVencimento, categoria, tipoDespesa, tipoRateio, solicitante, null);
     }
 
     /** @param competencia mês de referência da conta; se nulo, o mês corrente. Não pode ser futuro. */
-    public Despesa(String titulo, String descricao, BigDecimal valorTotal, LocalDate dataVencimento,
+    public Despesa(Casa casa, String titulo, String descricao, BigDecimal valorTotal, LocalDate dataVencimento,
                    CategoriaDespesa categoria, TipoDespesa tipoDespesa, TipoRateio tipoRateio, Morador solicitante,
                    YearMonth competencia) {
+        this.casa = Casa.exigir(casa);
         YearMonth mes = competencia != null ? competencia : YearMonth.now();
         if (mes.isAfter(YearMonth.now())) {
             throw new RegraNegocioException("A competência da despesa não pode ser de um mês futuro.");

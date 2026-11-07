@@ -1,5 +1,6 @@
 package br.com.homelive.model;
 
+import br.com.homelive.Fixtures;
 import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.model.enums.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +27,7 @@ class TransicoesDeEstadoTest {
     }
 
     private Despesa novaDespesa() {
-        return new Despesa("Internet", "Link", new BigDecimal("100.00"), LocalDate.now().plusDays(10),
+        return new Despesa(Fixtures.casa(), "Internet", "Link", new BigDecimal("100.00"), LocalDate.now().plusDays(10),
                 CategoriaDespesa.INTERNET_QUANTICA, TipoDespesa.FIXA, TipoRateio.IGUALITARIO, morador);
     }
 
@@ -98,7 +99,7 @@ class TransicoesDeEstadoTest {
     // ---------- TarefaDomestica ----------
 
     private TarefaDomestica novaTarefa() {
-        return new TarefaDomestica("Lixo", "Tirar o lixo", LocalDate.now().plusDays(1), 25, 15, morador, sindico);
+        return new TarefaDomestica(Fixtures.casa(), "Lixo", "Tirar o lixo", LocalDate.now().plusDays(1), 25, 15, morador, sindico);
     }
 
     @Test
@@ -116,7 +117,7 @@ class TransicoesDeEstadoTest {
     @Test
     @DisplayName("Concluir tarefa já marcada como atrasada rende só 50% da recompensa")
     void tarefaAtrasadaRendeMetade() {
-        TarefaDomestica t = new TarefaDomestica("Lixo", "x", LocalDate.now().minusDays(1), 25, 15, morador, sindico);
+        TarefaDomestica t = new TarefaDomestica(Fixtures.casa(), "Lixo", "x", LocalDate.now().minusDays(1), 25, 15, morador, sindico);
         assertTrue(t.marcarComoAtrasada());
         assertEquals(StatusTarefa.ATRASADA, t.getStatus());
 
@@ -129,7 +130,7 @@ class TransicoesDeEstadoTest {
     @Test
     @DisplayName("Concluir depois do prazo rende 50% mesmo se o atraso ainda não foi processado")
     void tarefaForaDoPrazoNaoProcessadaRendeMetade() {
-        TarefaDomestica t = new TarefaDomestica("Lixo", "x", LocalDate.now().minusDays(1), 25, 15, morador, sindico);
+        TarefaDomestica t = new TarefaDomestica(Fixtures.casa(), "Lixo", "x", LocalDate.now().minusDays(1), 25, 15, morador, sindico);
         assertEquals(StatusTarefa.PENDENTE, t.getStatus());
 
         t.concluir();
@@ -140,7 +141,7 @@ class TransicoesDeEstadoTest {
     @Test
     @DisplayName("Tarefa vencida vira atrasada uma única vez, e a própria tarefa não mexe nos pontos")
     void tarefaMarcadaComoAtrasadaUmaVez() {
-        TarefaDomestica t = new TarefaDomestica("Lixo", "x", LocalDate.now().minusDays(1), 25, 15, morador, sindico);
+        TarefaDomestica t = new TarefaDomestica(Fixtures.casa(), "Lixo", "x", LocalDate.now().minusDays(1), 25, 15, morador, sindico);
 
         assertTrue(t.marcarComoAtrasada());
         assertFalse(t.marcarComoAtrasada(), "já atrasada: não há nova transição");
@@ -152,11 +153,11 @@ class TransicoesDeEstadoTest {
     @Test
     @DisplayName("Tarefa dentro do prazo ou já concluída não vira atrasada")
     void tarefaNaoAtrasada() {
-        TarefaDomestica noPrazo = new TarefaDomestica("Lixo", "x", LocalDate.now().plusDays(1), 25, 15, morador, sindico);
+        TarefaDomestica noPrazo = new TarefaDomestica(Fixtures.casa(), "Lixo", "x", LocalDate.now().plusDays(1), 25, 15, morador, sindico);
         assertFalse(noPrazo.marcarComoAtrasada());
         assertEquals(StatusTarefa.PENDENTE, noPrazo.getStatus());
 
-        TarefaDomestica concluida = new TarefaDomestica("Lixo", "x", LocalDate.now().minusDays(1), 25, 15, morador, sindico);
+        TarefaDomestica concluida = new TarefaDomestica(Fixtures.casa(), "Lixo", "x", LocalDate.now().minusDays(1), 25, 15, morador, sindico);
         concluida.concluir();
         assertFalse(concluida.marcarComoAtrasada());
         assertEquals(StatusTarefa.CONCLUIDA, concluida.getStatus());
@@ -192,7 +193,7 @@ class TransicoesDeEstadoTest {
     @Test
     @DisplayName("Reserva inválida nem chega a existir: o construtor recusa")
     void agendamentoConstrutorValida() {
-        EspacoComum espaco = new EspacoComum("Lavanderia", "IoT", 2, "x");
+        EspacoComum espaco = new EspacoComum(Fixtures.casa(), "Lavanderia", "IoT", 2, "x");
 
         assertThrows(RegraNegocioException.class,
                 () -> new AgendamentoEspaco(espaco, morador, amanha, amanha.minusHours(1), "fim antes do início"));
@@ -207,7 +208,7 @@ class TransicoesDeEstadoTest {
     @Test
     @DisplayName("Não reserva espaço inativo nem para morador inativo")
     void agendamentoExigeAtivos() {
-        EspacoComum espaco = new EspacoComum("Lavanderia", "IoT", 2, "x");
+        EspacoComum espaco = new EspacoComum(Fixtures.casa(), "Lavanderia", "IoT", 2, "x");
 
         espaco.desativar();
         assertThrows(RegraNegocioException.class,
@@ -222,7 +223,7 @@ class TransicoesDeEstadoTest {
     @Test
     @DisplayName("Reserva só pode ser cancelada uma vez")
     void agendamentoCancelaUmaVez() {
-        EspacoComum espaco = new EspacoComum("Lavanderia", "IoT", 2, "x");
+        EspacoComum espaco = new EspacoComum(Fixtures.casa(), "Lavanderia", "IoT", 2, "x");
         AgendamentoEspaco a = new AgendamentoEspaco(espaco, morador, amanha, amanha.plusHours(1), "ok");
 
         a.cancelar();
@@ -233,7 +234,7 @@ class TransicoesDeEstadoTest {
     @Test
     @DisplayName("Não comparecimento só vale para reserva confirmada que já começou")
     void agendamentoNaoComparecimento() {
-        EspacoComum espaco = new EspacoComum("Lavanderia", "IoT", 2, "x");
+        EspacoComum espaco = new EspacoComum(Fixtures.casa(), "Lavanderia", "IoT", 2, "x");
         AgendamentoEspaco futura = new AgendamentoEspaco(espaco, morador, amanha, amanha.plusHours(1), "ok");
 
         assertThrows(RegraNegocioException.class, () -> futura.registrarNaoComparecimento(LocalDateTime.now()),
@@ -249,7 +250,7 @@ class TransicoesDeEstadoTest {
     @Test
     @DisplayName("Reserva cancelada não aceita registro de não comparecimento")
     void canceladaNaoPodeSerNaoComparecimento() {
-        EspacoComum espaco = new EspacoComum("Lavanderia", "IoT", 2, "x");
+        EspacoComum espaco = new EspacoComum(Fixtures.casa(), "Lavanderia", "IoT", 2, "x");
         AgendamentoEspaco a = new AgendamentoEspaco(espaco, morador, amanha, amanha.plusHours(1), "ok");
         a.cancelar();
 
@@ -261,7 +262,7 @@ class TransicoesDeEstadoTest {
     @Test
     @DisplayName("Espaço alterna entre ativo e inativo")
     void espacoAlternaStatus() {
-        EspacoComum espaco = new EspacoComum("Gourmet", "Rooftop", 8, "x");
+        EspacoComum espaco = new EspacoComum(Fixtures.casa(), "Gourmet", "Rooftop", 8, "x");
 
         espaco.alternarStatus();
         assertFalse(espaco.isAtivo());

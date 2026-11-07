@@ -1,5 +1,7 @@
 package br.com.homelive.controller;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import br.com.homelive.security.UsuarioAutenticado;
 import br.com.homelive.dto.RegraPenalidadeDTO;
 import br.com.homelive.service.RegraPenalidadeService;
 import jakarta.validation.Valid;
@@ -18,27 +20,27 @@ public class RegraPenalidadeController {
     private final RegraPenalidadeService regraService;
 
     @PostMapping
-    public ResponseEntity<RegraPenalidadeDTO.Response> criar(@RequestBody @Valid RegraPenalidadeDTO.Request request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(regraService.criar(request));
+    public ResponseEntity<RegraPenalidadeDTO.Response> criar(@RequestBody @Valid RegraPenalidadeDTO.Request request, @AuthenticationPrincipal UsuarioAutenticado logado) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(regraService.criar(logado.getCasaId(), request));
     }
 
     @GetMapping
-    public ResponseEntity<List<RegraPenalidadeDTO.Response>> listarTodas() {
-        return ResponseEntity.ok(regraService.listarTodas());
+    public ResponseEntity<List<RegraPenalidadeDTO.Response>> listarTodas(@AuthenticationPrincipal UsuarioAutenticado logado) {
+        return ResponseEntity.ok(regraService.listarTodas(logado.getCasaId()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RegraPenalidadeDTO.Response> obterPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(regraService.obterPorId(id));
+    public ResponseEntity<RegraPenalidadeDTO.Response> obterPorId(@PathVariable Long id, @AuthenticationPrincipal UsuarioAutenticado logado) {
+        return ResponseEntity.ok(regraService.obterPorId(logado.getCasaId(), id));
     }
 
     @PatchMapping("/{id}/ativar")
-    public ResponseEntity<RegraPenalidadeDTO.Response> ativar(@PathVariable Long id) {
-        return ResponseEntity.ok(regraService.ativar(id));
+    public ResponseEntity<RegraPenalidadeDTO.Response> ativar(@PathVariable Long id, @AuthenticationPrincipal UsuarioAutenticado logado) {
+        return ResponseEntity.ok(regraService.ativar(logado.getCasaId(), id));
     }
 
     @PatchMapping("/{id}/desativar")
-    public ResponseEntity<RegraPenalidadeDTO.Response> desativar(@PathVariable Long id) {
-        return ResponseEntity.ok(regraService.desativar(id));
+    public ResponseEntity<RegraPenalidadeDTO.Response> desativar(@PathVariable Long id, @AuthenticationPrincipal UsuarioAutenticado logado) {
+        return ResponseEntity.ok(regraService.desativar(logado.getCasaId(), id));
     }
 }

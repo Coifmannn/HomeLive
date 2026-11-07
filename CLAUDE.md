@@ -17,7 +17,10 @@ Novo no Claude Code.
 ## Como rodar
 ```bash
 ./mvnw spring-boot:run     # API em http://localhost:8080/api (precisa de JDK 21+)
-./mvnw test                # 177 testes, ~1 min
+./mvnw test                # 236 testes, ~1,5 min
+# Windows sem JAVA_HOME: use o PowerShell com `$env:JAVA_HOME="C:\Users\<voce>\.jdks\openjdk-26.0.2.1"; .\mvnw.cmd -q test`
+# (o Git Bash não acha o JDK). Depois de mudar assinaturas em main, use `mvnw.cmd clean test-compile`: o incremental
+# do Maven não recompila os testes e finge que está tudo verde.
 ```
 * Todas as rotas exigem HTTP Basic. Contas de demonstração (`DataInitializer`), **senha `homelive123`**:
   síndico `helena.vance@homelive2050.io`; moradores `lucas.silva@`, `sofia.chen@`, `mateus.oliveira@`, `beatriz.santos@homelive2050.io`.
@@ -73,36 +76,28 @@ Pacotes em `br.com.homelive`: `model` (entidades + `enums`), `repository`, `serv
 ## Estado atual
 Concluído e testado: autenticação e perfis; encapsulamento; rateio com Strategy+Template; **leitura mensal de consumo**
 com `competencia` na despesa; **rodízio de tarefas** (escalas recorrentes + agendador diário às 6h); **regras de penalidade
-configuráveis**; dashboard corrigido.
+configuráveis**; dashboard corrigido; **casas (multi-tenant)**: cadastro público, criar casa (vira síndico), entrar com código
++ aprovação, e isolamento total por casa.
 
-**Atenção:** no momento em que este arquivo foi escrito, havia **3 commits locais ainda sem push**
-(`bab1262`, `b9f4a70`, `9a8b062`), mais o commit deste arquivo. Rode `git status -sb` e confira.
+### Casas (feito, na branch `pc-casa`)
+* `Casa` (nome + `codigoConvite` tipo `HL-7K2Q`). `Usuario.casa` é nula logo após o cadastro. `StatusMembro`: `SEM_CASA`,
+  `PENDENTE`, `ATIVO` (`Usuario.getStatusMembro()` é polimórfico; o síndico responde `ATIVO` quando tem casa).
+* Cadastro (`POST /api/auth/cadastro`, público) cria um `Morador` sem casa. **Fundar a casa troca esse `Morador` por um `Sindico`**
+  com os mesmos dados (o JPA não muda a subclasse de uma linha): o `id` muda, o login (e-mail+senha) não. Ver `CasaService.criar`.
+* **Porta de entrada:** `ExigeMembroAtivoFilter` (instanciado no `SecurityConfig`, sem `@Component` de propósito) devolve 403
+  "Sem Casa Ativa" a quem não é membro ativo, fora de `/api/auth/**` e `/api/casas/**`.
+* **Isolamento:** as 5 entidades-raiz (`EspacoComum`, `Despesa`, `TarefaDomestica`, `TarefaRecorrente`, `RegraPenalidade`) têm
+  `casa` obrigatória no construtor; as demais herdam pelo dono (agendamento→espaço, rateio→despesa, leitura/penalidade→morador).
+  Todo service recebe o `casaId` do login (`logado.getCasaId()`), nunca do corpo. **Recurso de outra casa = 404**, não 403.
+  Ao criar um service/rota nova, filtre por casa **e** acrescente o caso ao `IsolamentoEntreCasasTest`.
+* Casa nova nasce com as 3 regras de penalidade padrão (`RegraPenalidade.padroesDa(casa)`).
+* Agendador das 6h roda casa por casa (`AgendadorConfig`), cada uma em transação própria.
+* Removidos: `POST /api/moradores`, `POST /api/sindicos`, `GET /api/sindicos` (use `GET /api/auth/eu`).
+* O `frontend/` do colega ainda usa o contrato antigo (descobre o perfil via `GET /sindicos` e `GET /moradores`) e não tem as
+  telas "criar casa / entrar com código / aguardando aprovação". **Precisa ser combinado com ele.**
+* Fora da 1ª versão: o que acontece quando o síndico sai (mais simples: transferir o cargo a outro morador).
 
-## Direção nova (combinada em 21/10/2026, ainda NÃO implementada)
-Decisões de produto/plataforma que o usuário trouxe. Aguardam as respostas das 4 perguntas abaixo antes de codar;
-mostre o plano detalhado antes de mexer.
-
-### Fluxo de cadastro e "quem é síndico"
-Ideia do usuário: o app abre **vazio**. A pessoa faz o **cadastro** (só cria a conta), faz login e então **cria uma HomeLive
-(casa)** ou **entra numa existente**. **Síndico = quem criou a casa**; quem entra é morador. Acaba o síndico fixo no
-`DataInitializer`.
-
-Desenho proposto:
-* Nova entidade `Casa` (nome + `codigoConvite` gerado, tipo `HL-7K2Q`). `Usuario` ganha `casa` (nula logo após o cadastro).
-* `/api/auth/cadastro` público. Rotas de dados exigem usuário **com casa**. Novas: `POST /api/casas` (cria e vira síndico) e
-  `POST /api/casas/entrar` (com o código).
-* **Isolamento por casa** é a parte cara: despesas, espaços, escalas, regras de penalidade, dashboard etc. passam a pertencer a
-  uma `Casa`, e toda consulta filtra por ela (senão o síndico da casa A mexe na casa B). `UsuarioAutenticado` carrega o `casaId`
-  e as regras de "dono" ganham "da mesma casa". Mexe em quase todo service/repository e nos 177 testes.
-* `Sindico`/`Morador` continuam entidades irmãs; o síndico passa a nascer do ato de fundar a casa. `DataInitializer` cria uma
-  casa de demonstração.
-* O front (`frontend/`, do colega, ainda não rastreado no git) precisa de tela "criar casa / entrar com código". Combinar com ele.
-
-**Decisões pendentes (recomendação entre parênteses):**
-1. Várias casas ou uma só por instalação? (várias)
-2. Entrar na casa só com código ou com aprovação do síndico? (código + aprovação, estado `PENDENTE` no morador)
-3. Um usuário pode estar em mais de uma casa? (não, uma casa por usuário)
-4. O que acontece se o síndico sair? (fora da 1ª versão; mais simples: transferir o cargo a outro morador)
+## Direção nova (ainda NÃO implementada)
 
 ### Postgres
 O usuário quer migrar do H2 para PostgreSQL. Há um `schema.sql` do grupo (com `tb_morador`, `tb_reserva`, `tb_rateio`,
@@ -111,7 +106,7 @@ entidades (`ddl-auto=update`), o script teria tabelas duplicadas e traz senha em
 Plano:
 * Criar o banco vazio `homelive`, adicionar `org.postgresql:postgresql` no `pom.xml`.
 * Perfil `postgres` em `application-postgres.properties` (credenciais por variável de ambiente, dialeto Postgres,
-  `ddl-auto=update`). **H2 continua padrão e nos testes**, então os 177 testes não dependem de Postgres.
+  `ddl-auto=update`). **H2 continua padrão e nos testes**, então os 236 testes não dependem de Postgres.
 * `DataInitializer` precisa de guarda para não duplicar a semente a cada boot (dados agora persistem).
 * Atualizar o `README.md`. O `schema.sql` vira referência antiga (mover para `docs/` ou apagar, a critério do usuário).
 * `tb_votacao`/`tb_voto` (votações) **não existem** no back-end; seria feature nova, se estiver na proposta.
@@ -123,8 +118,8 @@ com a API em `localhost:8080`. O mais simples é o Electron subir o JAR do Sprin
 Descartados: PWA/Capacitor (são para celular) e reescrever o front em Flutter/React Native.
 
 ### Ordem sugerida (commits separados, `feat:`)
-1. Casa + novo cadastro/entrada + isolamento por casa (com testes unitários, de integração e `curl`).
-2. Perfil Postgres (faz mais sentido depois de ter contas reais).
+1. ~~Casa + cadastro/entrada + isolamento por casa~~ (feito).
+2. Perfil Postgres.
 3. Electron.
 
 ## Pendências (em ordem de recomendação)
