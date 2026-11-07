@@ -10,6 +10,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 
 @Configuration
 @RequiredArgsConstructor
@@ -64,6 +65,8 @@ public class SecurityConfig {
 
                         // Todo o resto exige apenas estar logado (consultas e ações do dia a dia do morador).
                         .anyRequest().authenticated())
+                // Depois das regras de papel acima: quem não é membro ativo de uma casa só usa /api/auth e /api/casas.
+                .addFilterAfter(new ExigeMembroAtivoFilter(respostasJson), AuthorizationFilter.class)
                 .httpBasic(basic -> basic.authenticationEntryPoint(respostasJson))
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint(respostasJson)

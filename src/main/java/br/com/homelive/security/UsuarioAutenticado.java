@@ -2,6 +2,7 @@ package br.com.homelive.security;
 
 import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.model.Usuario;
+import br.com.homelive.model.enums.StatusMembro;
 import br.com.homelive.model.enums.TipoUsuario;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.GrantedAuthority;
@@ -25,6 +26,7 @@ public class UsuarioAutenticado implements UserDetails {
     private final TipoUsuario tipo;
     /** Nulo enquanto a pessoa não criou nem entrou em uma casa. */
     private final Long casaId;
+    private final StatusMembro statusMembro;
     private final boolean ativo;
 
     public UsuarioAutenticado(Usuario usuario) {
@@ -32,12 +34,22 @@ public class UsuarioAutenticado implements UserDetails {
         this.email = usuario.getEmail();
         this.senhaHash = usuario.getSenhaHash();
         this.tipo = usuario.getTipoUsuario();
+        this.statusMembro = usuario.getStatusMembro();
         this.casaId = usuario.getCasa() != null ? usuario.getCasa().getId() : null;
         this.ativo = usuario.isAtivo();
     }
 
     public Long getId() {
         return id;
+    }
+
+    public StatusMembro getStatusMembro() {
+        return statusMembro;
+    }
+
+    /** Só quem pertence a uma casa e já foi aprovado enxerga os dados dela. */
+    public boolean isMembroAtivo() {
+        return casaId != null && statusMembro == StatusMembro.ATIVO;
     }
 
     public Long getCasaId() {

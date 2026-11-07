@@ -36,6 +36,11 @@ public class RespostasDeSegurancaJson implements AuthenticationEntryPoint, Acces
                 "Seu perfil não tem permissão para realizar esta ação.");
     }
 
+    /** 403 para quem está logado mas ainda não é membro ativo de uma casa. */
+    public void semCasaAtiva(HttpServletResponse response, String mensagem) throws IOException {
+        escrever(response, HttpStatus.FORBIDDEN, "Sem Casa Ativa", mensagem);
+    }
+
     private void escrever(HttpServletResponse response, HttpStatus status, String erro, String mensagem) throws IOException {
         response.setStatus(status.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
