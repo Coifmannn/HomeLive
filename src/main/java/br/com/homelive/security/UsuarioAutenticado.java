@@ -23,6 +23,8 @@ public class UsuarioAutenticado implements UserDetails {
     private final String email;
     private final String senhaHash;
     private final TipoUsuario tipo;
+    /** Nulo enquanto a pessoa não criou nem entrou em uma casa. */
+    private final Long casaId;
     private final boolean ativo;
 
     public UsuarioAutenticado(Usuario usuario) {
@@ -30,11 +32,16 @@ public class UsuarioAutenticado implements UserDetails {
         this.email = usuario.getEmail();
         this.senhaHash = usuario.getSenhaHash();
         this.tipo = usuario.getTipoUsuario();
+        this.casaId = usuario.getCasa() != null ? usuario.getCasa().getId() : null;
         this.ativo = usuario.isAtivo();
     }
 
     public Long getId() {
         return id;
+    }
+
+    public Long getCasaId() {
+        return casaId;
     }
 
     public TipoUsuario getTipo() {

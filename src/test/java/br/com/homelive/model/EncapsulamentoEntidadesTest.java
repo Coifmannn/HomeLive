@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class EncapsulamentoEntidadesTest {
 
     private static final List<Class<?>> ENTIDADES = List.of(
-            Usuario.class, Morador.class, Sindico.class, EspacoComum.class, AgendamentoEspaco.class,
+            Usuario.class, Casa.class, Morador.class, Sindico.class, EspacoComum.class, AgendamentoEspaco.class,
             Despesa.class, RateioItem.class, TarefaDomestica.class, TarefaRecorrente.class, LeituraConsumo.class,
             RegraPenalidade.class, Penalidade.class);
 

@@ -1,5 +1,6 @@
 package br.com.homelive.model;
 
+import br.com.homelive.model.enums.StatusMembro;
 import br.com.homelive.model.enums.TipoUsuario;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -29,5 +30,11 @@ public class Sindico extends Usuario {
     @Override
     public TipoUsuario getTipoUsuario() {
         return TipoUsuario.SINDICO;
+    }
+
+    /** O síndico é quem fundou a casa, então nunca fica "pendente". */
+    @Override
+    public StatusMembro getStatusMembro() {
+        return getCasa() == null ? StatusMembro.SEM_CASA : StatusMembro.ATIVO;
     }
 }

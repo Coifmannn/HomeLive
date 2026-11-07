@@ -121,6 +121,18 @@ fetch('http://localhost:8080/api/dashboard', { headers: { Authorization: auth } 
 
 **Quem está agindo vem do login, não do corpo da requisição.** Por isso os campos `solicitanteId` (despesa), `sindicoId` (avaliação) e `atribuidaPorId` (tarefa) não existem mais. Se o front enviá-los, são ignorados.
 
+### Cadastro, casa e quem é síndico
+
+O app abre **vazio**: ninguém é síndico de nascença. O fluxo é:
+
+1. `POST /api/auth/cadastro` (a única rota pública) cria a conta. A pessoa nasce como morador **sem casa**.
+2. Depois do login, ela escolhe um caminho:
+   * **Criar uma casa** (`POST /api/casas`): vira o **síndico** dessa casa e recebe o código de convite. O sistema troca o perfil vazio de morador por um de síndico com os mesmos dados; o **`id` do usuário muda** e o login (e-mail + senha) continua o mesmo. O front deve reler `GET /api/auth/eu` depois de criar a casa.
+   * **Entrar numa casa** (`POST /api/casas/entrar`): informa o código e o quarto e fica `PENDENTE`. O síndico aprova ou recusa em `/api/casas/pendentes`.
+3. Uma pessoa pertence a **uma casa por vez**.
+
+`statusMembro` (`SEM_CASA`, `PENDENTE`, `ATIVO`) diz qual tela mostrar: criar/entrar, "aguardando aprovação" ou o app.
+
 | Ação | Síndico | Morador |
 | :--- | :---: | :---: |
 | Aprovar/rejeitar despesa | ✅ | ❌ |
@@ -148,6 +160,14 @@ fetch('http://localhost:8080/api/dashboard', { headers: { Authorization: auth } 
 
 | Módulo | Método | Rota | Acesso | Descrição |
 | :--- | :--- | :--- | :---: | :--- |
+| **Conta** | `POST` | `/api/auth/cadastro` | **público** | Cria só a conta: `{ nome, email, senha (mín. 6), telefone? }`. Nasce sem casa (`statusMembro: SEM_CASA`) |
+| | `GET` | `/api/auth/eu` | logado | Quem sou, meu papel, minha casa e `statusMembro` (o front usa para escolher a tela) |
+| **Casas** | `POST` | `/api/casas` | logado, sem casa | Funda a casa: `{ nome }`. **Quem funda vira síndico** (mesmo e-mail e senha) e recebe o `codigoConvite` (ex.: `HL-7K2Q`) |
+| | `POST` | `/api/casas/entrar` | logado, sem casa | Pede para entrar: `{ codigoConvite, numeroQuarto }`. Fica `PENDENTE` até o síndico aprovar |
+| | `GET` | `/api/casas/minha` | logado | Minha casa. O `codigoConvite` só aparece para o síndico |
+| | `GET` | `/api/casas/pendentes` | síndico | Moradores da casa esperando aprovação |
+| | `POST` | `/api/casas/membros/{id}/aprovar` | síndico | Aprova a entrada (vira `ATIVO`) |
+| | `POST` | `/api/casas/membros/{id}/recusar` | síndico | Recusa; a pessoa volta a `SEM_CASA` e pode tentar outro código |
 | **Dashboard** | `GET` | `/api/dashboard` | logado | Resumo consolidado com métricas, ranking e agendamentos |
 | **Moradores** | `GET` | `/api/moradores` | logado | Lista todos os moradores |
 | | `POST` | `/api/moradores` | síndico | Cadastra morador (corpo inclui `senha`, mín. 6 caracteres) |
@@ -187,7 +207,7 @@ fetch('http://localhost:8080/api/dashboard', { headers: { Authorization: auth } 
 ---
 
 ## 👥 7. Dados Pré-Carregados (`DataInitializer`)
-Ao iniciar, o sistema carrega automaticamente as contas abaixo. **A senha de todas é `homelive123`** (apenas para desenvolvimento).
+Ao iniciar, o sistema carrega uma casa de demonstração, **HomeLive 2050** (código de convite `HL-DEMO`), com as contas abaixo já aprovadas. **A senha de todas é `homelive123`** (apenas para desenvolvimento).
 
 | Perfil | Nome | E-mail |
 | :--- | :--- | :--- |

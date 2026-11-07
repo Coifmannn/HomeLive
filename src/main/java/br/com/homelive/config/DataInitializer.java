@@ -2,6 +2,7 @@ package br.com.homelive.config;
 
 import br.com.homelive.dto.AgendamentoDTO;
 import br.com.homelive.dto.DespesaDTO;
+import br.com.homelive.model.Casa;
 import br.com.homelive.model.EspacoComum;
 import br.com.homelive.model.LeituraConsumo;
 import br.com.homelive.model.RegraPenalidade;
@@ -16,6 +17,7 @@ import br.com.homelive.model.enums.TipoRodizio;
 import br.com.homelive.model.enums.CategoriaDespesa;
 import br.com.homelive.model.enums.TipoDespesa;
 import br.com.homelive.model.enums.TipoRateio;
+import br.com.homelive.repository.CasaRepository;
 import br.com.homelive.repository.EspacoComumRepository;
 import br.com.homelive.repository.LeituraConsumoRepository;
 import br.com.homelive.repository.MoradorRepository;
@@ -40,6 +42,7 @@ import java.time.YearMonth;
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
+    private final CasaRepository casaRepository;
     private final MoradorRepository moradorRepository;
     private final SindicoRepository sindicoRepository;
     private final EspacoComumRepository espacoComumRepository;
@@ -64,15 +67,27 @@ public class DataInitializer implements CommandLineRunner {
 
         String senhaDemo = passwordEncoder.encode(SENHA_DEMO);
 
+        // 0. Casa de demonstração (código de convite fixo, só para facilitar testes à mão)
+        Casa casa = casaRepository.save(new Casa("HomeLive 2050", "HL-DEMO"));
+
         // 1. Cadastrar Síndico
         Sindico sindico = new Sindico("Dra. Helena Vance", "helena.vance@homelive2050.io", senhaDemo, "(11) 98765-4321", "Governança e IA");
+        sindico.entrarNaCasa(casa);
         Sindico sindicoSalvo = sindicoRepository.save(sindico);
 
         // 2. Cadastrar Moradores
-        Morador m1 = moradorRepository.save(new Morador("Lucas Silva", "lucas.silva@homelive2050.io", senhaDemo, "(11) 99111-0001", "Suíte 101-A", 30));
-        Morador m2 = moradorRepository.save(new Morador("Sofia Chen", "sofia.chen@homelive2050.io", senhaDemo, "(11) 99111-0002", "Suíte 102-B", 28));
-        Morador m3 = moradorRepository.save(new Morador("Mateus Oliveira", "mateus.oliveira@homelive2050.io", senhaDemo, "(11) 99111-0003", "Suíte 201-A", 15));
-        Morador m4 = moradorRepository.save(new Morador("Beatriz Santos", "beatriz.santos@homelive2050.io", senhaDemo, "(11) 99111-0004", "Suíte 202-B", 30));
+        Morador m1 = new Morador("Lucas Silva", "lucas.silva@homelive2050.io", senhaDemo, "(11) 99111-0001", "Suíte 101-A", 30);
+        m1.entrarNaCasa(casa);
+        m1 = moradorRepository.save(m1);
+        Morador m2 = new Morador("Sofia Chen", "sofia.chen@homelive2050.io", senhaDemo, "(11) 99111-0002", "Suíte 102-B", 28);
+        m2.entrarNaCasa(casa);
+        m2 = moradorRepository.save(m2);
+        Morador m3 = new Morador("Mateus Oliveira", "mateus.oliveira@homelive2050.io", senhaDemo, "(11) 99111-0003", "Suíte 201-A", 15);
+        m3.entrarNaCasa(casa);
+        m3 = moradorRepository.save(m3);
+        Morador m4 = new Morador("Beatriz Santos", "beatriz.santos@homelive2050.io", senhaDemo, "(11) 99111-0004", "Suíte 202-B", 30);
+        m4.entrarNaCasa(casa);
+        m4 = moradorRepository.save(m4);
 
         // Ajusta pontuações iniciais para gamificação
         m2.adicionarPontos(30); // 130 pts

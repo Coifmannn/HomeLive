@@ -39,6 +39,8 @@ public class SecurityConfig {
                 .headers(h -> h.frameOptions(f -> f.sameOrigin()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // Única rota pública: a pessoa precisa conseguir criar a conta antes de ter login.
+                        .requestMatchers(HttpMethod.POST, "/api/auth/cadastro").permitAll()
 
                         // Console do banco dá acesso a tudo (inclusive hashes): só síndico.
                         .requestMatchers("/h2-console/**").hasRole("SINDICO")
@@ -49,6 +51,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/despesas/*/avaliar").hasRole("SINDICO")
                         .requestMatchers(HttpMethod.PATCH, "/api/espacos/*/status", "/api/moradores/*/estadia").hasRole("SINDICO")
                         .requestMatchers(HttpMethod.DELETE, "/api/moradores/*").hasRole("SINDICO")
+                        // Quem decide quem entra na casa é o síndico.
+                        .requestMatchers(HttpMethod.GET, "/api/casas/pendentes").hasRole("SINDICO")
+                        .requestMatchers(HttpMethod.POST, "/api/casas/membros/*/aprovar", "/api/casas/membros/*/recusar").hasRole("SINDICO")
                         .requestMatchers(HttpMethod.POST, "/api/regras-penalidade", "/api/penalidades").hasRole("SINDICO")
                         .requestMatchers(HttpMethod.PATCH, "/api/regras-penalidade/*/ativar", "/api/regras-penalidade/*/desativar").hasRole("SINDICO")
                         .requestMatchers(HttpMethod.PATCH, "/api/agendamentos/*/nao-compareceu").hasRole("SINDICO")

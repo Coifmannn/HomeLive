@@ -1,5 +1,7 @@
 package br.com.homelive.model;
 
+import br.com.homelive.exception.RegraNegocioException;
+import br.com.homelive.model.enums.StatusMembro;
 import br.com.homelive.model.enums.TipoUsuario;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -39,6 +41,11 @@ public abstract class Usuario {
 
     private boolean ativo = true;
 
+    /** Nula logo após o cadastro: a pessoa ainda não criou nem entrou em nenhuma casa. */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "casa_id")
+    private Casa casa;
+
     private LocalDateTime dataCriacao = LocalDateTime.now();
 
     protected Usuario(String nome, String email, String senhaHash, String telefone) {
@@ -50,6 +57,24 @@ public abstract class Usuario {
 
     /** Cada perfil declara o próprio papel (polimorfismo); a segurança deriva as permissões daqui. */
     public abstract TipoUsuario getTipoUsuario();
+
+    /** Situação na casa. Cada perfil responde do seu jeito (o síndico, por fundar a casa, já nasce ATIVO). */
+    public abstract StatusMembro getStatusMembro();
+
+    /** Uma pessoa só pode pertencer a uma casa por vez. */
+    public void entrarNaCasa(Casa novaCasa) {
+        if (novaCasa == null) {
+            throw new RegraNegocioException("Informe a casa.");
+        }
+        if (this.casa != null) {
+            throw new RegraNegocioException("Você já pertence a uma casa.");
+        }
+        this.casa = novaCasa;
+    }
+
+    protected void sairDaCasa() {
+        this.casa = null;
+    }
 
     public void ativar() {
         this.ativo = true;

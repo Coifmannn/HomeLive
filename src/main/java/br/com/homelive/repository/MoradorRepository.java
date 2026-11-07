@@ -10,4 +10,5 @@ import java.util.List;
 public interface MoradorRepository extends JpaRepository<Morador, Long> {
     List<Morador> findByAtivoTrue();
     List<Morador> findAllByOrderByPontosConvivenciaDesc();
+    List<Morador> findByCasaIdAndStatusMembro(Long casaId, br.com.homelive.model.enums.StatusMembro statusMembro);
 }
