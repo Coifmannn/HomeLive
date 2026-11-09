@@ -226,7 +226,7 @@ body {
 .pontos-verde { font-size: 0.85rem; color: var(--destaque-verde); font-weight: 600; }
 
 /* Seções Gerais */
-.cabecalho-secao { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+.cabecalho-secao { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 25px; }
 .cabecalho-secao p { margin-top: 5px; color: var(--texto-suave); font-size: 0.95rem; }
 .acoes-cabecalho { display: flex; gap: 10px; }
 
@@ -250,7 +250,9 @@ body {
 .algoritmo-financa { display: flex; justify-content: space-between; align-items: center; padding: 20px; margin-bottom: 25px; border-left: 4px solid var(--destaque-azul); }
 .cabecalho-algo { display: flex; align-items: center; gap: 15px; }
 .cabecalho-algo i { font-size: 2rem; color: var(--destaque-azul); }
-.container-tabela-despesas { padding: 20px; }
+/* No celular a tabela é mais larga que a tela: a caixa rola para o lado em vez de empurrar a página inteira. */
+.container-tabela-despesas { padding: 20px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.container-tabela-despesas .tabela-moderna { min-width: 560px; }
 
 /* Grade de Tarefas */
 .grade-tarefas { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
