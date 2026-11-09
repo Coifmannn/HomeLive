@@ -16,8 +16,9 @@ public interface DespesaRepository extends JpaRepository<Despesa, Long> {
     List<Despesa> findByStatus(StatusDespesa status);
     List<Despesa> findBySolicitanteId(Long solicitanteId);
 
-    /** Soma o valor das despesas lançadas no intervalo [inicio, fim). */
+    /** Soma o valor das despesas lançadas no intervalo [inicio, fim), sem contar as rejeitadas (nunca viraram gasto). */
     @Query("SELECT COALESCE(SUM(d.valorTotal), 0) FROM Despesa d " +
-           "WHERE d.dataLancamento >= :inicio AND d.dataLancamento < :fim")
+           "WHERE d.dataLancamento >= :inicio AND d.dataLancamento < :fim " +
+           "AND d.status <> br.com.homelive.model.enums.StatusDespesa.REJEITADA")
     BigDecimal somarValorLancadoEntre(@Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim);
 }

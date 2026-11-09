@@ -9,5 +9,6 @@ import java.util.List;
 @Repository
 public interface MoradorRepository extends JpaRepository<Morador, Long> {
     List<Morador> findByAtivoTrue();
+    long countByAtivoTrue();
     List<Morador> findAllByOrderByPontosConvivenciaDesc();
 }

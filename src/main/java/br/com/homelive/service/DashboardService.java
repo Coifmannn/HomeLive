@@ -32,7 +32,8 @@ public class DashboardService {
         LocalDate hoje = LocalDate.now();
         LocalDateTime agora = LocalDateTime.now();
 
-        long totalMoradores = moradorRepository.count();
+        // Só quem mora na casa hoje: moradores desativados saíram e não entram na conta.
+        long totalMoradores = moradorRepository.countByAtivoTrue();
 
         // Intervalos semiabertos [inicio, fim): não perdem a última fração do dia e distinguem o ano.
         LocalDate inicioMes = hoje.withDayOfMonth(1);
