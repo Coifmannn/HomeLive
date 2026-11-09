@@ -1,7 +1,9 @@
 package br.com.homelive.controller;
 
 import br.com.homelive.dto.MoradorDTO;
+import br.com.homelive.dto.SenhaDTO;
 import br.com.homelive.service.MoradorService;
+import br.com.homelive.service.SenhaService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import java.util.List;
 public class MoradorController {
 
     private final MoradorService moradorService;
+    private final SenhaService senhaService;
 
     @PostMapping
     public ResponseEntity<MoradorDTO.Response> cadastrar(@RequestBody @Valid MoradorDTO.Request request) {
@@ -45,6 +48,12 @@ public class MoradorController {
     @PatchMapping("/{id}/estadia")
     public ResponseEntity<MoradorDTO.Response> atualizarEstadia(@PathVariable Long id, @RequestParam Integer dias) {
         return ResponseEntity.ok(moradorService.atualizarEstadia(id, dias));
+    }
+
+    /** Síndico: gera uma senha temporária para o morador que esqueceu a dele. */
+    @PostMapping("/{id}/redefinir-senha")
+    public ResponseEntity<SenhaDTO.RedefinicaoResponse> redefinirSenha(@PathVariable Long id) {
+        return ResponseEntity.ok(senhaService.redefinirDoMorador(id));
     }
 
     @DeleteMapping("/{id}")

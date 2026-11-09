@@ -60,6 +60,7 @@ class PermissoesPorPerfilTest {
             "GET,    /api/penalidades",
             "PATCH,  /api/agendamentos/1/nao-compareceu",
             "POST,   /api/casa/convite/renovar",
+            "POST,   /api/moradores/2/redefinir-senha",
     })
     void moradorNaoPodeAcoesDeSindico(String metodo, String url) throws Exception {
         assertEquals(403, chamar(HttpMethod.valueOf(metodo), url, MORADOR));
@@ -88,6 +89,7 @@ class PermissoesPorPerfilTest {
             "GET,    /api/penalidades",
             "PATCH,  /api/agendamentos/1/nao-compareceu",
             "POST,   /api/casa/convite/renovar",
+            "POST,   /api/moradores/2/redefinir-senha",
     })
     void sindicoPassaPelaSeguranca(String metodo, String url) throws Exception {
         int status = chamar(HttpMethod.valueOf(metodo), url, SINDICO);
@@ -101,6 +103,8 @@ class PermissoesPorPerfilTest {
             "GET,    /api/dashboard",
             "GET,    /api/casa",
             "POST,   /api/casa/convite/renovar",
+            "PATCH,  /api/auth/senha",
+            "POST,   /api/moradores/2/redefinir-senha",
             "GET,    /api/moradores/ranking",
             "POST,   /api/despesas",
             "POST,   /api/agendamentos",

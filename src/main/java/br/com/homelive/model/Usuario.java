@@ -1,5 +1,6 @@
 package br.com.homelive.model;
 
+import br.com.homelive.exception.RegraNegocioException;
 import br.com.homelive.model.enums.TipoUsuario;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -50,6 +51,14 @@ public abstract class Usuario {
 
     /** Cada perfil declara o próprio papel (polimorfismo); a segurança deriva as permissões daqui. */
     public abstract TipoUsuario getTipoUsuario();
+
+    /** Troca a senha. Recebe o HASH (BCrypt) já calculado: a senha em texto puro nunca chega à entidade. */
+    public void trocarSenhaHash(String novoHash) {
+        if (novoHash == null || novoHash.isBlank()) {
+            throw new RegraNegocioException("A nova senha é obrigatória.");
+        }
+        this.senhaHash = novoHash;
+    }
 
     public void ativar() {
         this.ativo = true;
