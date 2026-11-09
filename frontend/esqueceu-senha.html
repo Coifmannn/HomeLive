@@ -37,26 +37,21 @@
                     <span>Homelive<span>.</span></span>
                 </div>
                 <h2>Recuperar Acesso</h2>
-                <p>Esqueceu sua senha quântica? Não se preocupe, nós ajudamos você a redefini-la.</p>
+                <p>Esqueceu a senha? O síndico da sua residência te ajuda em 3 passos.</p>
             </div>
 
-            <!-- Formulário de Recuperação -->
-            <form id="formulario-recuperacao" class="formulario-moderno">
-                <div class="grupo-formulario">
-                    <label for="credencial">E-mail ou CPF cadastrado</label>
-                    <div class="input-com-icone">
-                        <i class='bx bx-envelope'></i>
-                        <input type="text" id="credencial" class="input-vidro" placeholder="felipe@exemplo.com" required>
-                    </div>
-                </div>
+            <ol class="passos-recuperacao">
+                <li><strong>Peça ao síndico</strong> para abrir a tela <em>Moradores</em> e clicar em <em>Redefinir senha</em> no seu cartão.</li>
+                <li>Ele te passa uma <strong>senha temporária</strong>. Ela aparece só uma vez para ele.</li>
+                <li>Entre com ela e, no menu lateral, use <em>Trocar minha senha</em> para escolher a sua.</li>
+            </ol>
 
-                <div class="aviso-ia" style="margin-bottom: 20px;">
-                    <i class='bx bx-shield-quarter'></i>
-                    <p>Por segurança, enviaremos um token de autenticação temporário para validar sua identidade.</p>
-                </div>
+            <div class="aviso-ia" style="margin: 20px 0;">
+                <i class='bx bx-shield-quarter'></i>
+                <p>Por segurança, só o síndico pode gerar uma senha temporária, e a senha antiga deixa de funcionar na hora.</p>
+            </div>
 
-                <button type="submit" class="botao-primario largura-total">Enviar Link de Recuperação</button>
-            </form>
+            <a href="login.html" class="botao-primario largura-total" style="text-align:center; display:block;">Voltar para o Login</a>
 
             <div class="rodape-login mt-3">
                 <p>Lembrou a senha? <a href="login.html">Voltar para o Login</a></p>

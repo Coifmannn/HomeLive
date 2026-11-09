@@ -111,6 +111,9 @@ const AuthService = {
         return http('POST', '/auth/login', { email, senha, lembrar: !!lembrar }, true);
     },
 
+    // A própria pessoa troca a senha (informando a atual). Erro de senha atual vem como 400, sem deslogar.
+    alterarSenha: (senhaAtual, novaSenha) => patch('/auth/senha', { senhaAtual, novaSenha }),
+
     // Cria a conta e já devolve { token, expiraEm, papel, usuario } (a pessoa sai logada).
     // Sem residência ainda: envie nomeCasa (vira síndico). Com residência: codigoConvite + numeroQuarto (vira morador).
     cadastrar: (dados) => http('POST', '/auth/cadastro', dados, true)
@@ -130,6 +133,7 @@ const MoradorService = {
     obter: (id) => get(`/moradores/${id}`),
     ranking: () => get('/moradores/ranking'),
     cadastrar: (m) => post('/moradores', m),
+    redefinirSenha: (id) => post(`/moradores/${id}/redefinir-senha`),   // síndico: { senhaTemporaria }
     desativar: (id) => del(`/moradores/${id}`)
 };
 
@@ -164,7 +168,11 @@ const EscalaService = {
     gerar: () => post('/tarefas-recorrentes/gerar')
 };
 
-const EspacoService = { listar: () => get('/espacos') };
+const EspacoService = {
+    listar: () => get('/espacos'),                       // todos, ativos e desativados
+    criar: (e) => post('/espacos', e),                   // síndico
+    alternarStatus: (id) => patch(`/espacos/${id}/status`) // síndico: desativa ou reativa
+};
 
 const AgendamentoService = {
     listar: () => get('/agendamentos'),

@@ -308,7 +308,7 @@ function imagemDoEspaco(nome) {
     if (n.includes('escrit')) return 'acustico';
     if (n.includes('lavand')) return 'lavanderia';
     if (n.includes('gourmet')) return 'gourmet';
-    return '';
+    return 'generico';
 }
 
 function renderEspacos() {
@@ -330,6 +330,9 @@ function renderEspacos() {
                 ${e.ativo
                 ? `<button class="botao-primario largura-total" data-acao="reservar-espaco" data-id="${e.id}" data-nome="${esc(e.nome)}">Reservar Espaço</button>`
                 : `<button class="botao-contorno largura-total" disabled>Indisponível</button>`}
+                ${S.ehSindico
+                ? `<button class="botao-contorno botao-pequeno largura-total" style="margin-top:10px;" data-acao="toggle-espaco" data-id="${e.id}" data-ativa="${e.ativo}">${e.ativo ? 'Desativar espaço' : 'Reativar espaço'}</button>`
+                : ''}
             </div>
         </div>`;
     }).join('') || '<p style="color:var(--texto-suave);">Nenhum espaço cadastrado.</p>';
@@ -378,7 +381,10 @@ function renderMoradores() {
 
     const sindicos = S.sindicos.map(s => cartao(s.nome, 'SINDICO', '—', s.ativo, ['Depto.', s.departamento || '—'], ''));
     const moradores = S.moradores.map(m => cartao(m.nome, 'MORADOR', `${m.pontosConvivencia} pts`, m.ativo, ['Quarto', m.numeroQuarto],
-        S.ehSindico && m.ativo ? `<button data-acao="desativar-morador" data-id="${m.id}" class="botao-perigo botao-pequeno largura-total mt-3">Desativar Morador</button>` : ''));
+        S.ehSindico && m.ativo
+            ? `<button data-acao="redefinir-senha" data-id="${m.id}" data-nome="${esc(m.nome)}" class="botao-contorno botao-pequeno largura-total mt-3">Redefinir senha</button>
+               <button data-acao="desativar-morador" data-id="${m.id}" class="botao-perigo botao-pequeno largura-total" style="margin-top:10px;">Desativar Morador</button>`
+            : ''));
     document.getElementById('lista-moradores').innerHTML = sindicos.concat(moradores).join('');
 
     // Convite da residência (o card só aparece para o síndico; o código nem vem da API para o morador)
@@ -494,6 +500,8 @@ function iniciarEventos() {
                 break;
             case 'toggle-escala':
                 executar(ativa ? EscalaService.desativar(id) : EscalaService.ativar(id), ativa ? 'Escala pausada.' : 'Escala ativada.', 'info'); break;
+            case 'toggle-espaco':
+                executar(EspacoService.alternarStatus(id), ativa ? 'Espaço desativado.' : 'Espaço reativado.', 'info'); break;
             case 'toggle-regra':
                 executar(ativa ? RegraService.desativar(id) : RegraService.ativar(id), ativa ? 'Regra desativada.' : 'Regra ativada.', 'info'); break;
             case 'cancelar-reserva':
@@ -501,6 +509,19 @@ function iniciarEventos() {
                 break;
             case 'nao-compareceu':
                 if (confirm('Registrar que o morador não compareceu? Isso pode gerar penalidade.')) executar(AgendamentoService.naoCompareceu(id), 'Não comparecimento registrado.', 'aviso');
+                break;
+            case 'redefinir-senha':
+                if (confirm(`Gerar uma senha temporária para ${el.dataset.nome}? A senha atual dela deixa de funcionar.`)) {
+                    MoradorService.redefinirSenha(id).then((r) => {
+                        document.getElementById('senha-temporaria-nome').textContent = el.dataset.nome;
+                        document.getElementById('senha-temporaria-valor').textContent = r.senhaTemporaria;
+                        abrirModal('modalSenhaTemporaria');
+                    }).catch((e) => mostrarToast(e.message, 'erro'));
+                }
+                break;
+            case 'copiar-senha-temporaria':
+                copiarTexto(document.getElementById('senha-temporaria-valor').textContent).then(
+                    (ok) => mostrarToast(ok ? 'Senha copiada.' : 'Não consegui copiar. Selecione a senha e copie.', ok ? 'sucesso' : 'aviso'));
                 break;
             case 'copiar-convite':
                 copiarTexto(S.casa && S.casa.codigoConvite).then(
@@ -540,6 +561,26 @@ function iniciarFormulariosDaAplicacao() {
         MoradorService.cadastrar({
             nome: valor('novo-morador-nome'), email: valor('novo-morador-email'), senha: valor('novo-morador-senha'),
             numeroQuarto: valor('novo-morador-quarto'), telefone: textoOuNulo('novo-morador-telefone')
+        }));
+
+    // Trocar a própria senha: não usa aoEnviar porque não precisa recarregar os dados da tela.
+    document.getElementById('formulario-trocar-senha').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (valor('senha-nova') !== valor('senha-nova-confirma')) { mostrarToast('As senhas novas não conferem.', 'erro'); return; }
+        try {
+            await AuthService.alterarSenha(valor('senha-atual'), valor('senha-nova'));
+            fecharModal('modalTrocarSenha');
+            e.target.reset();
+            mostrarToast('Senha alterada com sucesso.', 'sucesso');
+        } catch (err) {
+            mostrarToast(err.message, 'erro');
+        }
+    });
+
+    aoEnviar('formulario-novo-espaco', 'modalNovoEspaco', 'Espaço cadastrado!', () =>
+        EspacoService.criar({
+            nome: valor('novo-espaco-nome').trim(), descricao: textoOuNulo('novo-espaco-descricao'),
+            capacidadeMaxima: numOuNulo('novo-espaco-capacidade'), regrasUso: textoOuNulo('novo-espaco-regras')
         }));
 
     aoEnviar('formulario-nova-despesa', 'modalNovaDespesa', 'Despesa enviada para aprovação!', () =>
@@ -642,14 +683,6 @@ function iniciarFormulariosDeAcesso() {
 
     iniciarCadastro();
 
-    // A API ainda não tem recuperação de senha.
-    const formRecup = document.getElementById('formulario-recuperacao');
-    if (formRecup) {
-        formRecup.addEventListener('submit', (e) => {
-            e.preventDefault();
-            mostrarToast('Recuperação de senha ainda não está disponível. Fale com o síndico.', 'info');
-        });
-    }
 }
 
 // Cadastro com dois caminhos, escolhidos pela API (GET /api/casa/estado):

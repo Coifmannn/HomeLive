@@ -274,6 +274,8 @@ body {
 .acustico { background-image: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.8)), url('../assets/img/escritorio.jpg'); }
 .lavanderia { background-image: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.8)), url('../assets/img/lavanderia.jpg'); }
 .gourmet { background-image: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.8)), url('../assets/img/gourmet.jpg'); }
+/* Espaço cadastrado pelo síndico, sem foto própria */
+.generico { background-image: linear-gradient(135deg, rgba(0, 240, 255, 0.28), rgba(123, 44, 191, 0.5)); }
 .conteudo-espaco { padding: 20px; flex: 1; display: flex; flex-direction: column; }
 .conteudo-espaco p { color: var(--texto-suave); font-size: 0.9rem; margin: 10px 0 20px 0; }
 .meta-espaco { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 20px; }
@@ -372,6 +374,10 @@ body {
 }
 .dica-ferramenta:hover::after,
 .dica-ferramenta:hover::before { opacity: 1; }
+
+/* Página "Esqueceu a senha" */
+.passos-recuperacao { margin: 0; padding-left: 20px; color: var(--texto-suave); font-size: 0.9rem; line-height: 1.6; display: flex; flex-direction: column; gap: 10px; }
+.passos-recuperacao strong, .passos-recuperacao em { color: var(--texto-principal); font-style: normal; }
 
 /* Atributo hidden sempre esconde, mesmo em elementos que têm display próprio. */
 [hidden] { display: none !important; }

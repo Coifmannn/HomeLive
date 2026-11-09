@@ -67,6 +67,7 @@
             </ul>
 
             <div class="seletor-papel-usuario">
+                <button type="button" class="botao-contorno botao-pequeno largura-total" onclick="abrirModal('modalTrocarSenha')"><i class='bx bx-lock-alt'></i> Trocar minha senha</button>
                 <a href="login.html" id="botao-sair" class="botao-sair mt-3"><i class='bx bx-log-out'></i> Sair</a>
             </div>
         </nav>
@@ -214,6 +215,9 @@
                     <div class="cabecalho-secao">
                         <h2>Reservas de Espaços</h2>
                         <p>Agende o uso das áreas compartilhadas para evitar conflitos de horários.</p>
+                        <div class="acoes-cabecalho apenas-admin">
+                            <button class="botao-primario" onclick="abrirModal('modalNovoEspaco')">Novo Espaço</button>
+                        </div>
                     </div>
 
                     <div class="grade-espacos" id="lista-espacos"></div>
@@ -598,6 +602,86 @@
                         <input type="text" id="penalidade-motivo" class="input-vidro" required>
                     </div>
                     <button type="submit" class="botao-perigo largura-total mt-3">Aplicar Penalidade</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Trocar Minha Senha -->
+    <div class="sobreposicao-modal" id="modalTrocarSenha">
+        <div class="caixa-modal painel-vidro">
+            <div class="cabecalho-modal">
+                <h3>Trocar minha senha</h3>
+                <button class="botao-fechar" onclick="fecharModal('modalTrocarSenha')"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="corpo-modal">
+                <form id="formulario-trocar-senha" class="formulario-moderno">
+                    <div class="grupo-formulario">
+                        <label>Senha atual</label>
+                        <input type="password" id="senha-atual" class="input-vidro" autocomplete="current-password" required>
+                    </div>
+                    <div class="linha-formulario">
+                        <div class="grupo-formulario">
+                            <label>Nova senha (mín. 6)</label>
+                            <input type="password" id="senha-nova" class="input-vidro" minlength="6" autocomplete="new-password" required>
+                        </div>
+                        <div class="grupo-formulario">
+                            <label>Confirmar nova senha</label>
+                            <input type="password" id="senha-nova-confirma" class="input-vidro" minlength="6" autocomplete="new-password" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="botao-primario largura-total mt-3">Salvar nova senha</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Senha Temporária (síndico redefiniu a senha de um morador) -->
+    <div class="sobreposicao-modal" id="modalSenhaTemporaria">
+        <div class="caixa-modal painel-vidro">
+            <div class="cabecalho-modal">
+                <h3>Senha temporária</h3>
+                <button class="botao-fechar" onclick="fecharModal('modalSenhaTemporaria')"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="corpo-modal">
+                <p class="ajuda-convite">Passe esta senha para <strong id="senha-temporaria-nome"></strong>. Ela <strong>aparece só agora</strong>: depois de fechar esta janela não dá para ver de novo. A pessoa entra com ela e troca por uma própria em "Trocar minha senha".</p>
+                <div id="senha-temporaria-valor" class="codigo-convite">—</div>
+                <div class="acoes-convite mt-3">
+                    <button class="botao-primario botao-pequeno" data-acao="copiar-senha-temporaria">Copiar senha</button>
+                    <button class="botao-contorno botao-pequeno" onclick="fecharModal('modalSenhaTemporaria')">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Novo Espaço -->
+    <div class="sobreposicao-modal" id="modalNovoEspaco">
+        <div class="caixa-modal painel-vidro">
+            <div class="cabecalho-modal">
+                <h3>Novo Espaço Comum</h3>
+                <button class="botao-fechar" onclick="fecharModal('modalNovoEspaco')"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="corpo-modal">
+                <form id="formulario-novo-espaco" class="formulario-moderno">
+                    <div class="grupo-formulario">
+                        <label>Nome do espaço</label>
+                        <input type="text" id="novo-espaco-nome" class="input-vidro" maxlength="80" placeholder="Ex: Sala de Cinema" required>
+                    </div>
+                    <div class="grupo-formulario">
+                        <label>Descrição (opcional)</label>
+                        <input type="text" id="novo-espaco-descricao" class="input-vidro" maxlength="200">
+                    </div>
+                    <div class="linha-formulario">
+                        <div class="grupo-formulario">
+                            <label>Capacidade (pessoas)</label>
+                            <input type="number" id="novo-espaco-capacidade" class="input-vidro" min="1" max="500" placeholder="4">
+                        </div>
+                        <div class="grupo-formulario">
+                            <label>Regras de uso (opcional)</label>
+                            <input type="text" id="novo-espaco-regras" class="input-vidro" maxlength="200">
+                        </div>
+                    </div>
+                    <button type="submit" class="botao-primario largura-total mt-3">Salvar Espaço</button>
                 </form>
             </div>
         </div>
