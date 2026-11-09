@@ -41,6 +41,65 @@ class TarefaRecorrenteTest {
     }
 
     @Test
+    @DisplayName("Mensal com dia âncora 31: ajusta nos meses curtos e VOLTA ao 31 (sem derivar para o 28)")
+    void mensalNaoDeriva() {
+        assertEquals(LocalDate.of(2030, 2, 28), Periodicidade.MENSAL.proxima(LocalDate.of(2030, 1, 31), 31));
+        assertEquals(LocalDate.of(2030, 3, 31), Periodicidade.MENSAL.proxima(LocalDate.of(2030, 2, 28), 31));
+        assertEquals(LocalDate.of(2030, 4, 30), Periodicidade.MENSAL.proxima(LocalDate.of(2030, 3, 31), 31));
+        assertEquals(LocalDate.of(2030, 5, 31), Periodicidade.MENSAL.proxima(LocalDate.of(2030, 4, 30), 31));
+    }
+
+    @Test
+    @DisplayName("Mensal em ano bissexto cai no dia 29 de fevereiro")
+    void mensalAnoBissexto() {
+        assertEquals(LocalDate.of(2028, 2, 29), Periodicidade.MENSAL.proxima(LocalDate.of(2028, 1, 31), 31));
+        assertEquals(LocalDate.of(2028, 3, 30), Periodicidade.MENSAL.proxima(LocalDate.of(2028, 2, 29), 30));
+    }
+
+    @Test
+    @DisplayName("Mensal com dia comum (15) cai sempre no dia 15, e virar o ano funciona")
+    void mensalDiaComum() {
+        assertEquals(LocalDate.of(2030, 2, 15), Periodicidade.MENSAL.proxima(LocalDate.of(2030, 1, 15), 15));
+        assertEquals(LocalDate.of(2031, 1, 15), Periodicidade.MENSAL.proxima(LocalDate.of(2030, 12, 15), 15));
+    }
+
+    @Test
+    @DisplayName("O dia âncora só importa para a mensal: as outras periodicidades o ignoram")
+    void ancoraSoParaMensal() {
+        LocalDate base = LocalDate.of(2030, 1, 31);
+        assertEquals(base.plusDays(1), Periodicidade.DIARIA.proxima(base, 31));
+        assertEquals(base.plusWeeks(1), Periodicidade.SEMANAL.proxima(base, 31));
+        assertEquals(base.plusWeeks(2), Periodicidade.QUINZENAL.proxima(base, 31));
+    }
+
+    @Test
+    @DisplayName("Escala mensal que começa no dia 31 gera sempre no último dia certo de cada mês")
+    void escalaMensalMantemODia() {
+        LocalDate inicio = LocalDate.of(hoje.getYear() + 2, 1, 31); // futuro: o construtor recusa passado
+        TarefaRecorrente t = new TarefaRecorrente("Filtros", "x", Periodicidade.MENSAL, 3, null, null,
+                TipoRodizio.SEQUENCIAL, inicio);
+
+        for (int mes = 2; mes <= 6; mes++) {
+            t.gerarTarefa(lucas, t.getProximaGeracao());
+            // âncora 31: em cada mês cai no último dia (28/29, 31, 30, 31, 30...), nunca "preso" no 28
+            LocalDate esperada = java.time.YearMonth.of(inicio.getYear(), mes).atEndOfMonth();
+            assertEquals(esperada, t.getProximaGeracao(), "mês " + mes);
+        }
+    }
+
+    @Test
+    @DisplayName("Escala antiga, sem dia âncora guardado, continua funcionando (usa o dia da data atual)")
+    void escalaSemAncoraGuardada() {
+        TarefaRecorrente t = new TarefaRecorrente("Filtros", "x", Periodicidade.MENSAL, 3, null, null,
+                TipoRodizio.SEQUENCIAL, LocalDate.of(hoje.getYear() + 2, 1, 15));
+        ReflectionTestUtils.setField(t, "diaAncora", null);
+
+        t.gerarTarefa(lucas, t.getProximaGeracao());
+
+        assertEquals(LocalDate.of(hoje.getYear() + 2, 2, 15), t.getProximaGeracao());
+    }
+
+    @Test
     @DisplayName("Construtor recusa dados inválidos")
     void construtorValida() {
         assertThrows(RegraNegocioException.class, () ->

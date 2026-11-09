@@ -51,6 +51,12 @@ public class TarefaRecorrente {
     @Column(nullable = false)
     private LocalDate proximaGeracao;
 
+    /**
+     * Dia do mês em que a escala começou (ex.: 31). Mantém a mensal no dia certo mesmo depois de passar por
+     * um mês curto. Vazio em escalas criadas antes deste campo: nesse caso vale o dia da próxima geração.
+     */
+    private Integer diaAncora;
+
     private boolean ativa = true;
 
     /** Quem recebeu a última tarefa gerada; o rodízio usa isso para não repetir a mesma pessoa. */
@@ -86,6 +92,7 @@ public class TarefaRecorrente {
         this.pontosPenalidade = pontosPenalidade != null ? pontosPenalidade : 15;
         this.tipoRodizio = tipoRodizio;
         this.proximaGeracao = inicio;
+        this.diaAncora = inicio.getDayOfMonth();
         this.ativa = true;
     }
 
@@ -110,8 +117,9 @@ public class TarefaRecorrente {
                 pontosRecompensa, pontosPenalidade, responsavel, null);
 
         this.ultimoResponsavel = responsavel;
+        int ancora = diaAncora != null ? diaAncora : proximaGeracao.getDayOfMonth();
         do {
-            this.proximaGeracao = periodicidade.proxima(this.proximaGeracao);
+            this.proximaGeracao = periodicidade.proxima(this.proximaGeracao, ancora);
         } while (!this.proximaGeracao.isAfter(hoje));
         return tarefa;
     }
