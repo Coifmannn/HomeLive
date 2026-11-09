@@ -91,41 +91,121 @@ Detalhes:
 
 ---
 
-## 🔌 4. Guia Rápido de Execução
+## 🔌 4. Passo a passo para rodar (apresentação)
 
-No terminal, dentro do diretório do projeto:
+> Tudo em **PowerShell**, dentro da pasta do projeto. Use exatamente os mesmos passos no ensaio e na apresentação.
+> Roteiro do que mostrar: [docs/roteiro-demonstracao.md](docs/roteiro-demonstracao.md). Cola da defesa: [docs/Cola-da-defesa.pdf](docs/Cola-da-defesa.pdf).
 
-```bash
-# Executar a aplicação
-./mvnw spring-boot:run
+### 4.1 Antes de começar (confira uma vez)
 
-# Rodar os testes automatizados
-./mvnw test
+| O que | Como conferir | Esperado |
+| :--- | :--- | :--- |
+| Java 21 ou mais novo | `java -version` | versão 21+ (na máquina do grupo: 23) |
+| PostgreSQL 17 ligado | `Get-Service *postgres*` | `Status: Running` |
+| Git | `git --version` | qualquer versão |
+| Internet | na 1ª vez o Maven baixa as bibliotecas; o site usa fontes e ícones da internet | sem internet o sistema funciona, só os ícones somem |
+
+### 4.2 Pegar a versão mais nova do projeto
+```powershell
+cd C:\Users\Lube\HomeLive
+git pull
+```
+Em outra máquina, na primeira vez: `git clone https://github.com/Coifmannn/HomeLive.git` e depois `cd HomeLive`.
+
+### 4.3 Deixar o banco zerado (faça antes de apresentar)
+Os dados de exemplo usam a **data de agora** (reservas, tarefas atrasadas, escalas devidas). Zerar o banco faz tudo nascer de hoje. **Pare a API antes** (passo 4.7).
+```powershell
+$env:PGPASSWORD='postgres'
+& 'C:\Program Files\PostgreSQL\17\bin\psql.exe' -U postgres -h localhost -c "DROP DATABASE IF EXISTS homelive;" -c "CREATE DATABASE homelive;"
+```
+Na primeira vez numa máquina nova, o `DROP` não faz nada e o `CREATE` cria o banco. Não precisa criar tabelas: o Hibernate cria sozinho.
+
+### 4.4 Subir a API
+Escolha **uma** das duas formas:
+
+**A) Com dados de exemplo** (painel já cheio: moradores, despesas, tarefas, reservas):
+```powershell
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=postgres"
 ```
 
-### Rodando com PostgreSQL (dados persistem)
-1. Instale o PostgreSQL e crie um banco vazio chamado `homelive` (`CREATE DATABASE homelive;`).
-2. Suba a API com o perfil `postgres`:
-   ```bash
-   ./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres
-   ```
-3. As tabelas são criadas pelo Hibernate a partir das entidades. Os dados de demonstração só são inseridos se o banco estiver vazio.
+**B) Totalmente vazio** (o primeiro cadastro cria a residência e vira síndico):
+```powershell
+$env:DEMO_DATA='false'
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=postgres"
+```
 
-| Variável de ambiente | Padrão |
+Espere aparecer `Started HomeLiveApplication` e **mais uns 10 segundos** (no modo A os dados de exemplo terminam de entrar depois do "Started"). A primeira subida é mais lenta porque compila o projeto.
+
+### 4.5 Abrir o sistema
+Abra **http://localhost:8080** no navegador.
+
+| Modo | Como entrar |
 | :--- | :--- |
-| `DB_HOST` | `localhost` |
-| `DB_PORT` | `5432` |
-| `DB_NAME` | `homelive` |
-| `DB_USER` | `postgres` |
-| `DB_PASSWORD` | `postgres` |
+| **A (exemplo)** | Contas abaixo, todas com a senha `homelive123` |
+| **B (vazio)** | Clique em **Criar perfil**: a tela pede o nome da residência e você vira o síndico. Quem se cadastrar depois usa o código de convite (tela **Moradores**) |
 
-Sem o perfil, a API usa o H2 em memória (os testes automatizados também).
+| Perfil | E-mail |
+| :--- | :--- |
+| Síndica | `helena.vance@homelive2050.io` |
+| Morador | `lucas.silva@homelive2050.io` |
+| Morador | `sofia.chen@homelive2050.io` |
+| Morador | `mateus.oliveira@homelive2050.io` |
+| Morador | `beatriz.santos@homelive2050.io` |
+
+### 4.6 Usar no celular
+Celular no **mesmo Wi-Fi** do computador. Descubra o IP (`ipconfig`, campo "Endereço IPv4") e abra `http://IP-DO-COMPUTADOR:8080` no Chrome do celular, depois **Adicionar à tela inicial** (detalhes na seção 5.1).
+Se o celular não abrir o site, o firewall do Windows está bloqueando a porta. Libere uma vez, em um PowerShell **como administrador**:
+```powershell
+New-NetFirewallRule -DisplayName "HomeLive 8080" -Direction Inbound -Protocol TCP -LocalPort 8080 -Action Allow
+```
+
+### 4.7 Parar a API
+Aperte **Ctrl+C** no terminal onde ela está rodando. Se o terminal foi fechado sem parar e a porta ficou presa:
+```powershell
+Get-NetTCPConnection -LocalPort 8080 -State Listen | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
+```
+
+### 4.8 Plano B: sem o Postgres
+Se o Postgres não ligar na hora, suba só com o banco em memória (já vem com os dados de exemplo; tudo some ao parar):
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+### 4.9 Rodar os testes (opcional, uns 2 minutos)
+```powershell
+.\mvnw.cmd test
+```
+Deve terminar com `Tests run: 251, Failures: 0, Errors: 0` e `BUILD SUCCESS`. Os testes usam o banco em memória e **não mexem** no Postgres.
+
+### 4.10 Se algo der errado
+
+| O que aparece | Causa provável | O que fazer |
+| :--- | :--- | :--- |
+| `Port 8080 was already in use` | Outra cópia da API rodando | Comando do passo 4.7 e suba de novo |
+| Erro de conexão com o banco ao subir | Postgres parado ou banco inexistente | `Start-Service postgresql-x64-17` (PowerShell como administrador) e/ou recriar o banco (passo 4.3) |
+| `password authentication failed` | A senha do Postgres não é `postgres` | `$env:DB_PASSWORD='sua-senha'` antes de subir (variáveis na tabela abaixo) |
+| `NoClassDefFoundError` ao subir ou testar | O VS Code recompilou a pasta `target/` ao mesmo tempo | Espere alguns segundos e rode de novo (ou feche o VS Code) |
+| Painel vazio logo depois de subir (modo A) | Os dados de exemplo ainda estão entrando | Espere ~10 segundos e atualize a página |
+| Site sem ícones e com outra fonte | Sem internet | Funciona igual; só a aparência muda |
+| "E-mail ou senha incorretos" | Conta ou senha errada | Use uma conta do passo 4.5 (modo A) ou cadastre-se (modo B) |
+| Esqueceu a senha de um morador | Não há e-mail no sistema | O síndico clica em **Redefinir senha** no cartão do morador (tela Moradores) |
+
+### Variáveis de ambiente (opcionais)
+
+| Variável | Padrão | Para que serve |
+| :--- | :--- | :--- |
+| `DB_HOST` | `localhost` | Endereço do Postgres |
+| `DB_PORT` | `5432` | Porta do Postgres |
+| `DB_NAME` | `homelive` | Nome do banco |
+| `DB_USER` | `postgres` | Usuário do banco |
+| `DB_PASSWORD` | `postgres` | Senha do banco |
+| `DEMO_DATA` | `true` | `false` abre o sistema vazio |
+| `JWT_SECRET` | valor de desenvolvimento | Segredo do token de login (mínimo 32 caracteres) |
+
+Sem o perfil `postgres`, a API usa o H2 em memória (os testes também).
 
 * **API Base URL:** `http://localhost:8080/api`
-* **H2 Console:** `http://localhost:8080/h2-console` (exige login de síndico)
-  * **JDBC URL:** `jdbc:h2:mem:homelivedb`
-  * **Usuário:** `sa`
-  * **Senha:** *(deixar em branco)*
+* **H2 Console** (só no modo em memória): `http://localhost:8080/h2-console` (exige login de síndico). JDBC URL `jdbc:h2:mem:homelivedb`, usuário `sa`, senha em branco.
 
 ---
 
@@ -179,15 +259,7 @@ Toda requisição também pode levar `Authorization: Basic base64(email:senha)` 
 curl -u lucas.silva@homelive2050.io:homelive123 http://localhost:8080/api/dashboard
 ```
 
-## 📱 5.1 App no celular (PWA)
-O front fica na pasta `frontend/` e é **servido pela própria API**: uma URL só para site e dados. Ele é um **PWA**: no celular dá para instalar na tela inicial, com ícone e tela cheia, sem loja de apps.
-
-1. Suba a API (`./mvnw spring-boot:run`) e deixe o celular **no mesmo Wi-Fi** do computador.
-2. Descubra o IP do computador (`ipconfig`, campo "Endereço IPv4"), por exemplo `192.168.0.10`.
-3. No Chrome do celular, abra `http://192.168.0.10:8080`.
-4. Menu ⋮ → **Adicionar à tela inicial**.
-
-> `localhost` no celular é o próprio celular, por isso o IP. Sem HTTPS o Chrome cria um atalho (abre o site); a instalação completa ("Instalar app", funcionamento offline da casca) exige HTTPS ou `localhost`. Os dados nunca ficam em cache: tudo que é `/api` vai sempre ao servidor.
+### Permissões por perfil
 
 **Quem está agindo vem do login, não do corpo da requisição.** Por isso os campos `solicitanteId` (despesa), `sindicoId` (avaliação) e `atribuidaPorId` (tarefa) não existem mais. Se o front enviá-los, são ignorados.
 
@@ -213,6 +285,16 @@ O front fica na pasta `frontend/` e é **servido pela própria API**: uma URL s�
 | Quitar item de rateio | ✅ qualquer | só o próprio |
 | Registrar leitura de consumo | ✅ de qualquer morador | só a própria |
 | Consultas (dashboard, ranking, listagens) | ✅ | ✅ |
+
+## 📱 5.1 App no celular (PWA)
+O front fica na pasta `frontend/` e é **servido pela própria API**: uma URL só para site e dados. Ele é um **PWA**: no celular dá para instalar na tela inicial, com ícone e tela cheia, sem loja de apps.
+
+1. Suba a API (passo 4.4) e deixe o celular **no mesmo Wi-Fi** do computador. Se não abrir, libere a porta no firewall (passo 4.6).
+2. Descubra o IP do computador (`ipconfig`, campo "Endereço IPv4"), por exemplo `192.168.0.10`.
+3. No Chrome do celular, abra `http://192.168.0.10:8080`.
+4. Menu ⋮ → **Adicionar à tela inicial**.
+
+> `localhost` no celular é o próprio celular, por isso o IP. Sem HTTPS o Chrome cria um atalho (abre o site); a instalação completa ("Instalar app", funcionamento offline da casca) exige HTTPS ou `localhost`. Os dados nunca ficam em cache: tudo que é `/api` vai sempre ao servidor.
 
 ---
 
