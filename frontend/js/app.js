@@ -365,26 +365,32 @@ function renderAgendamentos() {
 
 // --- Moradores ---------------------------------------------------------------------
 function renderMoradores() {
-    const cartao = (nome, papel, xp, ativo, extra, botao) => `
-        <div class="cartao-morador painel-vidro" style="${ativo ? '' : 'opacity:0.5;'}">
-            <div class="cabecalho-morador">
+    // Cartão apagado quando inativo; os botões ficam normais para dar para clicar em "Reativar".
+    const cartao = (nome, papel, xp, ativo, extra, botao, extra2) => `
+        <div class="cartao-morador painel-vidro">
+            <div class="cabecalho-morador" style="${ativo ? '' : 'opacity:0.5;'}">
                 <div class="container-foto"><img src="${avatar(nome)}" alt="" style="object-fit: cover;"></div>
                 <div><h3>${esc(nome)}</h3><span class="etiqueta ${papel === 'SINDICO' ? 'etiqueta-lider' : 'etiqueta-papel'}">${papel === 'SINDICO' ? 'Líder (Síndico)' : 'Morador'}</span></div>
             </div>
-            <div class="estatisticas-morador">
-                <div class="estat"><span>${papel === 'SINDICO' ? 'Pontos' : 'Pontos'}</span><strong>${xp}</strong></div>
+            <div class="estatisticas-morador" style="${ativo ? '' : 'opacity:0.5;'}">
+                <div class="estat"><span>Pontos</span><strong>${xp}</strong></div>
                 <div class="estat"><span>${extra[0]}</span><strong>${esc(extra[1])}</strong></div>
+                ${extra2 ? `<div class="estat"><span>${extra2[0]}</span><strong>${esc(extra2[1])}</strong></div>` : ''}
                 <div class="estat"><span>Status</span><strong class="${ativo ? 'texto-verde' : ''}">${ativo ? 'Ativo' : 'Inativo'}</strong></div>
             </div>
             ${botao}
         </div>`;
 
+    // Botões do síndico no cartão do morador: ativo tem 3 ações; inativo só pode ser reativado.
+    const acoesDoSindico = (m) => !S.ehSindico ? '' : m.ativo
+        ? `<button data-acao="editar-estadia" data-id="${m.id}" data-nome="${esc(m.nome)}" data-dias="${m.diasEstadia}" class="botao-contorno botao-pequeno largura-total mt-3">Editar estadia</button>
+           <button data-acao="redefinir-senha" data-id="${m.id}" data-nome="${esc(m.nome)}" class="botao-contorno botao-pequeno largura-total" style="margin-top:10px;">Redefinir senha</button>
+           <button data-acao="desativar-morador" data-id="${m.id}" class="botao-perigo botao-pequeno largura-total" style="margin-top:10px;">Desativar Morador</button>`
+        : `<button data-acao="reativar-morador" data-id="${m.id}" class="botao-primario botao-pequeno largura-total mt-3">Reativar Morador</button>`;
+
     const sindicos = S.sindicos.map(s => cartao(s.nome, 'SINDICO', '—', s.ativo, ['Depto.', s.departamento || '—'], ''));
-    const moradores = S.moradores.map(m => cartao(m.nome, 'MORADOR', `${m.pontosConvivencia} pts`, m.ativo, ['Quarto', m.numeroQuarto],
-        S.ehSindico && m.ativo
-            ? `<button data-acao="redefinir-senha" data-id="${m.id}" data-nome="${esc(m.nome)}" class="botao-contorno botao-pequeno largura-total mt-3">Redefinir senha</button>
-               <button data-acao="desativar-morador" data-id="${m.id}" class="botao-perigo botao-pequeno largura-total" style="margin-top:10px;">Desativar Morador</button>`
-            : ''));
+    const moradores = S.moradores.map(m => cartao(m.nome, 'MORADOR', `${m.pontosConvivencia} pts`, m.ativo,
+        ['Quarto', m.numeroQuarto], acoesDoSindico(m), ['Estadia', `${m.diasEstadia} dias`]));
     document.getElementById('lista-moradores').innerHTML = sindicos.concat(moradores).join('');
 
     // Convite da residência (o card só aparece para o síndico; o código nem vem da API para o morador)
@@ -510,6 +516,14 @@ function iniciarEventos() {
             case 'nao-compareceu':
                 if (confirm('Registrar que o morador não compareceu? Isso pode gerar penalidade.')) executar(AgendamentoService.naoCompareceu(id), 'Não comparecimento registrado.', 'aviso');
                 break;
+            case 'reativar-morador':
+                executar(MoradorService.reativar(id), 'Morador reativado.', 'sucesso'); break;
+            case 'editar-estadia':
+                document.getElementById('estadia-morador-id').value = id;
+                document.getElementById('estadia-nome').textContent = el.dataset.nome;
+                document.getElementById('estadia-dias').value = el.dataset.dias;
+                abrirModal('modalEstadia');
+                break;
             case 'redefinir-senha':
                 if (confirm(`Gerar uma senha temporária para ${el.dataset.nome}? A senha atual dela deixa de funcionar.`)) {
                     MoradorService.redefinirSenha(id).then((r) => {
@@ -576,6 +590,9 @@ function iniciarFormulariosDaAplicacao() {
             mostrarToast(err.message, 'erro');
         }
     });
+
+    aoEnviar('formulario-estadia', 'modalEstadia', 'Estadia atualizada!', () =>
+        MoradorService.atualizarEstadia(Number(valor('estadia-morador-id')), Number(valor('estadia-dias'))));
 
     aoEnviar('formulario-novo-espaco', 'modalNovoEspaco', 'Espaço cadastrado!', () =>
         EspacoService.criar({

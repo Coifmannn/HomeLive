@@ -134,6 +134,8 @@ const MoradorService = {
     ranking: () => get('/moradores/ranking'),
     cadastrar: (m) => post('/moradores', m),
     redefinirSenha: (id) => post(`/moradores/${id}/redefinir-senha`),   // síndico: { senhaTemporaria }
+    reativar: (id) => patch(`/moradores/${id}/reativar`),               // síndico: desfaz a desativação
+    atualizarEstadia: (id, dias) => patch(`/moradores/${id}/estadia?dias=${encodeURIComponent(dias)}`), // síndico
     desativar: (id) => del(`/moradores/${id}`)
 };
 

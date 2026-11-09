@@ -607,6 +607,27 @@
         </div>
     </div>
 
+    <!-- Modal Editar Estadia -->
+    <div class="sobreposicao-modal" id="modalEstadia">
+        <div class="caixa-modal painel-vidro">
+            <div class="cabecalho-modal">
+                <h3>Dias de estadia</h3>
+                <button class="botao-fechar" onclick="fecharModal('modalEstadia')"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="corpo-modal">
+                <form id="formulario-estadia" class="formulario-moderno">
+                    <input type="hidden" id="estadia-morador-id">
+                    <p class="ajuda-convite">Quantos dias <strong id="estadia-nome"></strong> fica na residência. Esse número é o peso do rateio <em>Por estadia</em>.</p>
+                    <div class="grupo-formulario">
+                        <label>Dias de estadia</label>
+                        <input type="number" id="estadia-dias" class="input-vidro" min="0" max="3650" required>
+                    </div>
+                    <button type="submit" class="botao-primario largura-total mt-3">Salvar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Trocar Minha Senha -->
     <div class="sobreposicao-modal" id="modalTrocarSenha">
         <div class="caixa-modal painel-vidro">
