@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-br"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HomeLive 2050 | Diagramas</title>
+<style>
+:root{--bg:#f6f7fb;--fg:#1d2433;--muted:#5b6478;--card:#fff;--line:#e3e6ee;--accent:#5b3fd6}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,Segoe UI,sans-serif}
+header{padding:28px 16px 8px;max-width:1200px;margin:auto} h1{margin:0;font-size:1.6rem} header p{color:var(--muted);margin:4px 0 0}
+nav{max-width:1200px;margin:12px auto 0;padding:0 16px;display:flex;gap:8px;flex-wrap:wrap}
+nav a{color:var(--accent);text-decoration:none;border:1px solid var(--line);background:var(--card);padding:6px 12px;border-radius:999px;font-size:.9rem}
+main{max-width:1200px;margin:auto;padding:16px} h2{margin:28px 0 12px;font-size:1.25rem;border-left:4px solid var(--accent);padding-left:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;overflow-x:auto}
+.card h3{margin:0 0 10px;font-size:1rem;color:var(--muted)} .mermaid{margin:0;background:none;text-align:center}
+@media print{nav{display:none} .card{break-inside:avoid;border:none} body{background:#fff}}
+</style></head><body>
+<header><h1>HomeLive 2050: Diagramas</h1><p>Modelagem de dados (PostgreSQL) e fluxograma da aplicação. Para imprimir/salvar em PDF: Ctrl+P.</p></header>
+<nav><a href="#der">Modelagem de dados</a><a href="#fluxo">Fluxograma</a></nav>
+<main>
+<h2 id="der">Modelagem de dados (DER)</h2>
+<section class="card"><h3>Diagrama Entidade-Relacionamento (DER)</h3><pre class="mermaid">erDiagram
+    usuarios ||--o| moradores : &quot;é um (herança)&quot;
+    usuarios ||--o| sindicos : &quot;é um (herança)&quot;
+
+    moradores ||--o{ leituras_consumo : &quot;registra&quot;
+    moradores ||--o{ despesas : &quot;solicita&quot;
+    sindicos  ||--o{ despesas : &quot;aprova/rejeita&quot;
+    despesas  ||--|{ rateio_itens : &quot;é dividida em&quot;
+    moradores ||--o{ rateio_itens : &quot;deve pagar&quot;
+
+    espacos_comuns ||--o{ agendamentos_espacos : &quot;é reservado em&quot;
+    moradores      ||--o{ agendamentos_espacos : &quot;reserva&quot;
+
+    moradores ||--o{ tarefas_domesticas : &quot;é responsável por&quot;
+    sindicos  ||--o{ tarefas_domesticas : &quot;atribui&quot;
+    moradores ||--o{ tarefas_recorrentes : &quot;último responsável&quot;
+
+    moradores         ||--o{ penalidades : &quot;recebe&quot;
+    regras_penalidade ||--o{ penalidades : &quot;origina&quot;
+    sindicos          ||--o{ penalidades : &quot;aplica&quot;
+
+    usuarios {
+        bigint id PK
+        varchar nome
+        varchar email UK
+        varchar telefone
+        varchar senha_hash &quot;BCrypt&quot;
+        boolean ativo
+        timestamp data_criacao
+    }
+    moradores {
+        bigint id PK,FK &quot;= usuarios.id&quot;
+        varchar numero_quarto
+        int dias_estadia
+        int pontos_convivencia
+        date data_entrada
+    }
+    sindicos {
+        bigint id PK,FK &quot;= usuarios.id&quot;
+        varchar departamento
+        date inicio_mandato
+        date fim_mandato
+    }
+    leituras_consumo {
+        bigint id PK
+        bigint morador_id FK
+        date competencia &quot;UK com morador_id&quot;
+        numeric kwh
+        timestamp registrada_em
+    }
+    despesas {
+        bigint id PK
+        varchar titulo
+        varchar descricao
+        numeric valor_total
+        date data_vencimento
+        date data_lancamento
+        date competencia
+        varchar categoria
+        varchar tipo_despesa
+        varchar tipo_rateio
+        varchar status
+        bigint solicitante_id FK
+        bigint aprovador_id FK
+        varchar motivo_rejeicao
+    }
+    rateio_itens {
+        bigint id PK
+        bigint despesa_id FK
+        bigint morador_id FK
+        numeric valor_calculado
+        varchar status_pagamento
+        date data_pagamento
+    }
+    espacos_comuns {
+        bigint id PK
+        varchar nome
+        varchar descricao
+        int capacidade_maxima
+        varchar regras_uso
+        boolean ativo
+    }
+    agendamentos_espacos {
+        bigint id PK
+        bigint espaco_id FK
+        bigint morador_id FK
+        timestamp data_hora_inicio
+        timestamp data_hora_fim
+        varchar motivo_reserva
+        varchar status
+        timestamp data_criacao
+    }
+    tarefas_domesticas {
+        bigint id PK
+        varchar titulo
+        varchar descricao
+        date data_prazo
+        int pontos_recompensa
+        int pontos_penalidade
+        varchar status
+        bigint responsavel_id FK
+        bigint atribuida_por_id FK
+        timestamp data_conclusao
+    }
+    tarefas_recorrentes {
+        bigint id PK
+        varchar titulo
+        varchar descricao
+        varchar periodicidade
+        int prazo_em_dias
+        int pontos_recompensa
+        int pontos_penalidade
+        varchar tipo_rodizio
+        date proxima_geracao
+        boolean ativa
+        bigint ultimo_responsavel_id FK
+    }
+    regras_penalidade {
+        bigint id PK
+        varchar nome
+        varchar tipo_infracao
+        varchar modo_calculo
+        int pontos_base
+        int incremento_por_reincidencia
+        int teto_pontos
+        int janela_reincidencia_dias
+        int limite_horas_antecedencia
+        boolean ativa
+    }
+    penalidades {
+        bigint id PK
+        bigint morador_id FK
+        bigint regra_id FK &quot;nulo = manual&quot;
+        varchar tipo_infracao
+        int pontos
+        varchar motivo
+        timestamp data_aplicacao
+        bigint aplicada_por_id FK &quot;nulo = automática&quot;
+    }
+</pre></section>
+<h2 id="fluxo">Fluxograma</h2>
+<section class="card"><h3>1. Fluxo geral: acesso e navegação</h3><pre class="mermaid">flowchart TD
+    A([Início]) --&gt; B[Tela de login&lt;br/&gt;e-mail + senha]
+    B --&gt; C{Campos válidos?}
+    C -- Não --&gt; B
+    C -- Sim --&gt; D[Front envia credenciais&lt;br/&gt;HTTP Basic para a API]
+    D --&gt; E{Spring Security:&lt;br/&gt;senha confere com o hash BCrypt?}
+    E -- Não / 401 --&gt; F[Mensagem: e-mail ou senha incorretos] --&gt; B
+    E -- Sim --&gt; G{Qual o perfil?}
+    G -- Síndico --&gt; H[Painel do Síndico]
+    G -- Morador --&gt; I[Painel do Morador]
+
+    H --&gt; M[Menu]
+    I --&gt; M
+    M --&gt; V[Visão geral&lt;br/&gt;métricas, ranking, próximas reservas]
+    M --&gt; FI[Finanças&lt;br/&gt;despesas e rateios]
+    M --&gt; TA[Tarefas e escalas]
+    M --&gt; RE[Reservas de espaços]
+    M --&gt; MO[Moradores]
+    M --&gt; RG[Regras e penalidades]
+    M --&gt; S([Sair: limpa a sessão]) --&gt; B
+</pre></section>
+<section class="card"><h3>2. O que cada perfil pode fazer</h3><pre class="mermaid">flowchart LR
+    subgraph Sindico[Síndico]
+        S1[Cadastrar moradores e síndicos]
+        S2[Aprovar ou rejeitar despesas]
+        S3[Criar tarefas e escalas]
+        S4[Configurar regras de penalidade]
+        S5[Aplicar penalidade manual]
+        S6[Registrar não comparecimento]
+        S7[Cadastrar e desativar espaços]
+    end
+    subgraph Morador[Morador]
+        M1[Lançar despesa]
+        M2[Reservar e cancelar a própria reserva]
+        M3[Concluir as próprias tarefas]
+        M4[Registrar a própria leitura de consumo]
+        M5[Quitar a própria parcela]
+        M6[Ver o próprio histórico de penalidades]
+    end
+    API{{API verifica o perfil&lt;br/&gt;em cada requisição}}
+    Sindico --&gt; API
+    Morador --&gt; API
+    API -- sem permissão --&gt; E403[403 Proibido]
+    API -- permitido --&gt; OK[Executa e grava no banco]
+</pre></section>
+<section class="card"><h3>3. Despesa e rateio</h3><pre class="mermaid">flowchart TD
+    A([Morador ou síndico lança despesa]) --&gt; B{Dados válidos?&lt;br/&gt;valor &gt; 0, título, vencimento}
+    B -- Não / 400 --&gt; A
+    B -- Sim --&gt; C[Despesa salva como&lt;br/&gt;PENDENTE_APROVACAO]
+    C --&gt; D{Síndico avalia}
+    D -- Rejeita --&gt; E[REJEITADA&lt;br/&gt;com motivo opcional]
+    D -- Aprova --&gt; F{Tipo de rateio}
+    F -- Igualitário --&gt; G[Peso 1 para cada morador ativo]
+    F -- Por estadia --&gt; H[Peso = dias de estadia]
+    F -- Por consumo --&gt; I{Todos têm leitura&lt;br/&gt;do mês da conta?}
+    I -- Não --&gt; J[Recusa e informa quem falta] --&gt; D
+    I -- Sim --&gt; K[Peso = kWh do mês]
+    G --&gt; L[Divide o valor e fecha os centavos&lt;br/&gt;no último morador]
+    H --&gt; L
+    K --&gt; L
+    L --&gt; M[Cria uma parcela por morador&lt;br/&gt;status PENDENTE]
+    M --&gt; N[Despesa RATEADA]
+    N --&gt; O[Morador quita a parcela] --&gt; P([Parcela PAGO])
+</pre></section>
+<section class="card"><h3>4. Reserva de espaço comum</h3><pre class="mermaid">flowchart TD
+    A([Morador escolhe espaço e horário]) --&gt; B{Início no futuro e&lt;br/&gt;fim depois do início?}
+    B -- Não / 400 --&gt; A
+    B -- Sim --&gt; C{Espaço e morador ativos?}
+    C -- Não / 400 --&gt; A
+    C -- Sim --&gt; D{Conflita com outra&lt;br/&gt;reserva confirmada?}
+    D -- Sim / 409 --&gt; A
+    D -- Não --&gt; E[Reserva CONFIRMADA]
+    E --&gt; F{O que acontece?}
+    F -- Morador cancela --&gt; G{Faltam menos horas que&lt;br/&gt;o limite da regra?}
+    G -- Sim --&gt; H[CANCELADO + penalidade&lt;br/&gt;CANCELAMENTO_TARDIO]
+    G -- Não --&gt; I[CANCELADO sem penalidade]
+    F -- Síndico cancela --&gt; I
+    F -- Síndico registra ausência --&gt; J[NAO_COMPARECEU + penalidade&lt;br/&gt;NAO_COMPARECIMENTO]
+    F -- Usa normalmente --&gt; K([Fim])
+</pre></section>
+<section class="card"><h3>5. Tarefas, rodízio e gamificação</h3><pre class="mermaid">flowchart TD
+    A([Rotina diária 06:00&lt;br/&gt;ou síndico]) --&gt; B[Marca tarefas vencidas&lt;br/&gt;como ATRASADA]
+    B --&gt; C[Evento: tarefa atrasada] --&gt; D[PenalidadeService aplica a regra&lt;br/&gt;FIXA ou PROGRESSIVA]
+    A --&gt; E{Há escala recorrente&lt;br/&gt;devida hoje?}
+    E -- Não --&gt; Z([Fim])
+    E -- Sim --&gt; F{Tipo de rodízio}
+    F -- Sequencial --&gt; G[Próximo da fila]
+    F -- Menor pontuação --&gt; H[Quem tem menos pontos]
+    F -- Menor carga --&gt; I[Quem tem menos tarefas abertas]
+    G --&gt; J[Gera tarefa PENDENTE&lt;br/&gt;e avança a próxima data]
+    H --&gt; J
+    I --&gt; J
+    J --&gt; K{Morador conclui}
+    K -- No prazo --&gt; L[+100% dos pontos]
+    K -- Atrasada --&gt; M[+50% dos pontos]
+    L --&gt; N([Ranking atualizado])
+    M --&gt; N
+</pre></section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true,theme:"default",securityLevel:"loose",er:{useMaxWidth:true},flowchart:{useMaxWidth:true}});</script>
+</body></html>
