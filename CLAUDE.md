@@ -5,7 +5,7 @@ quem usa a API; este arquivo é o que você precisa saber para **trabalhar no c�
 
 ## O projeto
 Trabalho semestral de **POO** (Análise e Desenvolvimento de Sistemas), em grupo. Back-end em **Java 21 + Spring Boot 4.1.1**
-(H2 em memória, Spring Data JPA, Spring Security, Lombok). O front-end é de outro integrante do grupo e ainda não existe aqui.
+(PostgreSQL ou H2 em memória, Spring Data JPA, Spring Security, Lombok). O front (HTML/JS/CSS) fica em `frontend/` e é servido pela própria API.
 **A nota vem de mostrar POO e padrões de projeto de forma clara e defensável**, então priorize design legível
 a infraestrutura sofisticada.
 
