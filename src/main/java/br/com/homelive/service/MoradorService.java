@@ -72,6 +72,14 @@ public class MoradorService {
         moradorRepository.save(morador);
     }
 
+    /** Desfaz a desativação: o morador volta a entrar no sistema e a contar nos totais e nos rateios. */
+    @Transactional
+    public void reativar(Long id) {
+        Morador morador = buscarEntidade(id);
+        morador.ativar();
+        moradorRepository.save(morador);
+    }
+
     public Morador buscarEntidade(Long id) {
         return moradorRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Morador não encontrado com o ID: " + id));

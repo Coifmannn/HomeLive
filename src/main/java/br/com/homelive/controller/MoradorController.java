@@ -56,6 +56,13 @@ public class MoradorController {
         return ResponseEntity.ok(senhaService.redefinirDoMorador(id));
     }
 
+    /** Síndico: traz de volta um morador que tinha sido desativado. */
+    @PatchMapping("/{id}/reativar")
+    public ResponseEntity<Void> reativar(@PathVariable Long id) {
+        moradorService.reativar(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> desativar(@PathVariable Long id) {
         moradorService.desativar(id);
