@@ -126,6 +126,7 @@ erDiagram
         int pontos_penalidade
         varchar tipo_rodizio
         date proxima_geracao
+        int dia_ancora "dia do mês em que começou"
         boolean ativa
         bigint ultimo_responsavel_id FK
     }
@@ -209,6 +210,8 @@ erDiagram
 * Tarefa vencida vira `ATRASADA` e gera penalidade.
 * Escalas recorrentes geram tarefas sozinhas (rotina diária às 06:00), escolhendo o responsável por rodízio
   (`SEQUENCIAL`, `MENOR_PONTUACAO` ou `MENOR_CARGA`). Gerar duas vezes no mesmo dia não duplica.
+* Escala **mensal** guarda o `dia_ancora` (dia em que começou): ajusta nos meses curtos e volta ao dia certo
+  (31/jan → 28/fev → 31/mar → 30/abr), sem "ficar presa" no 28.
 
 **Penalidades**
 * Só uma regra ativa por tipo de infração.

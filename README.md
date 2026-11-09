@@ -55,7 +55,7 @@ A `TarefaRecorrente` é o *modelo* de uma tarefa que se repete ("tirar o lixo, t
 * **Automático:** uma rotina diária (06:00, horário de Brasília) penaliza os atrasos e gera as tarefas devidas. Nenhuma chamada à API é necessária.
 * **Idempotente:** gerar duas vezes no mesmo dia não duplica tarefas. Se o sistema ficou parado, gera uma só e salta para a próxima data futura.
 * Só participam moradores **ativos**. Tarefas geradas aparecem como atribuídas pelo "Sistema Automático".
-* `Periodicidade` (`DIARIA`, `SEMANAL`, `QUINZENAL`, `MENSAL`) é um enum que sabe calcular a própria data seguinte.
+* `Periodicidade` (`DIARIA`, `SEMANAL`, `QUINZENAL`, `MENSAL`) é um enum que sabe calcular a própria data seguinte. Na **mensal**, a escala guarda o dia em que começou (`diaAncora`): ajusta nos meses curtos e volta ao dia certo (31/jan → 28/fev → 31/mar → 30/abr), sem ficar presa no 28.
 
 ### E. Regras de Penalidade Configuráveis (Observer + Strategy)
 O síndico define as regras; o sistema as aplica sozinho quando a infração acontece. Tarefas e reservas **não sabem que penalidades existem**: elas publicam *eventos* (`TarefaMarcadaComoAtrasada`, `ReservaCanceladaPeloMorador`, `MoradorNaoCompareceu`) e o `PenalidadeService` reage a eles (padrão **Observer**).
@@ -205,7 +205,7 @@ O front fica na pasta `frontend/` e é **servido pela própria API**: uma URL s�
 | Configurar regras de penalidade e aplicar penalidade manual | ✅ | ❌ |
 | Registrar não comparecimento a uma reserva | ✅ | ❌ |
 | Ver penalidades | ✅ todas | só as próprias |
-| Desativar morador / atualizar estadia | ✅ | ❌ |
+| Desativar, reativar morador e editar dias de estadia | ✅ | ❌ |
 | Lançar despesa | ✅ (administrativa) | ✅ (em nome próprio) |
 | Reservar espaço | ✅ (informa `moradorId`) | ✅ (em nome próprio) |
 | Cancelar reserva | ✅ qualquer | só a própria |
@@ -233,7 +233,8 @@ O front fica na pasta `frontend/` e é **servido pela própria API**: uma URL s�
 | | `POST` | `/api/moradores` | síndico | Cadastra morador (corpo inclui `senha`, mín. 6 caracteres) |
 | | `GET` | `/api/moradores/ranking` | logado | Ranking por pontos de convivência |
 | | `PATCH` | `/api/moradores/{id}/estadia?dias=` | síndico | Atualiza dias de estadia |
-| | `DELETE` | `/api/moradores/{id}` | síndico | Desativa o morador |
+| | `DELETE` | `/api/moradores/{id}` | síndico | Desativa o morador (ele deixa de entrar e de contar nos totais e rateios) |
+| | `PATCH` | `/api/moradores/{id}/reativar` | síndico | Traz de volta um morador desativado (`204`; reativar quem já está ativo também dá `204`) |
 | | `POST` | `/api/moradores/{id}/redefinir-senha` | síndico | Gera uma **senha temporária** (8 caracteres) para o morador que esqueceu a dele: `{ "senhaTemporaria": "..." }`. Ela só aparece nesta resposta; a senha antiga deixa de valer |
 | **Leituras de consumo** | `POST` | `/api/leituras-consumo` | logado | Registra (ou corrige) a leitura do mês: `{ "kwh": 120.5, "competencia": "2026-09" }`. `competencia` é opcional (padrão: mês corrente). O síndico também informa `moradorId` |
 | | `GET` | `/api/leituras-consumo?competencia=2026-09` | logado | Leituras de um mês (sem parâmetro, o mês corrente) |

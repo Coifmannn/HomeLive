@@ -111,7 +111,11 @@ configuráveis**; dashboard corrigido.
 * **Celular:** tabelas rolam dentro da própria caixa (`overflow-x:auto`); conferido com emulação de 375px, nenhuma tela estoura.
 * Armadilha: o VS Code (Java/NetBeans) recompila `target/` em paralelo e pode apagar classes no meio do `mvnw test`
   (`NoClassDefFoundError`). Se aparecer, rode o teste de novo.
-* Ainda em aberto: reativar morador desativado e editar estadia pela tela; deriva de data do rodízio mensal; "quanto devo no mês".
+* **Moradores:** `PATCH /api/moradores/{id}/reativar` + botões "Reativar Morador" e "Editar estadia" no cartão (síndico); a estadia
+  agora aparece no cartão. Testes em `GestaoDeMoradoresTest`.
+* **Rodízio mensal sem deriva:** `TarefaRecorrente.diaAncora` (coluna `dia_ancora`, vazia em escalas antigas = usa o dia da data atual)
+  e `Periodicidade.proxima(base, diaAncora)`: 31/jan → 28/fev → 31/mar. Testes em `TarefaRecorrenteTest`.
+* Ainda em aberto: "quanto devo no mês" (extrato do morador), pontos com consequência nas reservas, confirmação de tarefa.
 
 ## Direção nova (combinada em 21/10/2026; só a parte de "várias casas" segue NÃO implementada)
 Decisões de produto/plataforma que o usuário trouxe. Aguardam as respostas das 4 perguntas abaixo antes de codar;
@@ -183,7 +187,7 @@ Descartados: PWA/Capacitor (são para celular) e reescrever o front em Flutter/R
 
 ## Pontos em aberto (decisões de negócio, perguntar ao usuário)
 * `diasEstadia` ainda é **um valor único atual** no morador, o mesmo defeito que o consumo tinha. Poderia virar histórico mensal.
-* `Periodicidade.MENSAL` acumula deriva de dia (31/jan → 28/fev → 28/mar).
+  (O síndico já edita o valor pela tela; só o histórico por mês continua de fora.)
 * Quem confirma o que, e se o síndico também pode ser "morador" (hoje não: `Sindico` e `Morador` são entidades irmãs).
 
 ## Limites conhecidos (aceitáveis para o trabalho, não para produção)
