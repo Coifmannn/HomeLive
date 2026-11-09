@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>HomeLive 2050 - DER e Fluxograma</title>
+<style>
+  @page { size: A4 landscape; margin: 0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; }
+  .pagina { width: 297mm; height: 209mm; padding: 8mm 10mm 4mm; page-break-after: always; overflow: hidden; display: flex; flex-direction: column; }
+  .pagina:last-child { page-break-after: auto; }
+  h1 { font-size: 18px; margin: 0 0 2px; }
+  .sub { font-size: 11.5px; margin: 0 0 4px; color: #333; }
+  .pagina svg { flex: 1; min-height: 0; width: 100%; }
+</style>
+</head>
+<body>
+
+<section class="pagina">
+  <h1>Modelagem de Dados (DER) - HomeLive 2050</h1>
+  <p class="sub">Banco PostgreSQL. PK = chave primária, FK = chave estrangeira, UK = valor único. 1 e N indicam a cardinalidade (um para muitos).</p>
+<svg viewBox="0 0 1100 700" xmlns="http://www.w3.org/2000/svg" font-family="Arial, Helvetica, sans-serif">
+<line x1="480.0" y1="48.0" x2="665.0" y2="300.0" stroke="#222" stroke-width="1.4"/>
+<line x1="290.0" y1="48.0" x2="105.0" y2="265.0" stroke="#222" stroke-width="1.4"/>
+<line x1="200.0" y1="280.0" x2="290.0" y2="200.0" stroke="#222" stroke-width="1.4"/>
+<line x1="200.0" y1="295.0" x2="290.0" y2="371.0" stroke="#222" stroke-width="1.4"/>
+<line x1="200.0" y1="310.0" x2="290.0" y2="536.0" stroke="#222" stroke-width="1.4"/>
+<line x1="570.0" y1="315.6" x2="480.0" y2="245.0" stroke="#222" stroke-width="1.4"/>
+<line x1="570.0" y1="339.0" x2="480.0" y2="371.0" stroke="#222" stroke-width="1.4"/>
+<line x1="570.0" y1="362.4" x2="480.0" y2="509.6" stroke="#222" stroke-width="1.4"/>
+<line x1="570.0" y1="528.0" x2="480.0" y2="569.0" stroke="#222" stroke-width="1.4"/>
+<line x1="480.0" y1="170.0" x2="850.0" y2="174.2" stroke="#222" stroke-width="1.4"/>
+<line x1="760.0" y1="307.8" x2="850.0" y2="58.0" stroke="#222" stroke-width="1.4"/>
+<line x1="760.0" y1="323.4" x2="850.0" y2="225.5" stroke="#222" stroke-width="1.4"/>
+<line x1="760.0" y1="342.9" x2="850.0" y2="342.0" stroke="#222" stroke-width="1.4"/>
+<line x1="760.0" y1="366.3" x2="850.0" y2="486.0" stroke="#222" stroke-width="1.4"/>
+<line x1="945.0" y1="602.0" x2="945.0" y2="552.0" stroke="#222" stroke-width="1.4"/>
+<rect x="290" y="0" width="190" height="96" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<rect x="290" y="0" width="190" height="24" fill="#e6e6e6" stroke="#000" stroke-width="1.6"/>
+<text x="385.0" y="17" text-anchor="middle" font-weight="bold" font-size="13.5">usuarios</text>
+<text x="298" y="37" font-size="12.5">id</text>
+<text x="473" y="37" text-anchor="end" font-size="11" font-weight="bold">PK</text>
+<text x="298" y="55" font-size="12.5">nome</text>
+<text x="298" y="73" font-size="12.5">email</text>
+<text x="473" y="73" text-anchor="end" font-size="11" font-weight="bold">UK</text>
+<text x="298" y="91" font-size="12.5">senha_hash</text>
+<rect x="10" y="265" width="190" height="60" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<rect x="10" y="265" width="190" height="24" fill="#e6e6e6" stroke="#000" stroke-width="1.6"/>
+<text x="105.0" y="282" text-anchor="middle" font-weight="bold" font-size="13.5">sindicos</text>
+<text x="18" y="302" font-size="12.5">id</text>
+<text x="193" y="302" text-anchor="end" font-size="11" font-weight="bold">PK, FK</text>
+<text x="18" y="320" font-size="12.5">departamento</text>
+<rect x="570" y="300" width="190" height="78" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<rect x="570" y="300" width="190" height="24" fill="#e6e6e6" stroke="#000" stroke-width="1.6"/>
+<text x="665.0" y="317" text-anchor="middle" font-weight="bold" font-size="13.5">moradores</text>
+<text x="578" y="337" font-size="12.5">id</text>
+<text x="753" y="337" text-anchor="end" font-size="11" font-weight="bold">PK, FK</text>
+<text x="578" y="355" font-size="12.5">numero_quarto</text>
+<text x="578" y="373" font-size="12.5">pontos_convivencia</text>
+<rect x="290" y="125" width="190" height="150" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<rect x="290" y="125" width="190" height="24" fill="#e6e6e6" stroke="#000" stroke-width="1.6"/>
+<text x="385.0" y="142" text-anchor="middle" font-weight="bold" font-size="13.5">despesas</text>
+<text x="298" y="162" font-size="12.5">id</text>
+<text x="473" y="162" text-anchor="end" font-size="11" font-weight="bold">PK</text>
+<text x="298" y="180" font-size="12.5">titulo</text>
+<text x="298" y="198" font-size="12.5">valor_total</text>
+<text x="298" y="216" font-size="12.5">tipo_rateio</text>
+<text x="298" y="234" font-size="12.5">status</text>
+<text x="298" y="252" font-size="12.5">solicitante_id</text>
+<text x="473" y="252" text-anchor="end" font-size="11" font-weight="bold">FK</text>
+<text x="298" y="270" font-size="12.5">aprovador_id</text>
+<text x="473" y="270" text-anchor="end" font-size="11" font-weight="bold">FK</text>
+<rect x="290" y="305" width="190" height="132" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<rect x="290" y="305" width="190" height="24" fill="#e6e6e6" stroke="#000" stroke-width="1.6"/>
+<text x="385.0" y="322" text-anchor="middle" font-weight="bold" font-size="13.5">tarefas_domesticas</text>
+<text x="298" y="342" font-size="12.5">id</text>
+<text x="473" y="342" text-anchor="end" font-size="11" font-weight="bold">PK</text>
+<text x="298" y="360" font-size="12.5">titulo</text>
+<text x="298" y="378" font-size="12.5">data_prazo</text>
+<text x="298" y="396" font-size="12.5">status</text>
+<text x="298" y="414" font-size="12.5">responsavel_id</text>
+<text x="473" y="414" text-anchor="end" font-size="11" font-weight="bold">FK</text>
+<text x="298" y="432" font-size="12.5">atribuida_por_id</text>
+<text x="473" y="432" text-anchor="end" font-size="11" font-weight="bold">FK</text>
+<rect x="290" y="470" width="190" height="132" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<rect x="290" y="470" width="190" height="24" fill="#e6e6e6" stroke="#000" stroke-width="1.6"/>
+<text x="385.0" y="487" text-anchor="middle" font-weight="bold" font-size="13.5">penalidades</text>
+<text x="298" y="507" font-size="12.5">id</text>
+<text x="473" y="507" text-anchor="end" font-size="11" font-weight="bold">PK</text>
+<text x="298" y="525" font-size="12.5">morador_id</text>
+<text x="473" y="525" text-anchor="end" font-size="11" font-weight="bold">FK</text>
+<text x="298" y="543" font-size="12.5">regra_id</text>
+<text x="473" y="543" text-anchor="end" font-size="11" font-weight="bold">FK</text>
+<text x="298" y="561" font-size="12.5">aplicada_por_id</text>
+<text x="473" y="561" text-anchor="end" font-size="11" font-weight="bold">FK</text>
+<text x="298" y="579" font-size="12.5">pontos</text>
+<text x="298" y="597" font-size="12.5">motivo</text>
+<rect x="570" y="480" width="190" height="96" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<rect x="570" y="480" width="190" height="24" fill="#e6e6e6" stroke="#000" stroke-width="1.6"/>
+<text x="665.0" y="497" text-anchor="middle" font-weight="bold" font-size="13.5">regras_penalidade</text>
+<text x="578" y="517" font-size="12.5">id</text>
+<text x="753" y="517" text-anchor="end" font-size="11" font-weight="bold">PK</text>
+<text x="578" y="535" font-size="12.5">tipo_infracao</text>
+<text x="578" y="553" font-size="12.5">modo_calculo</text>
+<text x="578" y="571" font-size="12.5">pontos_base</text>
+<rect x="850" y="10" width="190" height="96" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<rect x="850" y="10" width="190" height="24" fill="#e6e6e6" stroke="#000" stroke-width="1.6"/>
+<text x="945.0" y="27" text-anchor="middle" font-weight="bold" font-size="13.5">leituras_consumo</text>
+<text x="858" y="47" font-size="12.5">id</text>
+<text x="1033" y="47" text-anchor="end" font-size="11" font-weight="bold">PK</text>
+<text x="858" y="65" font-size="12.5">morador_id</text>
+<text x="1033" y="65" text-anchor="end" font-size="11" font-weight="bold">FK</text>
+<text x="858" y="83" font-size="12.5">competencia</text>
+<text x="858" y="101" font-size="12.5">kwh</text>
+<rect x="850" y="140" width="190" height="114" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<rect x="850" y="140" width="190" height="24" fill="#e6e6e6" stroke="#000" stroke-width="1.6"/>
+<text x="945.0" y="157" text-anchor="middle" font-weight="bold" font-size="13.5">rateio_itens</text>
+<text x="858" y="177" font-size="12.5">id</text>
+<text x="1033" y="177" text-anchor="end" font-size="11" font-weight="bold">PK</text>
+<text x="858" y="195" font-size="12.5">despesa_id</text>
+<text x="1033" y="195" text-anchor="end" font-size="11" font-weight="bold">FK</text>
+<text x="858" y="213" font-size="12.5">morador_id</text>
+<text x="1033" y="213" text-anchor="end" font-size="11" font-weight="bold">FK</text>
+<text x="858" y="231" font-size="12.5">valor_calculado</text>
+<text x="858" y="249" font-size="12.5">status_pagamento</text>
+<rect x="850" y="285" width="190" height="114" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<rect x="850" y="285" width="190" height="24" fill="#e6e6e6" stroke="#000" stroke-width="1.6"/>
+<text x="945.0" y="302" text-anchor="middle" font-weight="bold" font-size="13.5">tarefas_recorrentes</text>
+<text x="858" y="322" font-size="12.5">id</text>
+<text x="1033" y="322" text-anchor="end" font-size="11" font-weight="bold">PK</text>
+<text x="858" y="340" font-size="12.5">titulo</text>
+<text x="858" y="358" font-size="12.5">periodicidade</text>
+<text x="858" y="376" font-size="12.5">tipo_rodizio</text>
+<text x="858" y="394" font-size="12.5">ultimo_responsavel_id</text>
+<text x="1033" y="394" text-anchor="end" font-size="11" font-weight="bold">FK</text>
+<rect x="850" y="420" width="190" height="132" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<rect x="850" y="420" width="190" height="24" fill="#e6e6e6" stroke="#000" stroke-width="1.6"/>
+<text x="945.0" y="437" text-anchor="middle" font-weight="bold" font-size="13.5">agendamentos_espacos</text>
+<text x="858" y="457" font-size="12.5">id</text>
+<text x="1033" y="457" text-anchor="end" font-size="11" font-weight="bold">PK</text>
+<text x="858" y="475" font-size="12.5">espaco_id</text>
+<text x="1033" y="475" text-anchor="end" font-size="11" font-weight="bold">FK</text>
+<text x="858" y="493" font-size="12.5">morador_id</text>
+<text x="1033" y="493" text-anchor="end" font-size="11" font-weight="bold">FK</text>
+<text x="858" y="511" font-size="12.5">data_hora_inicio</text>
+<text x="858" y="529" font-size="12.5">data_hora_fim</text>
+<text x="858" y="547" font-size="12.5">status</text>
+<rect x="850" y="602" width="190" height="78" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<rect x="850" y="602" width="190" height="24" fill="#e6e6e6" stroke="#000" stroke-width="1.6"/>
+<text x="945.0" y="619" text-anchor="middle" font-weight="bold" font-size="13.5">espacos_comuns</text>
+<text x="858" y="639" font-size="12.5">id</text>
+<text x="1033" y="639" text-anchor="end" font-size="11" font-weight="bold">PK</text>
+<text x="858" y="657" font-size="12.5">nome</text>
+<text x="858" y="675" font-size="12.5">capacidade_maxima</text>
+<rect x="10" y="560" width="190" height="78" fill="#fff" stroke="#000" stroke-width="1.6"/>
+<rect x="10" y="560" width="190" height="24" fill="#e6e6e6" stroke="#000" stroke-width="1.6"/>
+<text x="105.0" y="577" text-anchor="middle" font-weight="bold" font-size="13.5">casas</text>
+<text x="18" y="597" font-size="12.5">id</text>
+<text x="193" y="597" text-anchor="end" font-size="11" font-weight="bold">PK</text>
+<text x="18" y="615" font-size="12.5">nome</text>
+<text x="18" y="633" font-size="12.5">codigo_convite</text>
+<text x="193" y="633" text-anchor="end" font-size="11" font-weight="bold">UK</text>
+<text x="491.0" y="42.0" text-anchor="middle" font-size="13" font-weight="bold">1</text>
+<text x="676.0" y="293.0" text-anchor="middle" font-size="13" font-weight="bold">1</text>
+<text x="642.3" y="244.6" text-anchor="middle" font-size="11.5" font-style="italic" stroke="#fff" stroke-width="4" paint-order="stroke">é um</text>
+<text x="279.0" y="42.0" text-anchor="middle" font-size="13" font-weight="bold">1</text>
+<text x="116.0" y="258.0" text-anchor="middle" font-size="13" font-weight="bold">1</text>
+<text x="197.5" y="153.5" text-anchor="middle" font-size="11.5" font-style="italic" stroke="#fff" stroke-width="4" paint-order="stroke">é um</text>
+<text x="211.0" y="274.0" text-anchor="middle" font-size="13" font-weight="bold">1</text>
+<text x="279.0" y="194.0" text-anchor="middle" font-size="13" font-weight="bold">N</text>
+<text x="245.0" y="237.0" text-anchor="middle" font-size="11.5" font-style="italic" stroke="#fff" stroke-width="4" paint-order="stroke">aprova</text>
+<text x="211.0" y="289.0" text-anchor="middle" font-size="13" font-weight="bold">1</text>
+<text x="279.0" y="365.0" text-anchor="middle" font-size="13" font-weight="bold">N</text>
+<text x="245.0" y="330.0" text-anchor="middle" font-size="11.5" font-style="italic" stroke="#fff" stroke-width="4" paint-order="stroke">atribui</text>
+<text x="211.0" y="304.0" text-anchor="middle" font-size="13" font-weight="bold">1</text>
+<text x="279.0" y="530.0" text-anchor="middle" font-size="13" font-weight="bold">N</text>
+<text x="245.0" y="420.0" text-anchor="middle" font-size="11.5" font-style="italic" stroke="#fff" stroke-width="4" paint-order="stroke">aplica</text>
+<text x="559.0" y="309.6" text-anchor="middle" font-size="13" font-weight="bold">1</text>
+<text x="491.0" y="239.0" text-anchor="middle" font-size="13" font-weight="bold">N</text>
+<text x="525.0" y="277.3" text-anchor="middle" font-size="11.5" font-style="italic" stroke="#fff" stroke-width="4" paint-order="stroke">solicita</text>
+<text x="559.0" y="333.0" text-anchor="middle" font-size="13" font-weight="bold">1</text>
+<text x="491.0" y="365.0" text-anchor="middle" font-size="13" font-weight="bold">N</text>
+<text x="525.0" y="352.0" text-anchor="middle" font-size="11.5" font-style="italic" stroke="#fff" stroke-width="4" paint-order="stroke">executa</text>
+<text x="559.0" y="356.4" text-anchor="middle" font-size="13" font-weight="bold">1</text>
+<text x="491.0" y="503.6" text-anchor="middle" font-size="13" font-weight="bold">N</text>
+<text x="525.0" y="433.0" text-anchor="middle" font-size="11.5" font-style="italic" stroke="#fff" stroke-width="4" paint-order="stroke">recebe</text>
+<text x="559.0" y="522.0" text-anchor="middle" font-size="13" font-weight="bold">1</text>
+<text x="491.0" y="563.0" text-anchor="middle" font-size="13" font-weight="bold">N</text>
+<text x="525.0" y="545.5" text-anchor="middle" font-size="11.5" font-style="italic" stroke="#fff" stroke-width="4" paint-order="stroke">gera</text>
+<text x="491.0" y="164.0" text-anchor="middle" font-size="13" font-weight="bold">1</text>
+<text x="839.0" y="168.2" text-anchor="middle" font-size="13" font-weight="bold">N</text>
+<text x="665.0" y="169.1" text-anchor="middle" font-size="11.5" font-style="italic" stroke="#fff" stroke-width="4" paint-order="stroke">é dividida em</text>
+<text x="771.0" y="301.8" text-anchor="middle" font-size="13" font-weight="bold">1</text>
+<text x="839.0" y="52.0" text-anchor="middle" font-size="13" font-weight="bold">N</text>
+<text x="773.0" y="232.9" text-anchor="middle" font-size="11.5" font-style="italic" stroke="#fff" stroke-width="4" paint-order="stroke">registra</text>
+<text x="771.0" y="317.4" text-anchor="middle" font-size="13" font-weight="bold">1</text>
+<text x="839.0" y="219.5" text-anchor="middle" font-size="13" font-weight="bold">N</text>
+<text x="805.0" y="271.4" text-anchor="middle" font-size="11.5" font-style="italic" stroke="#fff" stroke-width="4" paint-order="stroke">paga</text>
+<text x="771.0" y="336.9" text-anchor="middle" font-size="13" font-weight="bold">1</text>
+<text x="839.0" y="336.0" text-anchor="middle" font-size="13" font-weight="bold">N</text>
+<text x="805.0" y="358.4" text-anchor="middle" font-size="11.5" font-style="italic" stroke="#fff" stroke-width="4" paint-order="stroke">último resp.</text>
+<text x="771.0" y="360.3" text-anchor="middle" font-size="13" font-weight="bold">1</text>
+<text x="839.0" y="480.0" text-anchor="middle" font-size="13" font-weight="bold">N</text>
+<text x="805.0" y="423.1" text-anchor="middle" font-size="11.5" font-style="italic" stroke="#fff" stroke-width="4" paint-order="stroke">reserva</text>
+<text x="956.0" y="595.0" text-anchor="middle" font-size="13" font-weight="bold">1</text>
+<text x="956.0" y="569.0" text-anchor="middle" font-size="13" font-weight="bold">N</text>
+<text x="975.0" y="581.0" text-anchor="middle" font-size="11.5" font-style="italic" stroke="#fff" stroke-width="4" paint-order="stroke">recebe</text>
+</svg>
+</section>
+
+<section class="pagina">
+  <h1>Fluxograma - HomeLive 2050</h1>
+  <p class="sub">Fluxo da aplicação, do acesso até as ações de cada perfil.</p>
+<svg viewBox="0 0 1100 700" xmlns="http://www.w3.org/2000/svg" font-family="Arial, Helvetica, sans-serif">
+<defs><marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#222"/></marker></defs>
+<polyline points="120,45 145,45" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="315,45 355,45" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="545,45 565,45" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="735,45 775,45" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="650,85 650,130" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="555,150 450,150 450,67" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="230,85 230,175" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="325,215 345,215" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="230,255 230,305" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="330,330 800,330 800,70" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="555,215 800,215" fill="none" stroke="#222" stroke-width="1.5"/>
+<polyline points="930,70 930,380 550,380 550,405" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="455,445 340,515" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="455,445 340,575" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="455,445 340,635" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="645,445 760,500" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="645,445 760,545" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="645,445 760,590" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="645,445 760,635" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="70,515 40,515 40,680 500,680" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="70,575 40,575" fill="none" stroke="#222" stroke-width="1.5"/>
+<polyline points="70,635 40,635" fill="none" stroke="#222" stroke-width="1.5"/>
+<polyline points="1030,500 1060,500 1060,680 600,680" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#seta)"/>
+<polyline points="1030,545 1060,545" fill="none" stroke="#222" stroke-width="1.5"/>
+<polyline points="1030,590 1060,590" fill="none" stroke="#222" stroke-width="1.5"/>
+<polyline points="1030,635 1060,635" fill="none" stroke="#222" stroke-width="1.5"/>
+<rect x="20.0" y="27.0" width="100" height="36" rx="18.0" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="70" y="50" text-anchor="middle" font-size="14">Início</text>
+<polygon points="230,5.0 315.0,45 230,85.0 145.0,45" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="230" y="50" text-anchor="middle" font-size="13.5">Já tem conta?</text>
+<rect x="355.0" y="23.0" width="190" height="44" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="450" y="50" text-anchor="middle" font-size="13.5">Login: e-mail e senha</text>
+<polygon points="650,5.0 735.0,45 650,85.0 565.0,45" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="650" y="50" text-anchor="middle" font-size="13.5">Dados corretos?</text>
+<rect x="775.0" y="20.0" width="210" height="50" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="880" y="42" text-anchor="middle" font-size="13.5">Sistema gera o token</text><text x="880" y="58" text-anchor="middle" font-size="13.5">e entra no painel</text>
+<rect x="555.0" y="130.0" width="190" height="40" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="650" y="155" text-anchor="middle" font-size="13.5">Mostra o erro</text>
+<polygon points="230,175.0 325.0,215 230,255.0 135.0,215" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="230" y="212" text-anchor="middle" font-size="13.5">Já existe</text><text x="230" y="228" text-anchor="middle" font-size="13.5">residência?</text>
+<rect x="345.0" y="187.0" width="210" height="56" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="450" y="212" text-anchor="middle" font-size="13.5">Informa o código de</text><text x="450" y="228" text-anchor="middle" font-size="13.5">convite e vira Morador</text>
+<rect x="130.0" y="305.0" width="200" height="50" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="230" y="327" text-anchor="middle" font-size="13.5">Cria a residência</text><text x="230" y="343" text-anchor="middle" font-size="13.5">e vira Síndico</text>
+<polygon points="550,405.0 645.0,445 550,485.0 455.0,445" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="550" y="450" text-anchor="middle" font-size="13.5">Qual o perfil?</text>
+<rect x="70.0" y="493.0" width="270" height="44" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="205" y="512" text-anchor="middle" font-size="13.5">Aprova ou rejeita despesas</text><text x="205" y="528" text-anchor="middle" font-size="13.5">(o sistema divide entre os moradores)</text>
+<rect x="70.0" y="555.0" width="270" height="40" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="205" y="572" text-anchor="middle" font-size="13.5">Cria tarefas, escalas e</text><text x="205" y="588" text-anchor="middle" font-size="13.5">regras de penalidade</text>
+<rect x="70.0" y="615.0" width="270" height="40" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="205" y="632" text-anchor="middle" font-size="13.5">Gerencia moradores e</text><text x="205" y="648" text-anchor="middle" font-size="13.5">o código de convite</text>
+<rect x="760.0" y="482.0" width="270" height="36" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="895" y="505" text-anchor="middle" font-size="13.5">Lança despesas e paga o seu rateio</text>
+<rect x="760.0" y="527.0" width="270" height="36" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="895" y="550" text-anchor="middle" font-size="13.5">Reserva espaços comuns</text>
+<rect x="760.0" y="572.0" width="270" height="36" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="895" y="595" text-anchor="middle" font-size="13.5">Conclui tarefas e ganha pontos</text>
+<rect x="760.0" y="617.0" width="270" height="36" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="895" y="640" text-anchor="middle" font-size="13.5">Registra o consumo de energia</text>
+<rect x="500.0" y="663.0" width="100" height="34" rx="17.0" fill="#fff" stroke="#000" stroke-width="1.6"/><text x="550" y="685" text-anchor="middle" font-size="14">Sair / Fim</text>
+<text x="335" y="38" text-anchor="middle" font-size="12.5" font-weight="bold" stroke="#fff" stroke-width="4" paint-order="stroke">Sim</text>
+<text x="745" y="38" text-anchor="middle" font-size="12.5" font-weight="bold" stroke="#fff" stroke-width="4" paint-order="stroke">Sim</text>
+<text x="668" y="112" text-anchor="start" font-size="12.5" font-weight="bold" stroke="#fff" stroke-width="4" paint-order="stroke">Não</text>
+<text x="246" y="135" text-anchor="start" font-size="12.5" font-weight="bold" stroke="#fff" stroke-width="4" paint-order="stroke">Não</text>
+<text x="335" y="207" text-anchor="middle" font-size="12.5" font-weight="bold" stroke="#fff" stroke-width="4" paint-order="stroke">Sim</text>
+<text x="246" y="288" text-anchor="start" font-size="12.5" font-weight="bold" stroke="#fff" stroke-width="4" paint-order="stroke">Não</text>
+<text x="400" y="436" text-anchor="middle" font-size="12.5" font-weight="bold" stroke="#fff" stroke-width="4" paint-order="stroke">Síndico</text>
+<text x="700" y="436" text-anchor="middle" font-size="12.5" font-weight="bold" stroke="#fff" stroke-width="4" paint-order="stroke">Morador</text>
+</svg>
+</section>
+
+</body>
+</html>
