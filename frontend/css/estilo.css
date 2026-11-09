@@ -371,6 +371,33 @@ body {
 .dica-ferramenta:hover::after,
 .dica-ferramenta:hover::before { opacity: 1; }
 
+/* Atributo hidden sempre esconde, mesmo em elementos que têm display próprio. */
+[hidden] { display: none !important; }
+
+/* ========================
+   CONVITE DA RESIDÊNCIA
+======================== */
+.cartao-convite {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 22px 25px;
+    margin-bottom: 20px;
+}
+.rotulo-convite { font-size: 0.85rem; color: var(--texto-suave); }
+.codigo-convite {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: var(--destaque-azul);
+    margin: 6px 0;
+    user-select: all;
+}
+.ajuda-convite { font-size: 0.8rem; color: var(--texto-suave); margin: 0; max-width: 460px; }
+.acoes-convite { display: flex; gap: 10px; flex-wrap: wrap; }
+
 /* ========================
    TOAST NOTIFICATIONS
 ======================== */

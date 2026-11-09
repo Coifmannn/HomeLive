@@ -97,20 +97,25 @@ function iniciarAplicacao() {
 
     iniciarEventos();
     iniciarFormulariosDaAplicacao();
-    renderTudo();
+    // Links como index.html#moradores abrem direto na tela (o cadastro leva o síndico novo ao código de convite).
+    renderTudo().then(() => {
+        const alvo = location.hash.slice(1);
+        if (alvo) navegarPara(alvo);
+    });
 }
 
 async function carregarDados() {
     const ehS = S.ehSindico;
-    const [moradores, sindicos, despesas, tarefas, escalas, espacos, agendamentos, regras, penalidades, dash, leituras] =
+    const [moradores, sindicos, despesas, tarefas, escalas, espacos, agendamentos, regras, penalidades, dash, leituras, casa] =
         await Promise.all([
             MoradorService.listar(), SindicoService.listar(), DespesaService.listar(), TarefaService.listar(),
             EscalaService.listar(), EspacoService.listar(), AgendamentoService.listar(), RegraService.listar(),
             ehS ? PenalidadeService.listar() : PenalidadeService.doMorador(S.eu.id),
             DashboardService.obter(),
-            ehS ? Promise.resolve([]) : LeituraService.doMorador(S.eu.id)
+            ehS ? Promise.resolve([]) : LeituraService.doMorador(S.eu.id),
+            CasaService.obter()
         ]);
-    Object.assign(S, { moradores, sindicos, despesas, tarefas, escalas, espacos, agendamentos, regras, penalidades, dash, leituras });
+    Object.assign(S, { moradores, sindicos, despesas, tarefas, escalas, espacos, agendamentos, regras, penalidades, dash, leituras, casa });
 }
 
 async function renderTudo() {
@@ -375,6 +380,12 @@ function renderMoradores() {
     const moradores = S.moradores.map(m => cartao(m.nome, 'MORADOR', `${m.pontosConvivencia} pts`, m.ativo, ['Quarto', m.numeroQuarto],
         S.ehSindico && m.ativo ? `<button data-acao="desativar-morador" data-id="${m.id}" class="botao-perigo botao-pequeno largura-total mt-3">Desativar Morador</button>` : ''));
     document.getElementById('lista-moradores').innerHTML = sindicos.concat(moradores).join('');
+
+    // Convite da residência (o card só aparece para o síndico; o código nem vem da API para o morador)
+    if (S.casa) {
+        document.getElementById('nome-casa').textContent = S.casa.nome;
+        document.getElementById('codigo-convite').textContent = S.casa.codigoConvite || '—';
+    }
 }
 
 // --- Regras e penalidades ----------------------------------------------------------
@@ -420,6 +431,27 @@ function popularSelects() {
         sel.innerHTML = opcoes;
         if (atual) sel.value = atual;
     });
+}
+
+// Copia para a área de transferência. Em página sem HTTPS (ex.: celular pelo IP) o navegador bloqueia
+// navigator.clipboard, então cai no método antigo (campo temporário + execCommand).
+async function copiarTexto(texto) {
+    if (!texto) return false;
+    try {
+        await navigator.clipboard.writeText(texto);
+        return true;
+    } catch {
+        const campo = document.createElement('textarea');
+        campo.value = texto;
+        campo.style.position = 'fixed';
+        campo.style.opacity = '0';
+        document.body.appendChild(campo);
+        campo.select();
+        let ok = false;
+        try { ok = document.execCommand('copy'); } catch { /* sem suporte */ }
+        campo.remove();
+        return ok;
+    }
 }
 
 // ==============================================================================
@@ -469,6 +501,14 @@ function iniciarEventos() {
                 break;
             case 'nao-compareceu':
                 if (confirm('Registrar que o morador não compareceu? Isso pode gerar penalidade.')) executar(AgendamentoService.naoCompareceu(id), 'Não comparecimento registrado.', 'aviso');
+                break;
+            case 'copiar-convite':
+                copiarTexto(S.casa && S.casa.codigoConvite).then(
+                    (ok) => mostrarToast(ok ? 'Código copiado! Passe para quem vai morar com você.' : 'Não consegui copiar. Selecione o código e copie.', ok ? 'sucesso' : 'aviso'));
+                break;
+            case 'renovar-convite':
+                if (confirm('Gerar um novo código? O código atual deixa de funcionar para novos cadastros.'))
+                    executar(CasaService.renovarConvite(), 'Novo código de convite gerado.', 'info');
                 break;
             case 'processar-atrasos':
                 executar(TarefaService.processarAtrasos(), 'Atrasos processados.', 'info'); break;
@@ -600,14 +640,9 @@ function iniciarFormulariosDeAcesso() {
         });
     }
 
-    // A API ainda não tem cadastro público nem recuperação de senha.
-    const formCadastro = document.getElementById('formulario-cadastro');
-    if (formCadastro) {
-        formCadastro.addEventListener('submit', (e) => {
-            e.preventDefault();
-            mostrarToast('Por enquanto o cadastro é feito pelo síndico, dentro do sistema.', 'info');
-        });
-    }
+    iniciarCadastro();
+
+    // A API ainda não tem recuperação de senha.
     const formRecup = document.getElementById('formulario-recuperacao');
     if (formRecup) {
         formRecup.addEventListener('submit', (e) => {
@@ -615,6 +650,89 @@ function iniciarFormulariosDeAcesso() {
             mostrarToast('Recuperação de senha ainda não está disponível. Fale com o síndico.', 'info');
         });
     }
+}
+
+// Cadastro com dois caminhos, escolhidos pela API (GET /api/casa/estado):
+//   sem residência -> "Criar residência": a pessoa vira o síndico;
+//   com residência -> "Entrar": código de convite + quarto, e a pessoa vira morador.
+async function iniciarCadastro() {
+    const form = document.getElementById('formulario-cadastro');
+    if (!form) return;
+    if (Sessao.obter()) { location.replace('index.html'); return; }
+
+    const botao = document.getElementById('botao-cadastro');
+    const blocoCriar = document.getElementById('bloco-criar-casa');
+    const blocoEntrar = document.getElementById('bloco-entrar');
+    let criandoCasa = false;
+
+    // Só números e símbolos de telefone; o código de convite sempre em maiúsculas.
+    document.getElementById('telefone').addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/[^\d()+\-\s]/g, '');
+    });
+    document.getElementById('codigo-convite-cadastro').addEventListener('input', (e) => {
+        e.target.value = e.target.value.toUpperCase().replace(/\s/g, '');
+    });
+
+    try {
+        const estado = await CasaService.estado();
+        criandoCasa = !estado.casaCriada;
+        blocoCriar.hidden = !criandoCasa;
+        blocoEntrar.hidden = criandoCasa;
+        document.getElementById('nome-casa-cadastro').required = criandoCasa;
+        document.getElementById('codigo-convite-cadastro').required = !criandoCasa;
+        document.getElementById('quarto').required = !criandoCasa;
+        if (criandoCasa) {
+            document.getElementById('titulo-cadastro').textContent = 'Crie a sua residência';
+            document.getElementById('subtitulo-cadastro').textContent = 'Você será o síndico: o sistema nasce com você.';
+            botao.textContent = 'Criar Residência';
+        } else {
+            document.getElementById('titulo-cadastro').textContent = 'Entre na sua residência';
+            document.getElementById('subtitulo-cadastro').textContent = 'Use o código de convite que o síndico te passou.';
+            document.getElementById('nome-casa-existente').textContent = estado.nomeCasa;
+            botao.textContent = 'Entrar na Residência';
+        }
+        botao.disabled = false;
+    } catch (err) {
+        document.getElementById('subtitulo-cadastro').textContent = 'Não foi possível falar com o servidor.';
+        botao.textContent = 'Indisponível';
+        mostrarToast(err.message, 'erro');
+        return;
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const senha = valor('senha');
+        if (senha.length < 6) { mostrarToast('A senha deve ter ao menos 6 caracteres.', 'erro'); return; }
+        if (senha !== valor('confirma-senha')) { mostrarToast('As senhas não conferem.', 'erro'); return; }
+
+        const lembrar = document.getElementById('lembrar-cadastro').checked;
+        const dados = {
+            nome: valor('nome').trim(),
+            email: valor('email').trim().toLowerCase(),
+            senha,
+            telefone: textoOuNulo('telefone'),
+            lembrar
+        };
+        if (criandoCasa) {
+            dados.nomeCasa = valor('nome-casa-cadastro').trim();
+            dados.usarSugestoes = document.getElementById('usar-sugestoes').checked;
+        } else {
+            dados.codigoConvite = valor('codigo-convite-cadastro').trim();
+            dados.numeroQuarto = valor('quarto').trim();
+        }
+
+        botao.disabled = true;
+        try {
+            const r = await AuthService.cadastrar(dados);
+            Sessao.salvar({ token: r.token, expiraEm: r.expiraEm, papel: r.papel, usuario: r.usuario }, lembrar);
+            mostrarToast(criandoCasa ? 'Residência criada! Você é o síndico.' : 'Bem-vindo(a) à residência!', 'sucesso');
+            // A fundadora vai direto à tela de Moradores, onde está o código de convite.
+            setTimeout(() => { location.href = criandoCasa ? 'index.html#moradores' : 'index.html'; }, 900);
+        } catch (err) {
+            mostrarToast(err.message, 'erro');
+            botao.disabled = false;
+        }
+    });
 }
 
 // ==============================================================================
@@ -631,8 +749,13 @@ window.fecharModal = function (id) { document.getElementById(id)?.classList.remo
 window.navegarPara = function (alvo) { document.querySelector(`.links-navegacao li[data-alvo="${alvo}"]`)?.click(); };
 
 window.mostrarToast = function (mensagem, tipo = 'sucesso') {
-    const container = document.getElementById('container-toasts');
-    if (!container) return;
+    // Só o index.html traz a caixa dos avisos; nas telas de login e cadastro ela é criada na hora.
+    let container = document.getElementById('container-toasts');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'container-toasts';
+        document.body.appendChild(container);
+    }
     const icones = { sucesso: 'bx-check-circle', erro: 'bx-x-circle', info: 'bx-info-circle', aviso: 'bx-error' };
     const toast = document.createElement('div');
     toast.className = `toast toast-${tipo}`;

@@ -245,6 +245,18 @@
                             <button class="botao-primario" onclick="abrirModal('modalAdicionarMorador')">Adicionar Morador</button>
                         </div>
                     </div>
+                    <!-- Convite: só o síndico enxerga o código da residência -->
+                    <div id="cartao-convite" class="cartao-convite painel-vidro apenas-admin">
+                        <div>
+                            <span class="rotulo-convite">Código de convite · <strong id="nome-casa"></strong></span>
+                            <div id="codigo-convite" class="codigo-convite">—</div>
+                            <p class="ajuda-convite">Passe este código para quem vai morar com você. Na tela de cadastro, a pessoa informa o código e entra como moradora.</p>
+                        </div>
+                        <div class="acoes-convite">
+                            <button class="botao-primario botao-pequeno" data-acao="copiar-convite">Copiar código</button>
+                            <button class="botao-contorno botao-pequeno" data-acao="renovar-convite">Gerar novo código</button>
+                        </div>
+                    </div>
                     <div id="lista-moradores" class="grade-moradores"></div>
                 </section>
 

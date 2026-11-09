@@ -36,8 +36,8 @@
                     <i class='bx bx-home-alt-2'></i>
                     <span>Homelive<span>.</span></span>
                 </div>
-                <h2>Junte-se ao Futuro</h2>
-                <p>Crie seu perfil e conecte-se ao seu Co-living.</p>
+                <h2 id="titulo-cadastro">Junte-se ao Futuro</h2>
+                <p id="subtitulo-cadastro">Verificando a sua residência...</p>
             </div>
 
             <!-- Formulário de cadastro -->
@@ -59,10 +59,10 @@
                         </div>
                     </div>
                     <div class="grupo-formulario">
-                        <label for="cpf">CPF</label>
+                        <label for="telefone">Telefone <small>(opcional)</small></label>
                         <div class="input-com-icone">
-                            <i class='bx bx-barcode'></i>
-                            <input type="text" id="cpf" class="input-vidro" placeholder="000.000.000-00" required>
+                            <i class='bx bx-phone'></i>
+                            <input type="tel" id="telefone" class="input-vidro" placeholder="(11) 90000-0000" maxlength="20" inputmode="tel">
                         </div>
                     </div>
                 </div>
@@ -84,13 +84,61 @@
                     </div>
                 </div>
 
-                <div class="opcoes-login" style="margin-top: -10px; margin-bottom: 20px;">
+                <!-- Modo 1: ainda não existe residência. A pessoa a cria e vira o síndico. -->
+                <div id="bloco-criar-casa" hidden>
+                    <div class="grupo-formulario">
+                        <label for="nome-casa-cadastro">Nome da residência</label>
+                        <div class="input-com-icone">
+                            <i class='bx bx-buildings'></i>
+                            <input type="text" id="nome-casa-cadastro" class="input-vidro" placeholder="Ex: Casa Aurora" maxlength="80">
+                        </div>
+                    </div>
+                    <label class="lembrar-mim" style="font-size: 0.85rem; margin-bottom: 14px;">
+                        <input type="checkbox" id="usar-sugestoes" checked> Começar com sugestões prontas (espaços, regras de penalidade e escalas de tarefas)
+                    </label>
+                    <div class="aviso-ia" style="margin: 0 0 18px;">
+                        <i class='bx bx-crown'></i>
+                        <p>Você será o <strong>síndico</strong> da residência. Depois, um código de convite fica disponível na tela de Moradores para você chamar quem vai morar com você.</p>
+                    </div>
+                </div>
+
+                <!-- Modo 2: a residência já existe. A pessoa entra como morador com o código de convite. -->
+                <div id="bloco-entrar" hidden>
+                    <div class="linha-formulario">
+                        <div class="grupo-formulario">
+                            <label for="codigo-convite-cadastro">Código de convite</label>
+                            <div class="input-com-icone">
+                                <i class='bx bx-key'></i>
+                                <input type="text" id="codigo-convite-cadastro" class="input-vidro" placeholder="HL-XXXXXX" maxlength="12" autocapitalize="characters" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="grupo-formulario">
+                            <label for="quarto">Seu quarto</label>
+                            <div class="input-com-icone">
+                                <i class='bx bx-bed'></i>
+                                <input type="text" id="quarto" class="input-vidro" placeholder="Ex: Suíte 101-A" maxlength="30">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="aviso-ia" style="margin: 0 0 18px;">
+                        <i class='bx bx-home-heart'></i>
+                        <p>Você vai entrar como <strong>morador</strong> da residência <strong id="nome-casa-existente"></strong>. Peça o código de convite ao síndico.</p>
+                    </div>
+                </div>
+
+                <div class="opcoes-login" style="margin-top: -10px; margin-bottom: 8px;">
+                    <label class="lembrar-mim" style="font-size: 0.8rem;">
+                        <input type="checkbox" id="lembrar-cadastro"> Continuar conectado
+                    </label>
+                </div>
+
+                <div class="opcoes-login" style="margin-top: 0; margin-bottom: 20px;">
                     <label class="lembrar-mim" style="font-size: 0.8rem;">
                         <input type="checkbox" required> Eu aceito os <a href="#" onclick="abrirModal('modalTermos'); return false;" style="color: var(--destaque-azul); text-decoration: underline;">Termos de Convivência (2050)</a>.
                     </label>
                 </div>
 
-                <button type="submit" class="botao-primario largura-total">Criar Meu Perfil</button>
+                <button type="submit" id="botao-cadastro" class="botao-primario largura-total" disabled>Aguarde...</button>
             </form>
 
             <div class="rodape-login">

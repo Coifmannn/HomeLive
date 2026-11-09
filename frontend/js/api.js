@@ -109,7 +109,18 @@ const AuthService = {
     async login(email, senha, lembrar) {
         email = email.trim().toLowerCase(); // a API compara o e-mail diferenciando maiúsculas
         return http('POST', '/auth/login', { email, senha, lembrar: !!lembrar }, true);
-    }
+    },
+
+    // Cria a conta e já devolve { token, expiraEm, papel, usuario } (a pessoa sai logada).
+    // Sem residência ainda: envie nomeCasa (vira síndico). Com residência: codigoConvite + numeroQuarto (vira morador).
+    cadastrar: (dados) => http('POST', '/auth/cadastro', dados, true)
+};
+
+const CasaService = {
+    // Pública: { casaCriada, nomeCasa }. A tela de cadastro usa para escolher entre "criar" e "entrar".
+    estado: () => http('GET', '/casa/estado', undefined, true),
+    obter: () => get('/casa'),                        // { nome, dataCriacao, codigoConvite (só síndico) }
+    renovarConvite: () => post('/casa/convite/renovar')
 };
 
 const DashboardService = { obter: () => get('/dashboard') };

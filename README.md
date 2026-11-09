@@ -156,6 +156,19 @@ fetch('/api/dashboard', { headers: { Authorization: 'Bearer ' + r.token } });
 * O segredo de assinatura vem da variável `JWT_SECRET` (mín. 32 caracteres). O padrão do `application.properties` é só para desenvolvimento.
 * Quem já tem token válido entra direto: a tela de login redireciona para o painel sozinha.
 
+### Cadastro: criar a residência ou entrar com convite
+A tela `cadastro.html` pergunta à API (`GET /api/casa/estado`) se a residência já existe e mostra o formulário certo:
+
+| Situação | Formulário | Resultado |
+| :--- | :--- | :--- |
+| Ainda **não existe** residência | **Criar residência**: nome da casa e (opcional) "começar com sugestões prontas" | A pessoa vira **síndico**, a casa é criada com um código de convite `HL-XXXXXX` e, se marcado, nasce com 3 espaços, 3 regras de penalidade e 3 escalas de tarefas |
+| **Já existe** | **Entrar**: código de convite e quarto | A pessoa vira **morador** |
+
+* Nos dois casos o cadastro já devolve o token: a pessoa sai logada e cai no painel (o síndico novo, direto na tela de Moradores, onde está o código).
+* O síndico copia o código ou gera um novo na tela de Moradores. O código aceita minúsculas e espaços; trocá-lo invalida o anterior.
+* Quem tenta criar uma segunda residência (sem o código) é barrado: com a casa criada, só dá para entrar com convite.
+* Existe **uma residência por instalação**. Várias residências, aprovação do síndico antes da entrada e recuperação de senha ficam para a próxima versão.
+
 ### HTTP Basic (continua funcionando)
 Toda requisição também pode levar `Authorization: Basic base64(email:senha)` (usado pelos testes e pelo `curl`). Sem credencial válida, a resposta é `401`; com perfil sem permissão, `403`. Ambos em JSON, no mesmo formato dos demais erros.
 
@@ -179,6 +192,7 @@ O front fica na pasta `frontend/` e é **servido pela própria API**: uma URL s�
 | :--- | :---: | :---: |
 | Aprovar/rejeitar despesa | ✅ | ❌ |
 | Cadastrar moradores e síndicos | ✅ | ❌ |
+| Ver e renovar o código de convite da residência | ✅ | ❌ |
 | Cadastrar espaço / ativar-desativar | ✅ | ❌ |
 | Criar tarefa / processar atrasos | ✅ | ❌ |
 | Criar, ativar/desativar escalas recorrentes e gerar tarefas | ✅ | ❌ |
@@ -203,6 +217,10 @@ O front fica na pasta `frontend/` e é **servido pela própria API**: uma URL s�
 | Módulo | Método | Rota | Acesso | Descrição |
 | :--- | :--- | :--- | :---: | :--- |
 | **Autenticação** | `POST` | `/api/auth/login` | pública | `{ "email", "senha", "lembrar" }` → `{ token, expiraEm, papel, usuario }` |
+| | `POST` | `/api/auth/cadastro` | pública | Cria a conta e já devolve o token (`201`). Sem residência: cria a casa e a pessoa vira **síndico**. Com residência: exige `codigoConvite` e `numeroQuarto` e a pessoa vira **morador** |
+| **Residência** | `GET` | `/api/casa/estado` | pública | `{ casaCriada, nomeCasa }`: a tela de cadastro usa para escolher entre criar e entrar |
+| | `GET` | `/api/casa` | logado | Nome da residência. O `codigoConvite` só vem para o síndico |
+| | `POST` | `/api/casa/convite/renovar` | síndico | Gera um novo código de convite (o anterior deixa de valer) |
 | **Dashboard** | `GET` | `/api/dashboard` | logado | Resumo consolidado com métricas, ranking e agendamentos |
 | **Moradores** | `GET` | `/api/moradores` | logado | Lista todos os moradores |
 | | `POST` | `/api/moradores` | síndico | Cadastra morador (corpo inclui `senha`, mín. 6 caracteres) |
@@ -243,6 +261,9 @@ O front fica na pasta `frontend/` e é **servido pela própria API**: uma URL s�
 
 ## 👥 7. Dados Pré-Carregados (`DataInitializer`)
 Ao iniciar, o sistema carrega automaticamente as contas abaixo. **A senha de todas é `homelive123`** (apenas para desenvolvimento).
+A residência de exemplo se chama *Residência HomeLive 2050*; o código de convite dela aparece para a Dra. Helena na tela de Moradores.
+
+> **Quer começar do zero?** Suba com `DEMO_DATA=false` num banco vazio (ex.: `$env:DEMO_DATA='false'` no PowerShell antes do `./mvnw spring-boot:run`). O sistema abre sem nenhum usuário e o **primeiro cadastro cria a residência** e vira o síndico. Banco que já tinha usuários e nenhuma residência (criado antes desta versão) ganha uma casa automaticamente.
 
 | Perfil | Nome | E-mail |
 | :--- | :--- | :--- |

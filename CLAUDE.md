@@ -90,7 +90,19 @@ configuráveis**; dashboard corrigido.
   → "Adicionar à tela inicial". Sem HTTPS vira atalho; instalação completa pede HTTPS/localhost.
 * Mudou o front? Reinicie a API: o `spring-boot:run` recopia `frontend/` para `target/classes/static`.
 
-## Direção nova (combinada em 21/10/2026, ainda NÃO implementada)
+### Cadastro público + residência (FEITO em 09/11/2026, direto na `main`, versão enxuta)
+* Entidade `Casa` (`casas`: nome + `codigoConvite` `HL-XXXXXX`, 6 chars sem I/O/0/1). **Uma casa por instalação**, sem FK nos usuários.
+  `POST /api/auth/cadastro` (pública): sem casa → cria a casa e a pessoa vira **síndico** (checkbox de sugestões: 3 espaços,
+  3 regras, 3 escalas via `SugestoesIniciaisCasa`); com casa → exige código + quarto e vira **morador**. Já devolve o token.
+  `GET /api/casa/estado` (pública), `GET /api/casa` (código só p/ síndico), `POST /api/casa/convite/renovar` (síndico).
+* `DEMO_DATA=false` abre o sistema vazio. `CasaService.garantirCasaSeHouverUsuarios` cria casa para banco antigo (sem ela, um
+  estranho viraria síndico). E-mail de cadastro é guardado em minúsculas.
+* Front: `cadastro.html` alterna entre "Criar residência" e "Entrar"; card de convite na tela de Moradores (copiar/renovar).
+  `mostrarToast` agora cria a caixa de avisos sozinho (antes login/cadastro não mostravam erro nenhum).
+* **Fica de fora (decidido):** várias casas com isolamento por casa, aprovação do síndico antes de entrar (estado PENDENTE),
+  recuperação de senha, transferir o cargo de síndico. As "4 decisões pendentes" abaixo seguem valendo para essa evolução.
+
+## Direção nova (combinada em 21/10/2026; só a parte de "várias casas" segue NÃO implementada)
 Decisões de produto/plataforma que o usuário trouxe. Aguardam as respostas das 4 perguntas abaixo antes de codar;
 mostre o plano detalhado antes de mexer.
 
