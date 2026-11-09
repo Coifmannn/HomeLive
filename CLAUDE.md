@@ -104,7 +104,12 @@ Desenho proposto:
 3. Um usuário pode estar em mais de uma casa? (não, uma casa por usuário)
 4. O que acontece se o síndico sair? (fora da 1ª versão; mais simples: transferir o cargo a outro morador)
 
-### Postgres
+### Postgres (FEITO em 09/11/2026, branch `feat/postgres`)
+Perfil `postgres` (`application-postgres.properties`, credenciais por `DB_*` com padrão `postgres`/`postgres`, banco `homelive`).
+PostgreSQL 17 instalado na máquina do usuário via winget (serviço `postgresql-x64-17`, senha do superusuário `postgres`).
+Testado: tabelas criadas pelo Hibernate, dados persistem após reiniciar, semente não duplica. H2 segue padrão e nos testes.
+O dialeto não é mais fixado em nenhum `.properties` (o Hibernate detecta; fixar H2Dialect no padrão vazava para o perfil postgres).
+Plano original, para referência:
 O usuário quer migrar do H2 para PostgreSQL. Há um `schema.sql` do grupo (com `tb_morador`, `tb_reserva`, `tb_rateio`,
 `tb_votacao`, `tb_voto`...), mas ele **descreve outro modelo** e **não deve ser executado**: o Hibernate gera as tabelas das
 entidades (`ddl-auto=update`), o script teria tabelas duplicadas e traz senha em texto puro (incompatível com o Spring Security).
@@ -148,5 +153,5 @@ Descartados: PWA/Capacitor (são para celular) e reescrever o front em Flutter/R
 * Quem confirma o que, e se o síndico também pode ser "morador" (hoje não: `Sindico` e `Morador` são entidades irmãs).
 
 ## Limites conhecidos (aceitáveis para o trabalho, não para produção)
-H2 em memória (dados somem ao reiniciar; `ddl-auto=update`, sem migrations); senha de demonstração fixa no `DataInitializer`;
+H2 em memória no perfil padrão (use o perfil `postgres` para persistir); `ddl-auto=update`, sem migrations; senha de demonstração fixa no `DataInitializer`;
 HTTP Basic sem HTTPS; sem paginação nas listagens.

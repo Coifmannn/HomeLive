@@ -83,7 +83,8 @@ Detalhes:
 * **Java 21 / 25 (LTS)**
 * **Spring Boot 4.x** (Spring Web, Spring Data JPA, Hibernate Validator)
 * **Spring Security** (HTTP Basic, senhas com BCrypt, perfis Síndico e Morador)
-* **Banco de Dados H2** (Em memória, com console visual em `/h2-console`, restrito ao síndico)
+* **PostgreSQL** (persistência relacional, perfil `postgres`)
+* **Banco de Dados H2** (padrão de desenvolvimento e dos testes; em memória, com console visual em `/h2-console`, restrito ao síndico)
 * **Lombok** (Produtividade e encapsulamento limpo)
 * **JUnit 5 / MockMvc** (Testes das regras de domínio, do Strategy e da segurança)
 
@@ -100,6 +101,24 @@ No terminal, dentro do diretório do projeto:
 # Rodar os testes automatizados
 ./mvnw test
 ```
+
+### Rodando com PostgreSQL (dados persistem)
+1. Instale o PostgreSQL e crie um banco vazio chamado `homelive` (`CREATE DATABASE homelive;`).
+2. Suba a API com o perfil `postgres`:
+   ```bash
+   ./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres
+   ```
+3. As tabelas são criadas pelo Hibernate a partir das entidades. Os dados de demonstração só são inseridos se o banco estiver vazio.
+
+| Variável de ambiente | Padrão |
+| :--- | :--- |
+| `DB_HOST` | `localhost` |
+| `DB_PORT` | `5432` |
+| `DB_NAME` | `homelive` |
+| `DB_USER` | `postgres` |
+| `DB_PASSWORD` | `postgres` |
+
+Sem o perfil, a API usa o H2 em memória (os testes automatizados também).
 
 * **API Base URL:** `http://localhost:8080/api`
 * **H2 Console:** `http://localhost:8080/h2-console` (exige login de síndico)
