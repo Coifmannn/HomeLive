@@ -37,6 +37,12 @@ main{max-width:1200px;margin:auto;padding:16px} h2{margin:28px 0 12px;font-size:
     regras_penalidade ||--o{ penalidades : &quot;origina&quot;
     sindicos          ||--o{ penalidades : &quot;aplica&quot;
 
+    casas {
+        bigint id PK
+        varchar nome
+        varchar codigo_convite UK &quot;HL-XXXXXX&quot;
+        timestamp data_criacao
+    }
     usuarios {
         bigint id PK
         varchar nome
@@ -182,9 +188,33 @@ main{max-width:1200px;margin:auto;padding:16px} h2{margin:28px 0 12px;font-size:
     M --&gt; RG[Regras e penalidades]
     M --&gt; S([Sair: limpa a sessão]) --&gt; B
 </pre></section>
+<section class="card"><h3>1.1 Cadastro: criar a residência ou entrar com o convite</h3><pre class="mermaid">flowchart TD
+    A([Abre a tela de cadastro]) --&gt; B[Front consulta GET /api/casa/estado&lt;br/&gt;rota pública]
+    B --&gt; C{A residência já existe?}
+    C -- Não --&gt; D[Formulário Criar residência&lt;br/&gt;nome da casa e sugestões prontas]
+    C -- Sim --&gt; E[Formulário Entrar&lt;br/&gt;código de convite e quarto]
+    D --&gt; F{Dados válidos?&lt;br/&gt;nome, e-mail e senha com 6 ou mais}
+    E --&gt; F
+    F -- Não --&gt; A
+    F -- Sim --&gt; G[POST /api/auth/cadastro]
+    G --&gt; H{E-mail já existe?}
+    H -- Sim / 400 --&gt; A
+    H -- Não --&gt; I{A residência existe?}
+    I -- Não --&gt; J[Cria a casa e gera o código HL-XXXXXX&lt;br/&gt;Cria o usuário como SÍNDICO]
+    J --&gt; K{Sugestões marcadas?}
+    K -- Sim --&gt; L[Cria 3 espaços, 3 regras e 3 escalas de exemplo]
+    K -- Não --&gt; M
+    L --&gt; M[API devolve o token JWT&lt;br/&gt;a pessoa já sai logada]
+    I -- Sim --&gt; N{O código de convite confere?}
+    N -- Não / 400 --&gt; A
+    N -- Sim --&gt; O[Cria o usuário como MORADOR]
+    O --&gt; M
+    M --&gt; P([Painel. O síndico novo cai na tela de Moradores,&lt;br/&gt;onde está o código para convidar os outros])
+</pre></section>
 <section class="card"><h3>2. O que cada perfil pode fazer</h3><pre class="mermaid">flowchart LR
     subgraph Sindico[Síndico]
         S1[Cadastrar moradores e síndicos]
+        S8[Ver e renovar o código de convite da casa]
         S2[Aprovar ou rejeitar despesas]
         S3[Criar tarefas e escalas]
         S4[Configurar regras de penalidade]

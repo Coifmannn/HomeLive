@@ -31,12 +31,40 @@ flowchart TD
     M --> S([Sair: limpa a sessão]) --> B
 ```
 
+## 1.1 Cadastro: criar a residência ou entrar com o convite
+
+```mermaid
+flowchart TD
+    A([Abre a tela de cadastro]) --> B[Front consulta GET /api/casa/estado<br/>rota pública]
+    B --> C{A residência já existe?}
+    C -- Não --> D[Formulário Criar residência<br/>nome da casa e sugestões prontas]
+    C -- Sim --> E[Formulário Entrar<br/>código de convite e quarto]
+    D --> F{Dados válidos?<br/>nome, e-mail e senha com 6 ou mais}
+    E --> F
+    F -- Não --> A
+    F -- Sim --> G[POST /api/auth/cadastro]
+    G --> H{E-mail já existe?}
+    H -- Sim / 400 --> A
+    H -- Não --> I{A residência existe?}
+    I -- Não --> J[Cria a casa e gera o código HL-XXXXXX<br/>Cria o usuário como SÍNDICO]
+    J --> K{Sugestões marcadas?}
+    K -- Sim --> L[Cria 3 espaços, 3 regras e 3 escalas de exemplo]
+    K -- Não --> M
+    L --> M[API devolve o token JWT<br/>a pessoa já sai logada]
+    I -- Sim --> N{O código de convite confere?}
+    N -- Não / 400 --> A
+    N -- Sim --> O[Cria o usuário como MORADOR]
+    O --> M
+    M --> P([Painel. O síndico novo cai na tela de Moradores,<br/>onde está o código para convidar os outros])
+```
+
 ## 2. O que cada perfil pode fazer
 
 ```mermaid
 flowchart LR
     subgraph Sindico[Síndico]
         S1[Cadastrar moradores e síndicos]
+        S8[Ver e renovar o código de convite da casa]
         S2[Aprovar ou rejeitar despesas]
         S3[Criar tarefas e escalas]
         S4[Configurar regras de penalidade]

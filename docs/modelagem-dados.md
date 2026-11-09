@@ -27,6 +27,12 @@ erDiagram
     regras_penalidade ||--o{ penalidades : "origina"
     sindicos          ||--o{ penalidades : "aplica"
 
+    casas {
+        bigint id PK
+        varchar nome
+        varchar codigo_convite UK "HL-XXXXXX"
+        timestamp data_criacao
+    }
     usuarios {
         bigint id PK
         varchar nome
@@ -151,6 +157,7 @@ erDiagram
 
 | Tabela | Classe Java | O que guarda |
 | :--- | :--- | :--- |
+| `casas` | `Casa` | A residência: nome e código de convite (hoje existe uma só por instalação, por isso não tem ligação com os usuários) |
 | `usuarios` | `Usuario` (abstrata) | Dados comuns de login de qualquer pessoa |
 | `moradores` | `Morador extends Usuario` | Quarto, estadia e pontos de convivência |
 | `sindicos` | `Sindico extends Usuario` | Mandato e departamento do administrador |
@@ -169,8 +176,15 @@ erDiagram
 
 ## Regras de negócio
 
+**Residência e convite**
+* O sistema abre sem residência. Quem se cadastra primeiro **cria a casa e vira o síndico**; a partir daí, quem se cadastra
+  **entra como morador** e precisa informar o **código de convite**.
+* O código tem o formato `HL-` + 6 caracteres, sem letras confundíveis (I, O, 0, 1), e é único. O síndico pode gerar um novo
+  (o antigo deixa de valer). Só o síndico enxerga o código.
+* Ao criar a casa dá para começar com sugestões prontas: 3 espaços, 3 regras de penalidade e 3 escalas de tarefas.
+
 **Usuários e perfis**
-* E-mail é único (`UNIQUE`). Senha guardada só como hash BCrypt.
+* E-mail é único (`UNIQUE`) e guardado em minúsculas. Senha guardada só como hash BCrypt.
 * Dois perfis com permissões distintas: **Síndico** (administra) e **Morador** (usa).
 * Morador não é apagado: é desativado (`ativo = false`), para preservar o histórico.
 * Todo morador começa com 100 pontos de convivência.

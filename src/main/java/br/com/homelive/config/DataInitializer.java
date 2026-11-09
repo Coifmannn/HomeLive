@@ -4,29 +4,22 @@ import br.com.homelive.dto.AgendamentoDTO;
 import br.com.homelive.dto.DespesaDTO;
 import br.com.homelive.model.EspacoComum;
 import br.com.homelive.model.LeituraConsumo;
-import br.com.homelive.model.RegraPenalidade;
 import br.com.homelive.model.Morador;
 import br.com.homelive.model.Sindico;
 import br.com.homelive.model.TarefaDomestica;
-import br.com.homelive.model.TarefaRecorrente;
-import br.com.homelive.model.enums.ModoCalculoPenalidade;
-import br.com.homelive.model.enums.Periodicidade;
-import br.com.homelive.model.enums.TipoInfracao;
-import br.com.homelive.model.enums.TipoRodizio;
 import br.com.homelive.model.enums.CategoriaDespesa;
 import br.com.homelive.model.enums.TipoDespesa;
 import br.com.homelive.model.enums.TipoRateio;
-import br.com.homelive.repository.EspacoComumRepository;
 import br.com.homelive.repository.LeituraConsumoRepository;
 import br.com.homelive.repository.MoradorRepository;
-import br.com.homelive.repository.RegraPenalidadeRepository;
 import br.com.homelive.repository.SindicoRepository;
 import br.com.homelive.repository.TarefaDomesticaRepository;
-import br.com.homelive.repository.TarefaRecorrenteRepository;
 import br.com.homelive.service.AgendamentoService;
 import br.com.homelive.security.UsuarioAutenticado;
+import br.com.homelive.service.CasaService;
 import br.com.homelive.service.DespesaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -35,6 +28,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -42,25 +36,35 @@ public class DataInitializer implements CommandLineRunner {
 
     private final MoradorRepository moradorRepository;
     private final SindicoRepository sindicoRepository;
-    private final EspacoComumRepository espacoComumRepository;
     private final DespesaService despesaService;
     private final AgendamentoService agendamentoService;
     private final TarefaDomesticaRepository tarefaRepository;
-    private final TarefaRecorrenteRepository tarefaRecorrenteRepository;
     private final LeituraConsumoRepository leituraConsumoRepository;
-    private final RegraPenalidadeRepository regraPenalidadeRepository;
+    private final SugestoesIniciaisCasa sugestoes;
+    private final CasaService casaService;
     private final PasswordEncoder passwordEncoder;
+
+    /**
+     * Liga/desliga os dados de demonstração (variável de ambiente {@code DEMO_DATA}). Desligado, o sistema abre
+     * vazio e o primeiro cadastro cria a residência.
+     */
+    @Value("${homelive.demo-data:true}")
+    private boolean demoData;
 
     /** Senha única das contas de demonstração. Só para desenvolvimento. */
     public static final String SENHA_DEMO = "homelive123";
 
     @Override
     public void run(String... args) throws Exception {
-        if (moradorRepository.count() > 0) {
+        if (!demoData || moradorRepository.count() > 0) {
+            // Sem semente: só garante que um banco antigo (com usuários e sem casa) não pareça "vazio".
+            casaService.garantirCasaSeHouverUsuarios();
             return;
         }
 
         System.out.println(">>> [HomeLive 2050] Inicializando dados de demonstração POO...");
+
+        casaService.criar("Residência HomeLive 2050");
 
         String senhaDemo = passwordEncoder.encode(SENHA_DEMO);
 
@@ -94,27 +98,10 @@ public class DataInitializer implements CommandLineRunner {
                 new LeituraConsumo(m4, mesAtual, new BigDecimal("165.00"))
         ));
 
-        // 3. Cadastrar Espaços Comuns
-        EspacoComum espaco1 = espacoComumRepository.save(new EspacoComum(
-                "Escritório Acústico VR",
-                "Cabine individual com cancelamento de ruído holográfico e conexão neural de alta fidelidade",
-                2,
-                "Máximo de 4 horas contínuas. Manter limpo após o uso."
-        ));
-
-        EspacoComum espaco2 = espacoComumRepository.save(new EspacoComum(
-                "Lavanderia Inteligente IoT",
-                "Lavadoras e secadoras ecológicas por ultra-som com esterilização UV automática",
-                4,
-                "Retirar roupas em até 10 minutos após o término do ciclo do robô."
-        ));
-
-        EspacoComum espaco3 = espacoComumRepository.save(new EspacoComum(
-                "Espaço Gourmet e Rooftop Hidropônico",
-                "Cozinha automatizada com fornos de convecção quântica e vista para a horta vertical",
-                12,
-                "Reserva antecipada necessária. Lixo orgânico direcionado ao biodigestor."
-        ));
+        // 3. Espaços Comuns (as mesmas sugestões que o cadastro oferece ao criar uma residência)
+        List<EspacoComum> espacos = sugestoes.criarEspacos();
+        EspacoComum espaco1 = espacos.get(0);
+        EspacoComum espaco2 = espacos.get(1);
 
         // 4. Lançar e Processar Despesas com Diferentes Strategies
         // Despesa A: Internet Quântica (Rateio Igualitário)
@@ -215,24 +202,10 @@ public class DataInitializer implements CommandLineRunner {
         tarefaRepository.save(t3);
 
         // 6.1 Regras de penalidade configuradas pelo síndico
-        regraPenalidadeRepository.saveAll(java.util.List.of(
-                new RegraPenalidade("Tarefa atrasada (progressiva)", TipoInfracao.TAREFA_ATRASADA,
-                        ModoCalculoPenalidade.PROGRESSIVA, 10, 5, 30, 30, null),
-                new RegraPenalidade("Cancelamento em cima da hora", TipoInfracao.CANCELAMENTO_TARDIO,
-                        ModoCalculoPenalidade.FIXA, 10, null, null, null, 2),
-                new RegraPenalidade("Reserva não utilizada", TipoInfracao.NAO_COMPARECIMENTO,
-                        ModoCalculoPenalidade.FIXA, 20, null, null, null, null)
-        ));
+        sugestoes.criarRegras();
 
         // 7. Tarefas recorrentes (escalas com rodízio). Devidas hoje: POST /api/tarefas-recorrentes/gerar as distribui.
-        tarefaRecorrenteRepository.saveAll(java.util.List.of(
-                new TarefaRecorrente("Retirada do lixo orgânico", "Levar ao biodigestor do térreo",
-                        Periodicidade.SEMANAL, 2, 20, 10, TipoRodizio.SEQUENCIAL, LocalDate.now()),
-                new TarefaRecorrente("Limpeza do Espaço Gourmet", "Higienizar bancadas e a cozinha automatizada",
-                        Periodicidade.SEMANAL, 3, 30, 15, TipoRodizio.MENOR_CARGA, LocalDate.now()),
-                new TarefaRecorrente("Troca dos filtros de água reciclada", "Substituir os cartuchos do sistema central",
-                        Periodicidade.MENSAL, 5, 40, 20, TipoRodizio.MENOR_PONTUACAO, LocalDate.now().plusDays(7))
-        ));
+        sugestoes.criarEscalas();
 
         System.out.println(">>> [HomeLive 2050] Dados de teste carregados com sucesso!");
     }

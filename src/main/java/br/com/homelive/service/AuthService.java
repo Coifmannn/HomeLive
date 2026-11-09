@@ -47,8 +47,12 @@ public class AuthService {
             throw new BadCredentialsException(MENSAGEM_PADRAO);
         }
 
-        Usuario usuario = encontrado.get();
-        var token = tokenService.gerar(usuario.getEmail(), usuario.getTipoUsuario().name(), request.querLembrar());
+        return respostaDeLogin(encontrado.get(), request.querLembrar());
+    }
+
+    /** Token + perfil de um usuário já autenticado ou recém-cadastrado (o cadastro também entra direto no sistema). */
+    public AuthDTO.LoginResponse respostaDeLogin(Usuario usuario, boolean lembrar) {
+        var token = tokenService.gerar(usuario.getEmail(), usuario.getTipoUsuario().name(), lembrar);
         return new AuthDTO.LoginResponse(token.valor(), token.expiraEm(), usuario.getTipoUsuario(), perfilDe(usuario));
     }
 

@@ -52,7 +52,8 @@ public class SecurityConfig {
 
                         // Entrada pública: login (troca e-mail + senha por token) e o front (HTML/CSS/JS/ícones do app).
                         // Os dados continuam todos protegidos: o front sozinho não mostra nada sem a API.
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/cadastro").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/casa/estado").permitAll()
                         .requestMatchers(HttpMethod.GET, ARQUIVOS_DO_FRONT).permitAll()
                         .requestMatchers(HttpMethod.HEAD, ARQUIVOS_DO_FRONT).permitAll()
 
@@ -61,6 +62,7 @@ public class SecurityConfig {
 
                         // Só o síndico governa a residência.
                         .requestMatchers(HttpMethod.POST, "/api/moradores", "/api/sindicos", "/api/espacos").hasRole("SINDICO")
+                        .requestMatchers(HttpMethod.POST, "/api/casa/convite/renovar").hasRole("SINDICO")
                         .requestMatchers(HttpMethod.POST, "/api/tarefas", "/api/tarefas/processar-atrasos").hasRole("SINDICO")
                         .requestMatchers(HttpMethod.POST, "/api/despesas/*/avaliar").hasRole("SINDICO")
                         .requestMatchers(HttpMethod.PATCH, "/api/espacos/*/status", "/api/moradores/*/estadia").hasRole("SINDICO")
