@@ -158,13 +158,17 @@ main{max-width:1200px;margin:auto;padding:16px} h2{margin:28px 0 12px;font-size:
 </pre></section>
 <h2 id="fluxo">Fluxograma</h2>
 <section class="card"><h3>1. Fluxo geral: acesso e navegação</h3><pre class="mermaid">flowchart TD
-    A([Início]) --&gt; B[Tela de login&lt;br/&gt;e-mail + senha]
+    A([Abre o app ou o site]) --&gt; T{Tem token guardado&lt;br/&gt;e ainda válido?&lt;br/&gt;continuar conectado}
+    T -- Sim --&gt; G
+    T -- Não --&gt; B[Tela de login&lt;br/&gt;e-mail + senha&lt;br/&gt;marca ou não Continuar conectado]
     B --&gt; C{Campos válidos?}
     C -- Não --&gt; B
-    C -- Sim --&gt; D[Front envia credenciais&lt;br/&gt;HTTP Basic para a API]
-    D --&gt; E{Spring Security:&lt;br/&gt;senha confere com o hash BCrypt?}
+    C -- Sim --&gt; D[Front chama POST /api/auth/login]
+    D --&gt; E{API: senha confere com o hash BCrypt&lt;br/&gt;e a conta está ativa?}
     E -- Não / 401 --&gt; F[Mensagem: e-mail ou senha incorretos] --&gt; B
-    E -- Sim --&gt; G{Qual o perfil?}
+    E -- Sim --&gt; K[API devolve token JWT + perfil&lt;br/&gt;validade 30 dias se continuar conectado, senão 24h]
+    K --&gt; L[Front guarda só o token&lt;br/&gt;e envia Bearer em cada requisição]
+    L --&gt; G{Qual o perfil?}
     G -- Síndico --&gt; H[Painel do Síndico]
     G -- Morador --&gt; I[Painel do Morador]
 

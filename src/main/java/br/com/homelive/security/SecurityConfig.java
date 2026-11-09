@@ -10,12 +10,22 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    /** Arquivos do front (páginas, CSS, JS, ícones e manifesto do app): públicos, os dados não. */
+    private static final String[] ARQUIVOS_DO_FRONT = {
+            "/", "/index.html", "/login.html", "/cadastro.html", "/esqueceu-senha.html",
+            "/manifest.json", "/sw.js", "/favicon.ico",
+            "/css/**", "/js/**", "/assets/**", "/icons/**"
+    };
+
     private final RespostasDeSegurancaJson respostasJson;
+    private final TokenService tokenService;
+    private final UsuarioDetailsService usuarioDetailsService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -31,7 +41,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // API stateless com HTTP Basic: sem sessão e sem cookie, então CSRF não se aplica.
+                // API stateless (HTTP Basic ou token Bearer): sem sessão e sem cookie, então CSRF não se aplica.
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .cors(Customizer.withDefaults())
@@ -39,6 +49,12 @@ public class SecurityConfig {
                 .headers(h -> h.frameOptions(f -> f.sameOrigin()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Entrada pública: login (troca e-mail + senha por token) e o front (HTML/CSS/JS/ícones do app).
+                        // Os dados continuam todos protegidos: o front sozinho não mostra nada sem a API.
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, ARQUIVOS_DO_FRONT).permitAll()
+                        .requestMatchers(HttpMethod.HEAD, ARQUIVOS_DO_FRONT).permitAll()
 
                         // Console do banco dá acesso a tudo (inclusive hashes): só síndico.
                         .requestMatchers("/h2-console/**").hasRole("SINDICO")
@@ -60,6 +76,9 @@ public class SecurityConfig {
                         // Todo o resto exige apenas estar logado (consultas e ações do dia a dia do morador).
                         .anyRequest().authenticated())
                 .httpBasic(basic -> basic.authenticationEntryPoint(respostasJson))
+                // Token (Bearer) como segunda forma de entrar, antes do filtro do Basic.
+                .addFilterBefore(new TokenAuthenticationFilter(tokenService, usuarioDetailsService),
+                        BasicAuthenticationFilter.class)
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint(respostasJson)
                         .accessDeniedHandler(respostasJson));

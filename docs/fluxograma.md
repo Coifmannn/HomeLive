@@ -6,13 +6,17 @@ Fluxo da aplicação do ponto de vista do usuário (front-end HTML/JS → API Sp
 
 ```mermaid
 flowchart TD
-    A([Início]) --> B[Tela de login<br/>e-mail + senha]
+    A([Abre o app ou o site]) --> T{Tem token guardado<br/>e ainda válido?<br/>continuar conectado}
+    T -- Sim --> G
+    T -- Não --> B[Tela de login<br/>e-mail + senha<br/>marca ou não Continuar conectado]
     B --> C{Campos válidos?}
     C -- Não --> B
-    C -- Sim --> D[Front envia credenciais<br/>HTTP Basic para a API]
-    D --> E{Spring Security:<br/>senha confere com o hash BCrypt?}
+    C -- Sim --> D[Front chama POST /api/auth/login]
+    D --> E{API: senha confere com o hash BCrypt<br/>e a conta está ativa?}
     E -- Não / 401 --> F[Mensagem: e-mail ou senha incorretos] --> B
-    E -- Sim --> G{Qual o perfil?}
+    E -- Sim --> K[API devolve token JWT + perfil<br/>validade 30 dias se continuar conectado, senão 24h]
+    K --> L[Front guarda só o token<br/>e envia Bearer em cada requisição]
+    L --> G{Qual o perfil?}
     G -- Síndico --> H[Painel do Síndico]
     G -- Morador --> I[Painel do Morador]
 
