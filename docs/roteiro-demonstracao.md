@@ -23,7 +23,12 @@
 | **2:10** (60s) | Como Helena: **Finanças & Rateio** → despesa pendente *Revisão Técnica dos Robôs Aspiradores* → **Aprovar**. Mostrar as parcelas por morador. | "Ao aprovar, o sistema divide o valor. Aqui o critério é estadia, mas pode ser igualitário ou por consumo. A soma sempre fecha: o último morador absorve os centavos." | Strategy e Template Method |
 | **3:10** (40s) | Menu **Reservas**: reservar um espaço. Tentar **o mesmo horário de novo** e mostrar o erro de conflito. | "Não deixa duas reservas no mesmo espaço e horário: há conflito se o início novo é antes do fim existente e o fim novo é depois do início existente." | Regra de negócio, validação, erro 409 |
 | **3:50** (40s) | Menu **Escalas & Tarefas**: **Gerar Tarefas Devidas** (rodízio) e **Processar Atrasos**. Depois **Regras & Penalidades**: mostrar a penalidade que o Mateus recebeu. | "O rodízio escolhe quem pega a tarefa. Tarefa atrasada gera um evento, e quem aplica a penalidade é outra classe. A tarefa não sabe que existem penalidades." | Strategy no rodízio e Observer |
-| **4:30** (30s) | Mostrar o **celular** com o app. Mostrar o **PDF do DER e do fluxograma**. | "Está também como app no celular. A modelagem tem 13 tabelas. Ficou para a próxima versão: várias residências e recuperação de senha." | PWA, DER, limitações assumidas |
+| **4:30** (30s) | Mostrar o **celular** com o app. Mostrar o **PDF do DER e do fluxograma**. | "Está também como app no celular. A modelagem tem 13 tabelas. Ficou para a próxima versão: várias residências e recuperação de senha por e-mail (hoje o síndico gera uma senha temporária)." | PWA, DER, limitações assumidas |
+
+## Extras (se sobrar tempo ou alguém pedir)
+- **Espaço novo:** como Helena, menu **Reservas** → **Novo Espaço** → o cartão aparece na hora; **Desativar espaço** mostra "Indisponível".
+- **Esqueci a senha:** menu **Moradores** → **Redefinir senha** no cartão de um morador → aparece a senha temporária (só uma vez). Entre como ele com ela e use **Trocar minha senha** no menu lateral.
+- **Celular:** abra qualquer tela; as tabelas rolam para o lado dentro da própria caixa.
 
 ## Se algo der errado
 - **Postgres não sobe:** pare a API e suba sem o perfil (`.\mvnw.cmd spring-boot:run`). Usa o banco em memória e funciona igual.

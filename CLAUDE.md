@@ -102,6 +102,17 @@ configuráveis**; dashboard corrigido.
 * **Fica de fora (decidido):** várias casas com isolamento por casa, aprovação do síndico antes de entrar (estado PENDENTE),
   recuperação de senha, transferir o cargo de síndico. As "4 decisões pendentes" abaixo seguem valendo para essa evolução.
 
+### Rodada final antes da avaliação (09/11/2026, direto na `main`)
+* **Dashboard corrigido:** total de despesas do mês ignora `REJEITADA` e `totalMoradores` conta só ativos (`countByAtivoTrue`).
+* **Espaços na tela:** botão "Novo Espaço" + ativar/desativar em cada cartão (só síndico); espaço sem foto usa `.generico`.
+* **Senha:** `PATCH /api/auth/senha` (troca a própria; senha atual errada = 400, nunca 401) e `POST /api/moradores/{id}/redefinir-senha`
+  (síndico; senha temporária de 8 chars, devolvida uma vez). `Usuario.trocarSenhaHash` (sem setter). `esqueceu-senha.html` virou
+  página explicativa. Testes em `SenhaTest`.
+* **Celular:** tabelas rolam dentro da própria caixa (`overflow-x:auto`); conferido com emulação de 375px, nenhuma tela estoura.
+* Armadilha: o VS Code (Java/NetBeans) recompila `target/` em paralelo e pode apagar classes no meio do `mvnw test`
+  (`NoClassDefFoundError`). Se aparecer, rode o teste de novo.
+* Ainda em aberto: reativar morador desativado e editar estadia pela tela; deriva de data do rodízio mensal; "quanto devo no mês".
+
 ## Direção nova (combinada em 21/10/2026; só a parte de "várias casas" segue NÃO implementada)
 Decisões de produto/plataforma que o usuário trouxe. Aguardam as respostas das 4 perguntas abaixo antes de codar;
 mostre o plano detalhado antes de mexer.
@@ -172,7 +183,6 @@ Descartados: PWA/Capacitor (são para celular) e reescrever o front em Flutter/R
 
 ## Pontos em aberto (decisões de negócio, perguntar ao usuário)
 * `diasEstadia` ainda é **um valor único atual** no morador, o mesmo defeito que o consumo tinha. Poderia virar histórico mensal.
-* O total de despesas do dashboard **inclui despesas rejeitadas**, e `totalMoradores` conta moradores inativos.
 * `Periodicidade.MENSAL` acumula deriva de dia (31/jan → 28/fev → 28/mar).
 * Quem confirma o que, e se o síndico também pode ser "morador" (hoje não: `Sindico` e `Morador` são entidades irmãs).
 

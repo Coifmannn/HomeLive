@@ -167,7 +167,10 @@ A tela `cadastro.html` pergunta à API (`GET /api/casa/estado`) se a residência
 * Nos dois casos o cadastro já devolve o token: a pessoa sai logada e cai no painel (o síndico novo, direto na tela de Moradores, onde está o código).
 * O síndico copia o código ou gera um novo na tela de Moradores. O código aceita minúsculas e espaços; trocá-lo invalida o anterior.
 * Quem tenta criar uma segunda residência (sem o código) é barrado: com a casa criada, só dá para entrar com convite.
-* Existe **uma residência por instalação**. Várias residências, aprovação do síndico antes da entrada e recuperação de senha ficam para a próxima versão.
+* Existe **uma residência por instalação**. Várias residências, aprovação do síndico antes da entrada e recuperação de senha por e-mail ficam para a próxima versão.
+
+### Esqueci a senha (sem e-mail)
+O sistema não envia e-mail, então a recuperação passa pelo síndico: na tela **Moradores** ele clica em **Redefinir senha** no cartão do morador e recebe uma **senha temporária**, que aparece uma única vez (no banco fica só o hash). O morador entra com ela e usa **Trocar minha senha** (menu lateral) para escolher a dele. A página `esqueceu-senha.html` explica esses passos. Tokens já emitidos continuam valendo até expirar; ao trocar a senha, vale a nova só nos próximos logins.
 
 ### HTTP Basic (continua funcionando)
 Toda requisição também pode levar `Authorization: Basic base64(email:senha)` (usado pelos testes e pelo `curl`). Sem credencial válida, a resposta é `401`; com perfil sem permissão, `403`. Ambos em JSON, no mesmo formato dos demais erros.
@@ -193,6 +196,9 @@ O front fica na pasta `frontend/` e é **servido pela própria API**: uma URL s�
 | Aprovar/rejeitar despesa | ✅ | ❌ |
 | Cadastrar moradores e síndicos | ✅ | ❌ |
 | Ver e renovar o código de convite da residência | ✅ | ❌ |
+| Redefinir a senha de um morador (senha temporária) | ✅ | ❌ |
+| Trocar a própria senha | ✅ | ✅ |
+| Cadastrar espaço e ativar/desativar (tela Reservas) | ✅ | ❌ |
 | Cadastrar espaço / ativar-desativar | ✅ | ❌ |
 | Criar tarefa / processar atrasos | ✅ | ❌ |
 | Criar, ativar/desativar escalas recorrentes e gerar tarefas | ✅ | ❌ |
@@ -217,6 +223,7 @@ O front fica na pasta `frontend/` e é **servido pela própria API**: uma URL s�
 | Módulo | Método | Rota | Acesso | Descrição |
 | :--- | :--- | :--- | :---: | :--- |
 | **Autenticação** | `POST` | `/api/auth/login` | pública | `{ "email", "senha", "lembrar" }` → `{ token, expiraEm, papel, usuario }` |
+| | `PATCH` | `/api/auth/senha` | logado | A própria pessoa troca a senha: `{ "senhaAtual", "novaSenha" }` → `204`. Senha atual errada ou nova igual à atual: `400` (não `401`, para não derrubar a sessão) |
 | | `POST` | `/api/auth/cadastro` | pública | Cria a conta e já devolve o token (`201`). Sem residência: cria a casa e a pessoa vira **síndico**. Com residência: exige `codigoConvite` e `numeroQuarto` e a pessoa vira **morador** |
 | **Residência** | `GET` | `/api/casa/estado` | pública | `{ casaCriada, nomeCasa }`: a tela de cadastro usa para escolher entre criar e entrar |
 | | `GET` | `/api/casa` | logado | Nome da residência. O `codigoConvite` só vem para o síndico |
@@ -227,6 +234,7 @@ O front fica na pasta `frontend/` e é **servido pela própria API**: uma URL s�
 | | `GET` | `/api/moradores/ranking` | logado | Ranking por pontos de convivência |
 | | `PATCH` | `/api/moradores/{id}/estadia?dias=` | síndico | Atualiza dias de estadia |
 | | `DELETE` | `/api/moradores/{id}` | síndico | Desativa o morador |
+| | `POST` | `/api/moradores/{id}/redefinir-senha` | síndico | Gera uma **senha temporária** (8 caracteres) para o morador que esqueceu a dele: `{ "senhaTemporaria": "..." }`. Ela só aparece nesta resposta; a senha antiga deixa de valer |
 | **Leituras de consumo** | `POST` | `/api/leituras-consumo` | logado | Registra (ou corrige) a leitura do mês: `{ "kwh": 120.5, "competencia": "2026-09" }`. `competencia` é opcional (padrão: mês corrente). O síndico também informa `moradorId` |
 | | `GET` | `/api/leituras-consumo?competencia=2026-09` | logado | Leituras de um mês (sem parâmetro, o mês corrente) |
 | | `GET` | `/api/leituras-consumo/morador/{id}` | logado | Histórico de leituras de um morador |

@@ -66,7 +66,7 @@
             <td>Senha com <b>BCrypt</b>. <code>POST /api/auth/login</code> devolve um token JWT (HS256; 30 dias com "continuar conectado"). Permissões por perfil numa matriz só, em <code>SecurityConfig</code>; regra de "dono" em <code>UsuarioAutenticado</code>.</td></tr>
         <tr><td class="c">Automação e testes</td>
             <td><code>AgendadorConfig</code> (<code>@Scheduled</code>, 06:00); <code>src/test</code></td>
-            <td>Todo dia às 06:00: marca tarefas atrasadas (dispara penalidades) e gera as tarefas do rodízio. 219 testes (unidade, integração e segurança).</td></tr>
+            <td>Todo dia às 06:00: marca tarefas atrasadas (dispara penalidades) e gera as tarefas do rodízio. 235 testes (unidade, integração e segurança).</td></tr>
       </table>
     </div>
 
@@ -82,7 +82,7 @@
         <p><b>Como entra um morador novo?</b>O 1º cadastro cria a residência e vira síndico; os seguintes entram com o código de convite (<code>HL-XXXXXX</code>) e viram moradores.</p>
         <p><b>Por que uma residência só?</b>Decisão de escopo: várias casas exigiriam filtrar todos os dados por casa. Ficou como próxima versão.</p>
       </div>
-      <div class="lim"><b>Limitações (assumir como decisão):</b> uma residência por instalação; sem recuperação de senha; segredo do token e senha do banco com valor de desenvolvimento; sem limite de tentativas de login; sem HTTPS; PWA testado só no computador.</div>
+      <div class="lim"><b>Limitações (assumir como decisão):</b> uma residência por instalação; sem recuperação de senha por e-mail (o síndico gera uma senha temporária); segredo do token e senha do banco com valor de desenvolvimento; sem limite de tentativas de login; sem HTTPS; PWA testado só no computador.</div>
       <div class="rod"><b>Rodar:</b> <code>./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres</code> → <code>http://localhost:8080</code>. Plano B sem Postgres: tirar o <code>-D...</code> (banco em memória). Do zero: <code>DEMO_DATA=false</code>. Contas de exemplo: <code>helena.vance@homelive2050.io</code> (síndica) e <code>lucas.silva@homelive2050.io</code> (morador), senha <code>homelive123</code>.</div>
     </div>
   </div>
