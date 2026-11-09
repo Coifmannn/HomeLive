@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>HomeLive 2050 - Cola da defesa</title>
+<style>
+  @page { size: A4 landscape; margin: 0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; }
+  .pagina { width: 297mm; height: 209mm; padding: 7mm 9mm 5mm; overflow: hidden; display: flex; flex-direction: column; }
+  h1 { font-size: 17px; margin: 0; }
+  .sub { font-size: 10.5px; margin: 2px 0 6px; color: #333; }
+  .cols { display: grid; grid-template-columns: 61% 39%; gap: 10px; flex: 1; min-height: 0; }
+  h2 { font-size: 12px; margin: 0 0 4px; padding: 2px 6px; background: #e6e6e6; border: 1px solid #000; }
+  table { border-collapse: collapse; width: 100%; font-size: 10.2px; line-height: 1.28; }
+  td, th { border: 1px solid #000; padding: 2.5px 5px; vertical-align: top; }
+  th { background: #f1f1f1; text-align: left; font-size: 10.4px; }
+  td.c { font-weight: bold; width: 17%; }
+  code { font-family: Consolas, "Courier New", monospace; font-size: 9.7px; background: #f3f3f3; padding: 0 2px; }
+  .qa { font-size: 10.6px; line-height: 1.3; }
+  .qa p { margin: 0 0 5px; padding: 2px 6px; border-left: 3px solid #000; }
+  .qa b { display: block; }
+  .lim { margin-top: 6px; font-size: 10.4px; line-height: 1.32; border: 1px solid #000; padding: 4px 7px; }
+  .rod { margin-top: 6px; font-size: 10px; line-height: 1.32; border: 1px dashed #000; padding: 4px 7px; }
+</style>
+</head>
+<body>
+<section class="pagina">
+  <h1>Cola da defesa - HomeLive 2050</h1>
+  <p class="sub">Java 21 + Spring Boot 4 + PostgreSQL. Caminho de uma requisição: front (HTML/JS) → controller → service → repository → banco. As <b>regras ficam nas entidades</b>; o service só orquestra.</p>
+
+  <div class="cols">
+    <div>
+      <h2>Conceito → onde está no código</h2>
+      <table>
+        <tr><th>Conceito</th><th>Onde</th><th>Em uma frase</th></tr>
+        <tr><td class="c">Herança e polimorfismo</td>
+            <td><code>model/Usuario</code> (abstrata, <code>@Inheritance(JOINED)</code>) → <code>Morador</code>, <code>Sindico</code></td>
+            <td>Cada perfil implementa <code>getTipoUsuario()</code>; o Spring Security usa isso como permissão (<code>ROLE_</code>). No banco: <code>usuarios</code> guarda o comum, <code>moradores</code> e <code>sindicos</code> usam o mesmo id.</td></tr>
+        <tr><td class="c">Encapsulamento</td>
+            <td><code>Despesa.aprovar/rejeitar</code>, <code>AgendamentoEspaco.cancelar</code>, <code>TarefaDomestica.concluir</code></td>
+            <td>Entidades <b>sem setters</b>: o estado só muda por métodos que recusam transição inválida (despesa já avaliada não é avaliada de novo). O construtor de <code>AgendamentoEspaco</code> recusa reserva no passado. <code>EncapsulamentoEntidadesTest</code> falha se alguém criar um setter público.</td></tr>
+        <tr><td class="c">Strategy</td>
+            <td><code>strategy/CalculoRateioStrategy</code> (Igualitário, Estadia, Consumo) e <code>RodizioStrategy</code> (Sequencial, Menor Pontuação, Menor Carga)</td>
+            <td>Troca o algoritmo sem <code>if/else</code> gigante. A <code>RateioStrategyFactory</code> escolhe a estratégia pelo enum <code>TipoRateio</code>. Critério novo = classe nova.</td></tr>
+        <tr><td class="c">Template Method</td>
+            <td><code>RateioProporcionalStrategy.calcular()</code> (<code>final</code>) e <code>RodizioBaseStrategy</code></td>
+            <td>O esqueleto (validar, somar pesos, repartir, fechar os centavos no último morador) fica na classe abstrata; as filhas só dizem o <code>peso()</code> de cada morador.</td></tr>
+        <tr><td class="c">Observer</td>
+            <td><code>event/</code> (3 eventos) e <code>PenalidadeService</code> com <code>@EventListener</code></td>
+            <td><code>TarefaService</code> e <code>AgendamentoService</code> só publicam (<code>publishEvent</code>); quem aplica a penalidade é o <code>PenalidadeService</code>. Tarefa e reserva não sabem que penalidades existem.</td></tr>
+        <tr><td class="c">Strategy no enum</td>
+            <td><code>ModoCalculoPenalidade</code>, <code>Periodicidade</code></td>
+            <td>Cada valor do enum sabe calcular: FIXA/PROGRESSIVA (pontos) e DIARIA/SEMANAL/MENSAL (próxima data).</td></tr>
+        <tr><td class="c">Estruturas de dados</td>
+            <td>fábricas, <code>ContextoRateio</code>, <code>ContextoRodizio</code>, <code>TarefaRecorrenteService</code></td>
+            <td><code>EnumMap&lt;Tipo, Strategy&gt;</code> (busca direta pela chave); <code>Map&lt;Long,BigDecimal&gt;</code> (kWh por morador) e <code>Map&lt;Long,Long&gt;</code> (tarefas abertas por morador, via <code>groupingBy</code>); <code>List</code> ordenada com <code>Comparator</code> no rodízio circular; <code>Optional</code> p/ ausência; <code>BigDecimal</code> p/ dinheiro.</td></tr>
+        <tr><td class="c">Conflito de horário</td>
+            <td><code>AgendamentoEspacoRepository.findConflitos</code></td>
+            <td>Há conflito se <code>inicioNovo &lt; fimExistente E fimNovo &gt; inicioExistente</code> (só reservas CONFIRMADAS do mesmo espaço). Resposta 409.</td></tr>
+        <tr><td class="c">Validação</td>
+            <td>DTOs (<code>@NotBlank @Email @Positive @Size</code>), <code>GlobalExceptionHandler</code>, front</td>
+            <td>O back-end recusa dado inválido com 400 em JSON; o front também (<code>type=number</code>, <code>required</code>, telefone só aceita dígitos e símbolos). Regra de negócio quebrada: <code>RegraNegocioException</code>.</td></tr>
+        <tr><td class="c">Autenticação e perfis</td>
+            <td><code>security/SecurityConfig</code>, <code>TokenService</code>, <code>TokenAuthenticationFilter</code>, <code>UsuarioAutenticado</code></td>
+            <td>Senha com <b>BCrypt</b>. <code>POST /api/auth/login</code> devolve um token JWT (HS256; 30 dias com "continuar conectado"). Permissões por perfil numa matriz só, em <code>SecurityConfig</code>; regra de "dono" em <code>UsuarioAutenticado</code>.</td></tr>
+        <tr><td class="c">Automação e testes</td>
+            <td><code>AgendadorConfig</code> (<code>@Scheduled</code>, 06:00); <code>src/test</code></td>
+            <td>Todo dia às 06:00: marca tarefas atrasadas (dispara penalidades) e gera as tarefas do rodízio. 219 testes (unidade, integração e segurança).</td></tr>
+      </table>
+    </div>
+
+    <div>
+      <h2>Perguntas prováveis</h2>
+      <div class="qa">
+        <p><b>Por que herança JOINED?</b>Evita colunas vazias: o comum fica em <code>usuarios</code> e cada perfil guarda só o que é seu.</p>
+        <p><b>Por que o front não manda "quem sou eu"?</b>A identidade vem do token, não do corpo da requisição. Assim um morador não consegue se passar por síndico.</p>
+        <p><b>Por que token e não guardar a senha?</b>A senha não fica no navegador. O token é assinado e expira; se mudar um byte, a assinatura não confere.</p>
+        <p><b>Como a senha é guardada?</b>Só o hash BCrypt, nunca o texto.</p>
+        <p><b>Como o rateio fecha os centavos?</b>O último morador recebe a diferença, então a soma sempre dá o valor total.</p>
+        <p><b>O que acontece com tarefa atrasada?</b>A rotina das 06:00 marca ATRASADA e publica um evento; o <code>PenalidadeService</code> aplica a regra ativa (FIXA ou PROGRESSIVA).</p>
+        <p><b>Como entra um morador novo?</b>O 1º cadastro cria a residência e vira síndico; os seguintes entram com o código de convite (<code>HL-XXXXXX</code>) e viram moradores.</p>
+        <p><b>Por que uma residência só?</b>Decisão de escopo: várias casas exigiriam filtrar todos os dados por casa. Ficou como próxima versão.</p>
+      </div>
+      <div class="lim"><b>Limitações (assumir como decisão):</b> uma residência por instalação; sem recuperação de senha; segredo do token e senha do banco com valor de desenvolvimento; sem limite de tentativas de login; sem HTTPS; PWA testado só no computador.</div>
+      <div class="rod"><b>Rodar:</b> <code>./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres</code> → <code>http://localhost:8080</code>. Plano B sem Postgres: tirar o <code>-D...</code> (banco em memória). Do zero: <code>DEMO_DATA=false</code>. Contas de exemplo: <code>helena.vance@homelive2050.io</code> (síndica) e <code>lucas.silva@homelive2050.io</code> (morador), senha <code>homelive123</code>.</div>
+    </div>
+  </div>
+</section>
+</body>
+</html>
