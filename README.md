@@ -82,7 +82,8 @@ Detalhes:
 ## 🛠️ 3. Tecnologias Utilizadas
 * **Java 21 / 25 (LTS)**
 * **Spring Boot 4.x** (Spring Web, Spring Data JPA, Hibernate Validator)
-* **Spring Security** (HTTP Basic, senhas com BCrypt, perfis Síndico e Morador)
+* **Spring Security** (login com token JWT e HTTP Basic, senhas com BCrypt, perfis Síndico e Morador)
+* **PWA** (front instalável no celular, servido pela própria API)
 * **PostgreSQL** (persistência relacional, perfil `postgres`)
 * **Banco de Dados H2** (padrão de desenvolvimento e dos testes; em memória, com console visual em `/h2-console`, restrito ao síndico)
 * **Lombok** (Produtividade e encapsulamento limpo)
@@ -130,13 +131,47 @@ Sem o perfil, a API usa o H2 em memória (os testes automatizados também).
 
 ## 🔐 5. Autenticação e Perfis
 
-A API usa **HTTP Basic**: toda requisição leva o header `Authorization: Basic base64(email:senha)`. Sem ele, a resposta é `401`; com perfil sem permissão, `403`. Ambos em JSON, no mesmo formato dos demais erros.
+### Login com token ("continuar conectado")
+O front troca e-mail + senha por um **token** (JWT assinado) em `POST /api/auth/login` e daí em diante só mostra o token. A senha nunca fica guardada no navegador.
 
 ```js
-// Exemplo no front-end
-const auth = 'Basic ' + btoa('lucas.silva@homelive2050.io:homelive123');
-fetch('http://localhost:8080/api/dashboard', { headers: { Authorization: auth } });
+// 1. Login (rota pública)
+const r = await fetch('/api/auth/login', {
+  method: 'POST', headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email: 'lucas.silva@homelive2050.io', senha: 'homelive123', lembrar: true })
+}).then(r => r.json());
+// r = { token, expiraEm, papel: "MORADOR" | "SINDICO", usuario: { ...dados do morador/síndico } }
+
+// 2. Demais rotas
+fetch('/api/dashboard', { headers: { Authorization: 'Bearer ' + r.token } });
 ```
+
+| `lembrar` | Validade do token | Onde o front guarda |
+| :--- | :--- | :--- |
+| `true` ("Continuar conectado") | 30 dias | `localStorage` (sobrevive ao fechar o app) |
+| `false` ou ausente | 24 horas | `sessionStorage` (some ao fechar a aba) |
+
+* Login errado (e-mail inexistente, senha errada ou conta desativada) responde sempre `401` com a mesma mensagem.
+* Token adulterado, expirado ou de usuário desativado depois do login: `401`.
+* O segredo de assinatura vem da variável `JWT_SECRET` (mín. 32 caracteres). O padrão do `application.properties` é só para desenvolvimento.
+* Quem já tem token válido entra direto: a tela de login redireciona para o painel sozinha.
+
+### HTTP Basic (continua funcionando)
+Toda requisição também pode levar `Authorization: Basic base64(email:senha)` (usado pelos testes e pelo `curl`). Sem credencial válida, a resposta é `401`; com perfil sem permissão, `403`. Ambos em JSON, no mesmo formato dos demais erros.
+
+```bash
+curl -u lucas.silva@homelive2050.io:homelive123 http://localhost:8080/api/dashboard
+```
+
+## 📱 5.1 App no celular (PWA)
+O front fica na pasta `frontend/` e é **servido pela própria API**: uma URL só para site e dados. Ele é um **PWA**: no celular dá para instalar na tela inicial, com ícone e tela cheia, sem loja de apps.
+
+1. Suba a API (`./mvnw spring-boot:run`) e deixe o celular **no mesmo Wi-Fi** do computador.
+2. Descubra o IP do computador (`ipconfig`, campo "Endereço IPv4"), por exemplo `192.168.0.10`.
+3. No Chrome do celular, abra `http://192.168.0.10:8080`.
+4. Menu ⋮ → **Adicionar à tela inicial**.
+
+> `localhost` no celular é o próprio celular, por isso o IP. Sem HTTPS o Chrome cria um atalho (abre o site); a instalação completa ("Instalar app", funcionamento offline da casca) exige HTTPS ou `localhost`. Os dados nunca ficam em cache: tudo que é `/api` vai sempre ao servidor.
 
 **Quem está agindo vem do login, não do corpo da requisição.** Por isso os campos `solicitanteId` (despesa), `sindicoId` (avaliação) e `atribuidaPorId` (tarefa) não existem mais. Se o front enviá-los, são ignorados.
 
@@ -167,6 +202,7 @@ fetch('http://localhost:8080/api/dashboard', { headers: { Authorization: auth } 
 
 | Módulo | Método | Rota | Acesso | Descrição |
 | :--- | :--- | :--- | :---: | :--- |
+| **Autenticação** | `POST` | `/api/auth/login` | pública | `{ "email", "senha", "lembrar" }` → `{ token, expiraEm, papel, usuario }` |
 | **Dashboard** | `GET` | `/api/dashboard` | logado | Resumo consolidado com métricas, ranking e agendamentos |
 | **Moradores** | `GET` | `/api/moradores` | logado | Lista todos os moradores |
 | | `POST` | `/api/moradores` | síndico | Cadastra morador (corpo inclui `senha`, mín. 6 caracteres) |

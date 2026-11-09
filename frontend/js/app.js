@@ -579,14 +579,18 @@ function iniciarFormulariosDaAplicacao() {
 function iniciarFormulariosDeAcesso() {
     const formLogin = document.getElementById('formulario-login');
     if (formLogin) {
+        // Quem escolheu "continuar conectado" e ainda tem token válido entra direto, sem digitar nada.
+        if (Sessao.obter()) { location.replace('index.html'); return; }
+
         formLogin.addEventListener('submit', async (e) => {
             e.preventDefault();
             const botao = formLogin.querySelector('button[type=submit]');
             botao.disabled = true;
             try {
                 const email = valor('credencial').trim();
-                const r = await AuthService.login(email, valor('senha'));
-                Sessao.salvar({ auth: r.auth, papel: r.papel, usuario: r.usuario }, document.getElementById('lembrar').checked);
+                const lembrar = document.getElementById('lembrar').checked;
+                const r = await AuthService.login(email, valor('senha'), lembrar);
+                Sessao.salvar({ token: r.token, expiraEm: r.expiraEm, papel: r.papel, usuario: r.usuario }, lembrar);
                 mostrarToast('Bem-vindo de volta! Redirecionando...', 'sucesso');
                 setTimeout(() => { window.location.href = 'index.html'; }, 600);
             } catch (err) {

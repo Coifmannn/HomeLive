@@ -1,21 +1,34 @@
 // ==============================================================================
 // COMUNICAÇÃO COM A API HOMELIVE (Spring Boot)
-// A API usa HTTP Basic: todo request leva "Authorization: Basic base64(email:senha)".
+// O login (POST /auth/login) troca e-mail + senha por um TOKEN. Todo request seguinte leva
+// "Authorization: Bearer <token>". A senha nunca fica guardada no navegador.
 // Quem está agindo vem do login; o front nunca manda solicitanteId/sindicoId.
 // ==============================================================================
+// Quando o front é servido pela própria API (celular, app instalado), '/api' basta: mesma origem.
+// Aberto de arquivo (file://) ou de outro servidor local (ex.: Live Server), aponta para a API em localhost:8080.
 const CONFIG = {
-    URL_BACKEND: 'http://localhost:8080/api'
+    URL_BACKEND: (location.protocol === 'file:' || (location.port && location.port !== '8080'))
+        ? 'http://localhost:8080/api'
+        : '/api'
 };
 
-// --- Sessão (credenciais + dados do usuário logado) ---------------------------
-// sessionStorage some ao fechar a aba; "lembrar de mim" usa localStorage.
+// --- Sessão (token + dados do usuário logado) ---------------------------------
+// "Continuar conectado" guarda no localStorage (token de 30 dias, sobrevive ao fechar o app);
+// sem marcar, usa o sessionStorage (some ao fechar a aba).
 const Sessao = {
     CHAVE: 'homelive_sessao',
     _storage() {
         return localStorage.getItem(this.CHAVE) ? localStorage : sessionStorage;
     },
     obter() {
-        try { return JSON.parse(this._storage().getItem(this.CHAVE)); } catch { return null; }
+        let dados = null;
+        try { dados = JSON.parse(this._storage().getItem(this.CHAVE)); } catch { /* sessão corrompida */ }
+        // Sessão de versões antigas (sem token) ou com token vencido: não vale mais.
+        if (!dados || !dados.token || (dados.expiraEm && Date.parse(dados.expiraEm) <= Date.now())) {
+            if (dados) this.limpar();
+            return null;
+        }
+        return dados;
     },
     salvar(dados, lembrar) {
         this.limpar();
@@ -24,11 +37,6 @@ const Sessao = {
     limpar() {
         localStorage.removeItem(this.CHAVE);
         sessionStorage.removeItem(this.CHAVE);
-    },
-    // btoa só aceita Latin-1; o encode evita quebrar com senha acentuada.
-    cabecalho(email, senha) {
-        const bytes = new TextEncoder().encode(`${email}:${senha}`);
-        return 'Basic ' + btoa(String.fromCharCode(...bytes));
     }
 };
 
@@ -40,11 +48,10 @@ class ErroApi extends Error {
 }
 
 // --- Cliente HTTP --------------------------------------------------------------
-async function http(metodo, rota, corpo, auth) {
-    const sessao = Sessao.obter();
+async function http(metodo, rota, corpo, semSessao) {
+    const sessao = semSessao ? null : Sessao.obter();
     const headers = {};
-    const credencial = auth || (sessao && sessao.auth);
-    if (credencial) headers['Authorization'] = credencial;
+    if (sessao) headers['Authorization'] = 'Bearer ' + sessao.token;
     if (corpo !== undefined) headers['Content-Type'] = 'application/json';
 
     let res;
@@ -58,7 +65,7 @@ async function http(metodo, rota, corpo, auth) {
         throw new ErroApi(0, 'Não consegui falar com a API. Ela está rodando em ' + CONFIG.URL_BACKEND + '?');
     }
 
-    if (res.status === 401 && !auth) {
+    if (res.status === 401 && !semSessao) {
         // sessão inválida/expirada: volta pro login
         Sessao.limpar();
         if (!location.pathname.endsWith('login.html')) location.href = 'login.html';
@@ -84,6 +91,11 @@ function mensagemDeErro(dados, status) {
     return 'Erro ' + status + ' ao falar com a API.';
 }
 
+// App instalável: registra o service worker (só funciona em localhost ou HTTPS; fora disso o site segue normal).
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { /* sem SW, sem problema */ }));
+}
+
 const get = (rota) => http('GET', rota);
 const post = (rota, corpo) => http('POST', rota, corpo === undefined ? {} : corpo);
 const patch = (rota, corpo) => http('PATCH', rota, corpo);
@@ -93,25 +105,10 @@ const del = (rota) => http('DELETE', rota);
 // SERVIÇOS (um por módulo da API)
 // ==============================================================================
 const AuthService = {
-    // Não existe /auth/login: testa as credenciais numa rota protegida e descobre
-    // o perfil procurando o e-mail entre síndicos e moradores.
-    async login(email, senha) {
+    // Devolve { token, expiraEm, papel, usuario }. "lembrar" pede o token de 30 dias.
+    async login(email, senha, lembrar) {
         email = email.trim().toLowerCase(); // a API compara o e-mail diferenciando maiúsculas
-        const auth = Sessao.cabecalho(email, senha);
-        let sindicos;
-        try {
-            sindicos = await http('GET', '/sindicos', undefined, auth);
-        } catch (e) {
-            if (e.status === 401) throw new ErroApi(401, 'E-mail ou senha incorretos.');
-            throw e;
-        }
-        const sindico = sindicos.find(s => s.email.toLowerCase() === email);
-        if (sindico) return { auth, papel: 'SINDICO', usuario: sindico };
-
-        const moradores = await http('GET', '/moradores', undefined, auth);
-        const morador = moradores.find(m => m.email.toLowerCase() === email);
-        if (!morador) throw new ErroApi(401, 'Não encontrei seu perfil no sistema.');
-        return { auth, papel: 'MORADOR', usuario: morador };
+        return http('POST', '/auth/login', { email, senha, lembrar: !!lembrar }, true);
     }
 };
 

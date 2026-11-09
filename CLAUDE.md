@@ -78,6 +78,18 @@ configuráveis**; dashboard corrigido.
 **Atenção:** no momento em que este arquivo foi escrito, havia **3 commits locais ainda sem push**
 (`bab1262`, `b9f4a70`, `9a8b062`), mais o commit deste arquivo. Rode `git status -sb` e confira.
 
+### Login com token + PWA (FEITO em 09/11/2026, branch `feat/login-token-pwa`)
+* `POST /api/auth/login` (pública) troca e-mail+senha por **JWT HS256** (`TokenService`, Nimbus via `spring-security-oauth2-jose`,
+  segredo em `JWT_SECRET`, mín. 32 chars). `lembrar=true` → 30 dias; senão 24h. `TokenAuthenticationFilter` aceita
+  `Authorization: Bearer` **junto** com o Basic (testes seguem em Basic). Usuário desativado perde o token na hora.
+  Erro de login é sempre 401 com a mesma mensagem. Testes em `LoginComTokenTest`.
+* O front guarda só o token (`localStorage` se "continuar conectado", senão `sessionStorage`); `login.html` redireciona direto
+  ao painel se há token válido.
+* O front (`frontend/`) é copiado para `static/` pelo `pom.xml` e **servido pela própria API** (mesma origem, `/api`).
+  É PWA: `manifest.json`, `sw.js` (só a casca; `/api` nunca em cache), ícones em `icons/`. Para o celular: `http://IP-do-PC:8080`
+  → "Adicionar à tela inicial". Sem HTTPS vira atalho; instalação completa pede HTTPS/localhost.
+* Mudou o front? Reinicie a API: o `spring-boot:run` recopia `frontend/` para `target/classes/static`.
+
 ## Direção nova (combinada em 21/10/2026, ainda NÃO implementada)
 Decisões de produto/plataforma que o usuário trouxe. Aguardam as respostas das 4 perguntas abaixo antes de codar;
 mostre o plano detalhado antes de mexer.
