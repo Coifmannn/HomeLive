@@ -30,9 +30,17 @@ public class CasaService {
         return buscarCasa().orElseThrow(() -> new RecursoNaoEncontradoException("A residência ainda não foi criada."));
     }
 
+    /**
+     * Casa que já tem alguém para passar o código de convite. Uma casa sem nenhum usuário (ex.: banco em que as contas
+     * foram apagadas) não conta: ninguém poderia entrar, então o cadastro volta ao fluxo de criar a residência.
+     */
+    public Optional<Casa> buscarCasaComMoradores() {
+        return buscarCasa().filter(casa -> usuarioRepository.count() > 0);
+    }
+
     /** Público: diz se a residência já existe, para o cadastro escolher entre criar e entrar. */
     public CasaDTO.Estado estado() {
-        return buscarCasa()
+        return buscarCasaComMoradores()
                 .map(casa -> new CasaDTO.Estado(true, casa.getNome()))
                 .orElse(new CasaDTO.Estado(false, null));
     }
@@ -51,6 +59,7 @@ public class CasaService {
 
     @Transactional
     public Casa criar(String nome) {
+        casaRepository.deleteAll(); // sobra de uma casa sem usuários; a instalação tem uma casa só
         return casaRepository.save(new Casa(nome));
     }
 

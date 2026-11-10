@@ -83,6 +83,12 @@ function iniciarAplicacao() {
 
     document.getElementById('botao-sair').addEventListener('click', () => Sessao.limpar());
 
+    // Sino: leva para onde estão as pendências (síndico aprova despesas; morador cumpre tarefas).
+    document.getElementById('botao-pendencias').addEventListener('click', () => {
+        const alvo = S.ehSindico ? 'financas' : 'tarefas';
+        document.querySelector(`.links-navegacao li[data-alvo="${alvo}"]`).click();
+    });
+
     // Cabeçalho
     document.getElementById('exibicao-data').textContent =
         new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });

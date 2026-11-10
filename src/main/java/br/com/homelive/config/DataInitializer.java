@@ -7,13 +7,17 @@ import br.com.homelive.model.LeituraConsumo;
 import br.com.homelive.model.Morador;
 import br.com.homelive.model.Sindico;
 import br.com.homelive.model.TarefaDomestica;
+import br.com.homelive.model.TarefaRecorrente;
 import br.com.homelive.model.enums.CategoriaDespesa;
+import br.com.homelive.model.enums.Periodicidade;
+import br.com.homelive.model.enums.TipoRodizio;
 import br.com.homelive.model.enums.TipoDespesa;
 import br.com.homelive.model.enums.TipoRateio;
 import br.com.homelive.repository.LeituraConsumoRepository;
 import br.com.homelive.repository.MoradorRepository;
 import br.com.homelive.repository.SindicoRepository;
 import br.com.homelive.repository.TarefaDomesticaRepository;
+import br.com.homelive.repository.TarefaRecorrenteRepository;
 import br.com.homelive.service.AgendamentoService;
 import br.com.homelive.security.UsuarioAutenticado;
 import br.com.homelive.service.CasaService;
@@ -40,6 +44,7 @@ public class DataInitializer implements CommandLineRunner {
     private final AgendamentoService agendamentoService;
     private final TarefaDomesticaRepository tarefaRepository;
     private final LeituraConsumoRepository leituraConsumoRepository;
+    private final TarefaRecorrenteRepository tarefaRecorrenteRepository;
     private final SugestoesIniciaisCasa sugestoes;
     private final CasaService casaService;
     private final PasswordEncoder passwordEncoder;
@@ -206,6 +211,69 @@ public class DataInitializer implements CommandLineRunner {
 
         // 7. Tarefas recorrentes (escalas com rodízio). Devidas hoje: POST /api/tarefas-recorrentes/gerar as distribui.
         sugestoes.criarEscalas();
+
+        // 7.1 Escalas extras de exemplo (só na demonstração, não entram no pacote inicial do cadastro).
+        tarefaRecorrenteRepository.saveAll(List.of(
+                new TarefaRecorrente("Limpeza dos banheiros comuns", "Higienizar pias, vasos e box com os robôs de apoio",
+                        Periodicidade.SEMANAL, 2, 25, 15, TipoRodizio.SEQUENCIAL, LocalDate.now()),
+                new TarefaRecorrente("Regar a horta vertical", "Conferir o nível dos reservatórios e regar o rooftop",
+                        Periodicidade.DIARIA, 1, 10, 5, TipoRodizio.SEQUENCIAL, LocalDate.now().plusDays(1)),
+                new TarefaRecorrente("Reposição de suprimentos de limpeza", "Conferir estoque de detergente, papel e sacos de lixo",
+                        Periodicidade.QUINZENAL, 4, 20, 10, TipoRodizio.MENOR_CARGA, LocalDate.now().plusDays(3))));
+
+        // 8. Gastos extras de exemplo, em estados diferentes do ciclo de vida.
+        // Despesa D: Água (Rateio Igualitário, já aprovada e rateada)
+        DespesaDTO.Response r4 = despesaService.lancarDespesa(new DespesaDTO.Request(
+                "Conta de Água Reutilizável",
+                "Consumo do ciclo de captação e tratamento de água de chuva",
+                new BigDecimal("180.00"),
+                LocalDate.now().plusDays(8),
+                CategoriaDespesa.AGUA_REUTILIZAVEL,
+                TipoDespesa.FIXA,
+                TipoRateio.IGUALITARIO,
+                null
+        ), new UsuarioAutenticado(m4));
+        despesaService.avaliarDespesa(r4.getId(), new DespesaDTO.AprovacaoRequest(true, null), sindicoSalvo.getId());
+
+        // Despesa E: Compras coletivas (Rateio por Estadia, já aprovada e rateada)
+        DespesaDTO.Response r5 = despesaService.lancarDespesa(new DespesaDTO.Request(
+                "Compras Coletivas de Alimentos",
+                "Cesta mensal de hortifrúti e itens básicos da despensa inteligente",
+                new BigDecimal("560.00"),
+                LocalDate.now().plusDays(5),
+                CategoriaDespesa.ALIMENTACAO_INTELIGENTE,
+                TipoDespesa.VARIAVEL,
+                TipoRateio.POR_ESTADIA,
+                null
+        ), new UsuarioAutenticado(m1));
+        despesaService.avaliarDespesa(r5.getId(), new DespesaDTO.AprovacaoRequest(true, null), sindicoSalvo.getId());
+
+        // Despesa F: Taxa geral (pendente, para o síndico avaliar)
+        despesaService.lancarDespesa(new DespesaDTO.Request(
+                "Taxa Geral do Condomínio",
+                "Limpeza das áreas comuns, segurança e jardinagem",
+                new BigDecimal("640.00"),
+                LocalDate.now().plusDays(12),
+                CategoriaDespesa.CONDOMINIO_GERAL,
+                TipoDespesa.FIXA,
+                TipoRateio.IGUALITARIO,
+                null
+        ), new UsuarioAutenticado(m2));
+
+        // Despesa G: Reparo urgente rejeitado pelo síndico (exemplo do fluxo de rejeição)
+        DespesaDTO.Response r7 = despesaService.lancarDespesa(new DespesaDTO.Request(
+                "Troca de Painel Solar Decorativo",
+                "Substituição estética sem ganho de geração",
+                new BigDecimal("1200.00"),
+                LocalDate.now().plusDays(30),
+                CategoriaDespesa.ENERGIA_SOLAR,
+                TipoDespesa.VARIAVEL,
+                TipoRateio.IGUALITARIO,
+                null
+        ), new UsuarioAutenticado(m3));
+        despesaService.avaliarDespesa(r7.getId(),
+                new DespesaDTO.AprovacaoRequest(false, "Gasto não essencial; reapresentar com orçamento comparativo."),
+                sindicoSalvo.getId());
 
         System.out.println(">>> [HomeLive 2050] Dados de teste carregados com sucesso!");
     }

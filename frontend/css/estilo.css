@@ -12,7 +12,7 @@
     --texto-principal: #f0f0f5;
     --texto-suave: #8b8b9e;
     
-    --desfoque-vidro: blur(16px);
+    --desfoque-vidro: blur(8px);
     --transicao: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
@@ -90,15 +90,17 @@ body {
 .orbe-fundo {
     position: absolute;
     border-radius: 50%;
-    filter: blur(120px);
+    /* gradiente radial no lugar de filter:blur(120px), que era pesado de animar */
+    background: radial-gradient(circle, var(--cor-orbe) 0%, transparent 70%);
     z-index: -1;
     opacity: 0.5;
+    will-change: transform;
     animation: flutuar 20s infinite ease-in-out alternate;
 }
 
-.orbe-1 { width: 400px; height: 400px; background: var(--destaque-roxo); top: -100px; left: -100px; }
-.orbe-2 { width: 350px; height: 350px; background: var(--destaque-azul); bottom: 10%; right: -50px; animation-delay: -5s; }
-.orbe-3 { width: 250px; height: 250px; background: var(--destaque-verde); top: 40%; left: 30%; animation-delay: -10s; opacity: 0.2; }
+.orbe-1 { width: 400px; height: 400px; --cor-orbe: var(--destaque-roxo); top: -100px; left: -100px; }
+.orbe-2 { width: 350px; height: 350px; --cor-orbe: var(--destaque-azul); bottom: 10%; right: -50px; animation-delay: -5s; }
+.orbe-3 { width: 250px; height: 250px; --cor-orbe: var(--destaque-verde); top: 40%; left: 30%; animation-delay: -10s; opacity: 0.2; }
 
 @keyframes flutuar {
     0% { transform: translate(0, 0) scale(1); }
@@ -315,9 +317,9 @@ body {
 .resultado-final { background: rgba(0, 245, 212, 0.05); padding: 10px; border-radius: 8px; border-left: 3px solid var(--destaque-verde); }
 
 /* Modais */
-.sobreposicao-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: var(--transicao); }
+.sobreposicao-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: var(--transicao); }
 .sobreposicao-modal.ativa { opacity: 1; pointer-events: auto; }
-.caixa-modal { width: 100%; max-width: 450px; transform: translateY(20px); transition: var(--transicao); }
+.caixa-modal { width: 100%; max-width: 450px; max-height: 90vh; overflow-y: auto; transform: translateY(20px); transition: var(--transicao); }
 .sobreposicao-modal.ativa .caixa-modal { transform: translateY(0); }
 .cabecalho-modal { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--borda-painel); }
 .botao-fechar { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }

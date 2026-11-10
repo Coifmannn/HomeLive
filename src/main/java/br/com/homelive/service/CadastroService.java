@@ -44,9 +44,9 @@ public class CadastroService {
             throw new RegraNegocioException("Já existe uma conta com este e-mail.");
         }
 
-        Usuario novo = casaService.buscarCasa().isPresent()
-                ? entrarComoMorador(request, email, casaService.casaAtual())
-                : criarCasaComoSindico(request, email);
+        Usuario novo = casaService.buscarCasaComMoradores()
+                .<Usuario>map(casa -> entrarComoMorador(request, email, casa))
+                .orElseGet(() -> criarCasaComoSindico(request, email));
 
         return authService.respostaDeLogin(novo, request.querLembrar());
     }
