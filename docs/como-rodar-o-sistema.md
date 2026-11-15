@@ -25,6 +25,7 @@ Aqui os dados ficam salvos mesmo depois de parar a aplicação. Crie um banco no
 psql -U postgres -h localhost -c "CREATE DATABASE homelive;"
 ```
 
+
 Não precisa criar tabela nenhuma: o Hibernate cria sozinho quando a aplicação sobe.
 
 Depois é só subir com o perfil `postgres`:
