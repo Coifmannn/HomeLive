@@ -82,13 +82,6 @@ Concluir uma tarefa no prazo dá os pontos da tarefa. Concluir atrasado dá só 
 
 Precisa de Java 21 ou mais novo. Os comandos abaixo são pra PowerShell, dentro da pasta do projeto.
 
-Primeiro clone o projeto (ou dê `git pull` se já tem):
-
-```powershell
-git clone https://github.com/Coifmannn/HomeLive.git
-cd HomeLive
-```
-
 ### Subir com o banco em memória (mais fácil)
 
 ```powershell
